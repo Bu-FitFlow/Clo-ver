@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: clover
+
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+        default_batch_fetch_size: 1000
+    open-in-view: false
+
+  cloud:
+    aws:
+      credentials:
+        access-key: ${DO_ACCESS_KEY}
+        secret-key: ${DO_SECRET_KEY}
+      region:
+        static: sgp1
+      s3:
+        endpoint: https://sgp1.digitaloceanspaces.com
+
+jwt:
+  secret: ${JWT_SECRET_KEY}
+  access-token-validity-in-milliseconds: 86400000
+
