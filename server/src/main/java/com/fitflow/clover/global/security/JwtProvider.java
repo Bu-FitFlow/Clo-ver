@@ -1,0 +1,81 @@
+package com.fitflow.clover.global.security;
+
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import java.security.Key;
+import java.util.Date;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class JwtProvider {
+    private final CustomUserDetailsService customUserDetailsService;
+
+    @Value("${jwt.secret}")
+    private String secretKey;
+
+    @Value("${jwt.access-token-validity-in-milliseconds}")
+    private long accessTokenValidityInMilliseconds;
+
+    private Key key;
+
+    @PostConstruct
+    public void init() {
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+        this.key = Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public String createAccessToken(Long userId, String email) {
+        Claims claims = Jwts.claims().setSubject(userId.toString());
+        claims.put("email", email);
+
+        Date now = new Date();
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + accessTokenValidityInMilliseconds))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String getUserId(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            return true;
+        } catch (SecurityException | MalformedJwtException e) {
+            log.error("잘못된 JWT 서명입니다.");
+        } catch (ExpiredJwtException e) {
+            log.error("만료된 JWT 토큰입니다.");
+        } catch (UnsupportedJwtException e) {
+            log.error("지원되지 않는 JWT 토큰입니다.");
+        } catch (IllegalArgumentException e) {
+            log.error("JWT 토큰이 잘못되었습니다.");
+        }
+        return false;
+    }
+
+    public Authentication getAuthentication(String token) {
+        String userId = this.getUserId(token);
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(userId);
+        return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+    }
+}

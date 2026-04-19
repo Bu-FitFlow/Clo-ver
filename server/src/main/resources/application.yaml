@@ -28,6 +28,7 @@ spring:
         static: sgp1
       s3:
         endpoint: https://sgp1.digitaloceanspaces.com
+        bucket: cloverstorage
 
 jwt:
   secret: ${JWT_SECRET_KEY}
