@@ -1,5 +1,7 @@
 package com.fitflow.clover.global.security;
 
+import com.fitflow.clover.domain.member.entity.Member;
+import com.fitflow.clover.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
