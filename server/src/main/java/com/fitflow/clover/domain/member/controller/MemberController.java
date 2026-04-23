@@ -7,10 +7,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/members")
@@ -22,5 +21,11 @@ public class MemberController {
     public ResponseEntity<MemberResponse> signup(@Valid @RequestBody SignUpRequest request) {
         MemberResponse response = memberService.signUp(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<String> getMyInfo(@AuthenticationPrincipal UserDetails userDetails) {
+        String memberId = userDetails.getUsername();
+        return ResponseEntity.ok("환영합니다! 당신의 회원 식별 번호는 " + memberId + " 입니다.");
     }
 }

@@ -14,7 +14,7 @@ public enum ErrorCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요한 서비스입니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다."),
 
-    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "인증 정보가 만료되었거나 유효하지 않습니다. 다시 로그인해 주세요."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 토큰입니다."),
 
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 유저입니다."),

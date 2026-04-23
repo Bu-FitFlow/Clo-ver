@@ -49,5 +49,5 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET_KEY}
-  access-token-validity-in-milliseconds: 86400000
+  access-token-validity-in-milliseconds: 1800000
 
