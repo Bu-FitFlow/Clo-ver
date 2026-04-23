@@ -1,4 +1,4 @@
-package com.fitflow.clover.domain.member.dto;
+package com.fitflow.clover.domain.member.dto.response;
 
 import com.fitflow.clover.domain.member.entity.Gender;
 import com.fitflow.clover.domain.member.entity.Member;

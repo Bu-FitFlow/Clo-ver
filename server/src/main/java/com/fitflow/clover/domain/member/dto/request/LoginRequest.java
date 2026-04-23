@@ -1,4 +1,4 @@
-package com.fitflow.clover.domain.member.dto;
+package com.fitflow.clover.domain.member.dto.request;
 
 import lombok.Getter;
 

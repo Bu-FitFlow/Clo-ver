@@ -1,7 +1,7 @@
 package com.fitflow.clover.domain.member.service;
 
-import com.fitflow.clover.domain.member.dto.LoginRequest;
-import com.fitflow.clover.domain.member.dto.TokenResponse;
+import com.fitflow.clover.domain.member.dto.request.LoginRequest;
+import com.fitflow.clover.domain.member.dto.response.TokenResponse;
 import com.fitflow.clover.domain.member.entity.Member;
 import com.fitflow.clover.domain.member.repository.MemberRepository;
 import com.fitflow.clover.global.error.CustomException;

@@ -1,9 +1,10 @@
 package com.fitflow.clover.domain.member.controller;
 
-import com.fitflow.clover.domain.member.dto.MemberResponse;
-import com.fitflow.clover.domain.member.dto.SignUpRequest;
-import com.fitflow.clover.domain.member.dto.TokenResponse;
-import com.fitflow.clover.domain.member.dto.TotpEnableRequest;
+import com.fitflow.clover.domain.member.dto.response.MemberInfoResponse;
+import com.fitflow.clover.domain.member.dto.response.MemberResponse;
+import com.fitflow.clover.domain.member.dto.request.SignUpRequest;
+import com.fitflow.clover.domain.member.dto.response.TokenResponse;
+import com.fitflow.clover.domain.member.dto.request.TotpEnableRequest;
 import com.fitflow.clover.domain.member.service.MemberService;
 import com.fitflow.clover.domain.member.service.PasskeyService;
 import com.fitflow.clover.domain.member.service.TotpService;
@@ -31,9 +32,10 @@ public class MemberController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<String> getMyInfo(@AuthenticationPrincipal UserDetails userDetails) {
-        String memberId = userDetails.getUsername();
-        return ResponseEntity.ok("환영합니다! 당신의 회원 식별 번호는 " + memberId + " 입니다.");
+    public ResponseEntity<MemberInfoResponse> getMyInfo(@AuthenticationPrincipal UserDetails userDetails) {
+        Long memberId = Long.parseLong(userDetails.getUsername());
+        MemberInfoResponse response = memberService.getMyInfo(memberId);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/totp/setup")

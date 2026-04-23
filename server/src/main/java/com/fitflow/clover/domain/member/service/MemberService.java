@@ -1,9 +1,11 @@
 package com.fitflow.clover.domain.member.service;
 
-import com.fitflow.clover.domain.member.dto.MemberResponse;
-import com.fitflow.clover.domain.member.dto.SignUpRequest;
+import com.fitflow.clover.domain.member.dto.response.MemberInfoResponse;
+import com.fitflow.clover.domain.member.dto.response.MemberResponse;
+import com.fitflow.clover.domain.member.dto.request.SignUpRequest;
 import com.fitflow.clover.domain.member.entity.Member;
 import com.fitflow.clover.domain.member.repository.MemberRepository;
+import com.fitflow.clover.domain.member.repository.PasskeyRepository;
 import com.fitflow.clover.global.error.CustomException;
 import com.fitflow.clover.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PasskeyRepository passkeyRepository;
     private final MailService mailService;
 
     @Transactional
@@ -40,6 +43,22 @@ public class MemberService {
         mailService.sendVerificationEmail(member.getEmail());
 
         return MemberResponse.from(savedMember);
+    }
+
+    public MemberInfoResponse getMyInfo(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        boolean hasPasskey = !passkeyRepository.findAllByMember_MemberId(memberId).isEmpty();
+
+        return MemberInfoResponse.builder()
+                .loginId(member.getLoginId())
+                .name(member.getName())
+                .nickname(member.getNickname())
+                .email(member.getEmail())
+                .totpEnabled(member.isTotpEnabled())
+                .hasPasskey(hasPasskey)
+                .build();
     }
 
     private void checkDuplicateMember(SignUpRequest request) {

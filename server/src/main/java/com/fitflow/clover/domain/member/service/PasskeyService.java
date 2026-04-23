@@ -1,6 +1,6 @@
 package com.fitflow.clover.domain.member.service;
 
-import com.fitflow.clover.domain.member.dto.TokenResponse;
+import com.fitflow.clover.domain.member.dto.response.TokenResponse;
 import com.fitflow.clover.domain.member.entity.Member;
 import com.fitflow.clover.domain.member.entity.PasskeyCredential;
 import com.fitflow.clover.domain.member.repository.MemberRepository;
