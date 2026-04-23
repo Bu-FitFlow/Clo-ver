@@ -21,6 +21,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final MailService mailService;
     private final RedisUtil redisUtil;
+    private final TotpService totpService;
 
     @Transactional
     public TokenResponse login(LoginRequest request) {
@@ -38,6 +39,13 @@ public class AuthService {
                 mailService.sendVerificationEmail(member.getEmail());
                 throw new CustomException(ErrorCode.EMAIL_VERIFICATION_RESENT);
             }
+        }
+
+        if (member.isTotpEnabled()) {
+            if (request.getTotpCode() == null || request.getTotpCode().isEmpty()) {
+                throw new CustomException(ErrorCode.TOTP_VERIFICATION_REQUIRED);
+            }
+            totpService.verifyCode(member.getTotpSecret(), request.getTotpCode());
         }
 
         String accessToken = jwtTokenProvider.createAccessToken(member.getMemberId(), member.getRole());

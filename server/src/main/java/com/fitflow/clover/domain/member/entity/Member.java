@@ -22,6 +22,12 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false)
     private String password;
 
+    @Column(name = "totp_secret")
+    private String totpSecret;
+
+    @Column(name = "is_totp_enabled", nullable = false)
+    private boolean totpEnabled = false;
+
     @Column(nullable = false, length = 20)
     private String name;
 
@@ -44,6 +50,19 @@ public class Member extends BaseTimeEntity {
 
     public void verifyEmail() {
         this.isEmailVerified = true;
+    }
+
+    public void updateTotpSecret(String secret) {
+        this.totpSecret = secret;
+    }
+
+    public void enableTotp() {
+        this.totpEnabled = true;
+    }
+
+    public void disableTotp() {
+        this.totpEnabled = false;
+        this.totpSecret = null;
     }
 
     public void updateProfile(String name, String nickname, String email) {

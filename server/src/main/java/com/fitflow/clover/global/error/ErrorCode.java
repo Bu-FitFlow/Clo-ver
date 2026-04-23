@@ -24,6 +24,8 @@ public enum ErrorCode {
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "아이디 혹은 비밀번호가 일치하지 않습니다."),
+    INVALID_TOTP_CODE(HttpStatus.BAD_REQUEST, "2차 인증(OTP) 번호가 일치하지 않습니다."),
+    TOTP_VERIFICATION_REQUIRED(HttpStatus.PRECONDITION_REQUIRED, "2차 인증(OTP) 번호 입력이 필요합니다."),
 
     EMAIL_VERIFICATION_PENDING(HttpStatus.FORBIDDEN, "인증 메일이 이미 발송되었습니다. 메일함을 확인해주세요."),
     EMAIL_VERIFICATION_RESENT(HttpStatus.FORBIDDEN, "인증 유효시간이 만료되어 새 인증 메일을 발송했습니다. 메일함을 확인해주세요.");
