@@ -1,10 +1,7 @@
 package com.fitflow.clover.domain.member.controller;
 
 import com.fitflow.clover.domain.member.dto.request.*;
-import com.fitflow.clover.domain.member.dto.response.MemberInfoResponse;
-import com.fitflow.clover.domain.member.dto.response.MemberResponse;
-import com.fitflow.clover.domain.member.dto.response.PasskeyResponse;
-import com.fitflow.clover.domain.member.dto.response.TokenResponse;
+import com.fitflow.clover.domain.member.dto.response.*;
 import com.fitflow.clover.domain.member.service.MemberService;
 import com.fitflow.clover.domain.member.service.PasskeyService;
 import com.fitflow.clover.domain.member.service.TotpService;
@@ -71,11 +68,21 @@ public class MemberController {
         return ResponseEntity.ok(response);
     }
 
+
     @GetMapping("/me/passkeys")
     public ResponseEntity<List<PasskeyResponse>> getMyPasskeys(@AuthenticationPrincipal UserDetails userDetails) {
         Long memberId = Long.parseLong(userDetails.getUsername());
 
         List<PasskeyResponse> response = passkeyService.getMyPasskeys(memberId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/me/totp/status")
+    public ResponseEntity<TotpStatusResponse> getTotpStatus(@AuthenticationPrincipal UserDetails userDetails) {
+        Long memberId = Long.parseLong(userDetails.getUsername());
+
+        TotpStatusResponse response = memberService.getTotpStatus(memberId);
 
         return ResponseEntity.ok(response);
     }

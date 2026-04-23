@@ -3,6 +3,7 @@ package com.fitflow.clover.domain.member.service;
 import com.fitflow.clover.domain.member.dto.request.*;
 import com.fitflow.clover.domain.member.dto.response.MemberInfoResponse;
 import com.fitflow.clover.domain.member.dto.response.MemberResponse;
+import com.fitflow.clover.domain.member.dto.response.TotpStatusResponse;
 import com.fitflow.clover.domain.member.entity.Member;
 import com.fitflow.clover.domain.member.repository.MemberRepository;
 import com.fitflow.clover.domain.member.repository.PasskeyRepository;
@@ -176,6 +177,13 @@ public class MemberService {
         redisUtil.deleteData(PWD_RESET_TOKEN_PREFIX + request.getResetToken());
 
         redisUtil.deleteData("RT:" + member.getMemberId());
+    }
+
+    public TotpStatusResponse getTotpStatus(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        return new TotpStatusResponse(member.isTotpEnabled());
     }
 
     @Transactional
