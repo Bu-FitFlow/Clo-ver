@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
     private static final String FIND_ID_PREFIX = "FIND_ID:";
     private static final long VERIFY_TIME_LIMIT = 600000L;
+    private static final String PWD_RESET_PREFIX = "PWD_RESET:";
+    private static final String PWD_RESET_TOKEN_PREFIX = "PWD_RESET_TOKEN:";
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasskeyRepository passkeyRepository;
@@ -125,6 +127,55 @@ public class MemberService {
         redisUtil.deleteData(FIND_ID_PREFIX + request.getEmail());
 
         return member.getLoginId();
+    }
+
+    public void sendPasswordResetCode(PasswordResetSendRequest request) {
+        memberRepository.findByLoginIdAndNameAndEmail(request.getLoginId(), request.getName(), request.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        String authCode = String.valueOf((int) (Math.random() * 899999) + 100000);
+
+        redisUtil.setDataExpire(PWD_RESET_PREFIX + request.getEmail(), authCode, VERIFY_TIME_LIMIT);
+
+        mailService.sendAuthCodeEmail(request.getEmail(), authCode);
+    }
+
+    public String verifyPasswordResetCode(PasswordResetVerifyRequest request) {
+        String savedCode = redisUtil.getData(PWD_RESET_PREFIX + request.getEmail());
+
+        if (savedCode == null || !savedCode.equals(request.getCode())) {
+            throw new CustomException(ErrorCode.INVALID_VERIFICATION_CODE);
+        }
+
+        redisUtil.deleteData(PWD_RESET_PREFIX + request.getEmail());
+
+        String resetToken = java.util.UUID.randomUUID().toString();
+
+        redisUtil.setDataExpire(PWD_RESET_TOKEN_PREFIX + resetToken, request.getLoginId(), 300000L);
+
+        return resetToken;
+    }
+
+    @Transactional
+    public void resetPassword(PasswordResetRequest request) {
+        String loginId = redisUtil.getData(PWD_RESET_TOKEN_PREFIX + request.getResetToken());
+
+        if (loginId == null) {
+            throw new CustomException(ErrorCode.INVALID_VERIFICATION_CODE);
+        }
+
+        Member member = memberRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (passwordEncoder.matches(request.getNewPassword(), member.getPassword())) {
+            throw new CustomException(ErrorCode.SAME_AS_OLD_PASSWORD);
+        }
+
+        member.updatePassword(passwordEncoder.encode(request.getNewPassword()));
+
+        redisUtil.deleteData(PWD_RESET_TOKEN_PREFIX + request.getResetToken());
+
+        redisUtil.deleteData("RT:" + member.getMemberId());
     }
 
     @Transactional

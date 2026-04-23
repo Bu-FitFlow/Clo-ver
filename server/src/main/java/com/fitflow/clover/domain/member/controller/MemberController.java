@@ -42,6 +42,25 @@ public class MemberController {
         return ResponseEntity.ok(loginId);
     }
 
+    @PostMapping("/password/find/send")
+    public ResponseEntity<String> sendPasswordResetCode(@RequestBody @Valid PasswordResetSendRequest request) {
+        memberService.sendPasswordResetCode(request);
+        return ResponseEntity.ok("입력하신 이메일로 인증번호가 발송되었습니다.");
+    }
+
+    @PostMapping("/password/find/verify")
+    public ResponseEntity<String> verifyPasswordResetCode(@RequestBody @Valid PasswordResetVerifyRequest request) {
+        // 성공 시 resetToken(허가증) 반환
+        String resetToken = memberService.verifyPasswordResetCode(request);
+        return ResponseEntity.ok(resetToken);
+    }
+
+    @PatchMapping("/password/reset")
+    public ResponseEntity<String> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
+        memberService.resetPassword(request);
+        return ResponseEntity.ok("비밀번호가 성공적으로 재설정되었습니다. 새로운 비밀번호로 로그인해 주세요.");
+    }
+
     @GetMapping("/me")
     public ResponseEntity<MemberInfoResponse> getMyInfo(@AuthenticationPrincipal UserDetails userDetails) {
         Long memberId = Long.parseLong(userDetails.getUsername());

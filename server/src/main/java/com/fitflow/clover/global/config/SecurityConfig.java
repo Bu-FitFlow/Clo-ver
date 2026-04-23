@@ -45,6 +45,8 @@ public class SecurityConfig {
                                 "/api/members/refresh",
                                 "/api/members/emails/**",
                                 "/api/members/find-id/**",
+                                "/api/members/password/find/**",
+                                "/api/members/password/reset",
                                 "/api/members/passkey/login/**"
                         ).permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
