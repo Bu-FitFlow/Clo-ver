@@ -1,6 +1,7 @@
 package com.fitflow.clover.domain.member.controller;
 
 import com.fitflow.clover.domain.member.dto.request.MemberUpdateRequest;
+import com.fitflow.clover.domain.member.dto.request.MemberWithdrawRequest;
 import com.fitflow.clover.domain.member.dto.response.MemberInfoResponse;
 import com.fitflow.clover.domain.member.dto.response.MemberResponse;
 import com.fitflow.clover.domain.member.dto.request.SignUpRequest;
@@ -46,6 +47,15 @@ public class MemberController {
         Long memberId = Long.parseLong(userDetails.getUsername());
         memberService.updateMyInfo(memberId, request);
         return ResponseEntity.ok("회원 정보가 성공적으로 수정되었습니다.");
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<String> withdraw(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody @Valid MemberWithdrawRequest request) {
+        Long memberId = Long.parseLong(userDetails.getUsername());
+        memberService.withdraw(memberId, request.getPassword());
+        return ResponseEntity.ok("회원 탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다.");
     }
 
     @GetMapping("/totp/setup")

@@ -48,6 +48,8 @@ public class Member extends BaseTimeEntity {
     @Builder.Default
     private String role = "USER";
 
+    private boolean isDeleted = false;
+
     public void verifyEmail() {
         this.isEmailVerified = true;
     }
@@ -68,5 +70,11 @@ public class Member extends BaseTimeEntity {
     public void updateProfile(String nickname, String email) {
         this.nickname = nickname;
         this.email = email;
+    }
+
+    public void withdraw() {
+        this.isDeleted = true;
+        this.nickname = "탈퇴한 회원";
+        this.email = "withdrawn@" + this.memberId;
     }
 }

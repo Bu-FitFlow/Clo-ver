@@ -82,6 +82,19 @@ public class MemberService {
         member.updateProfile(request.getNickname(), request.getEmail());
     }
 
+    @Transactional
+    public void withdraw(Long memberId, String password) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(password, member.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+        }
+        member.withdraw();
+
+        redisUtil.deleteData("RT:" + memberId);
+    }
+
     private void checkDuplicateMember(SignUpRequest request) {
         if (memberRepository.existsByLoginId(request.getLoginId())) {
             throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
