@@ -24,6 +24,7 @@ public enum ErrorCode {
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "아이디 혹은 비밀번호가 일치하지 않습니다."),
+    SAME_AS_OLD_PASSWORD(HttpStatus.BAD_REQUEST, "새 비밀번호는 기존 비밀번호와 다르게 설정해야 합니다."),
 
     INVALID_TOTP_CODE(HttpStatus.BAD_REQUEST, "2차 인증(OTP) 번호가 일치하지 않습니다."),
     TOTP_VERIFICATION_REQUIRED(HttpStatus.PRECONDITION_REQUIRED, "2차 인증(OTP) 번호 입력이 필요합니다."),

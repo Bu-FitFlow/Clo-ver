@@ -72,6 +72,10 @@ public class Member extends BaseTimeEntity {
         this.email = email;
     }
 
+    public void updatePassword(String newPassword) {
+        this.password = newPassword;
+    }
+
     public void withdraw() {
         this.isDeleted = true;
         this.nickname = "탈퇴한 회원";

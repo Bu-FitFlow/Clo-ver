@@ -1,6 +1,7 @@
 package com.fitflow.clover.domain.member.service;
 
 import com.fitflow.clover.domain.member.dto.request.MemberUpdateRequest;
+import com.fitflow.clover.domain.member.dto.request.PasswordChangeRequest;
 import com.fitflow.clover.domain.member.dto.response.MemberInfoResponse;
 import com.fitflow.clover.domain.member.dto.response.MemberResponse;
 import com.fitflow.clover.domain.member.dto.request.SignUpRequest;
@@ -80,6 +81,25 @@ public class MemberService {
             redisUtil.deleteData(verifiedKey);
         }
         member.updateProfile(request.getNickname(), request.getEmail());
+    }
+
+    @Transactional
+    public void changePassword(Long memberId, PasswordChangeRequest request) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), member.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), member.getPassword())) {
+            throw new CustomException(ErrorCode.SAME_AS_OLD_PASSWORD);
+        }
+
+        String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
+        member.updatePassword(encodedNewPassword);
+
+        redisUtil.deleteData("RT:" + memberId);
     }
 
     @Transactional

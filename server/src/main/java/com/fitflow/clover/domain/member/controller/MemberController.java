@@ -1,12 +1,9 @@
 package com.fitflow.clover.domain.member.controller;
 
-import com.fitflow.clover.domain.member.dto.request.MemberUpdateRequest;
-import com.fitflow.clover.domain.member.dto.request.MemberWithdrawRequest;
+import com.fitflow.clover.domain.member.dto.request.*;
 import com.fitflow.clover.domain.member.dto.response.MemberInfoResponse;
 import com.fitflow.clover.domain.member.dto.response.MemberResponse;
-import com.fitflow.clover.domain.member.dto.request.SignUpRequest;
 import com.fitflow.clover.domain.member.dto.response.TokenResponse;
-import com.fitflow.clover.domain.member.dto.request.TotpEnableRequest;
 import com.fitflow.clover.domain.member.service.MemberService;
 import com.fitflow.clover.domain.member.service.PasskeyService;
 import com.fitflow.clover.domain.member.service.TotpService;
@@ -47,6 +44,15 @@ public class MemberController {
         Long memberId = Long.parseLong(userDetails.getUsername());
         memberService.updateMyInfo(memberId, request);
         return ResponseEntity.ok("회원 정보가 성공적으로 수정되었습니다.");
+    }
+
+    @PatchMapping("/me/password")
+    public ResponseEntity<String> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody @Valid PasswordChangeRequest request) {
+        Long memberId = Long.parseLong(userDetails.getUsername());
+        memberService.changePassword(memberId, request);
+        return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다. 새로운 비밀번호로 다시 로그인해 주세요.");
     }
 
     @DeleteMapping("/me")
