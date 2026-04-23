@@ -30,6 +30,18 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PostMapping("/find-id/send")
+    public ResponseEntity<String> sendFindIdCode(@RequestBody @Valid FindIdSendRequest request) {
+        memberService.sendFindIdCode(request);
+        return ResponseEntity.ok("입력하신 이메일로 인증번호가 발송되었습니다.");
+    }
+
+    @PostMapping("/find-id/verify")
+    public ResponseEntity<String> verifyFindIdCode(@RequestBody @Valid FindIdVerifyRequest request) {
+        String loginId = memberService.verifyFindIdCode(request);
+        return ResponseEntity.ok(loginId);
+    }
+
     @GetMapping("/me")
     public ResponseEntity<MemberInfoResponse> getMyInfo(@AuthenticationPrincipal UserDetails userDetails) {
         Long memberId = Long.parseLong(userDetails.getUsername());

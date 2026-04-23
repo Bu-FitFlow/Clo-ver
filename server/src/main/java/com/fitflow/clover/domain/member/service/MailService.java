@@ -60,6 +60,28 @@ public class MailService {
         return false;
     }
 
+    public void sendAuthCodeEmail(String toEmail, String authCode) {
+        MimeMessage message = emailSender.createMimeMessage();
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(toEmail);
+            helper.setSubject("[Clo-ver] 계정 찾기 인증번호 안내");
+
+            String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;'>" +
+                    "<h3 style='color: #333;'>Clo-ver 계정 찾기 인증번호</h3>" +
+                    "<p style='color: #555; line-height: 1.5;'>요청하신 인증번호를 안내해 드립니다.<br>아래 6자리 숫자를 진행 중인 화면에 입력해 주세요.</p>" +
+                    "<div style='display:inline-block; padding:15px 30px; margin-top:10px; background-color:#f8f9fa; border:1px solid #dee2e6; border-radius:5px; font-size:28px; font-weight:bold; letter-spacing:10px; color:#28a745;'>" +
+                    authCode + "</div>" +
+                    "<p style='margin-top:20px; color:#999; font-size:12px;'>* 본 인증번호는 발송 시점으로부터 10분 동안만 유효합니다.<br>* 본인이 요청하지 않은 경우 이 메일을 무시해 주세요.</p>" +
+                    "</div>";
+
+            helper.setText(htmlContent, true);
+            emailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("인증번호 이메일 발송에 실패했습니다.", e);
+        }
+    }
+
     public boolean isVerificationEmailSent(String email) {
         return redisUtil.getData(email) != null;
     }

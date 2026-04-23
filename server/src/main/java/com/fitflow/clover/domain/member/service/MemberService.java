@@ -1,10 +1,8 @@
 package com.fitflow.clover.domain.member.service;
 
-import com.fitflow.clover.domain.member.dto.request.MemberUpdateRequest;
-import com.fitflow.clover.domain.member.dto.request.PasswordChangeRequest;
+import com.fitflow.clover.domain.member.dto.request.*;
 import com.fitflow.clover.domain.member.dto.response.MemberInfoResponse;
 import com.fitflow.clover.domain.member.dto.response.MemberResponse;
-import com.fitflow.clover.domain.member.dto.request.SignUpRequest;
 import com.fitflow.clover.domain.member.entity.Member;
 import com.fitflow.clover.domain.member.repository.MemberRepository;
 import com.fitflow.clover.domain.member.repository.PasskeyRepository;
@@ -20,12 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MemberService {
+    private static final String FIND_ID_PREFIX = "FIND_ID:";
+    private static final long VERIFY_TIME_LIMIT = 600000L;
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasskeyRepository passkeyRepository;
     private final MailService mailService;
     private final RedisUtil redisUtil;
-
 
     @Transactional
     public MemberResponse signUp(SignUpRequest request) {
@@ -100,6 +99,32 @@ public class MemberService {
         member.updatePassword(encodedNewPassword);
 
         redisUtil.deleteData("RT:" + memberId);
+    }
+
+    public void sendFindIdCode(FindIdSendRequest request) {
+        Member member = memberRepository.findByNameAndEmail(request.getName(), request.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        String authCode = String.valueOf((int) (Math.random() * 899999) + 100000);
+
+        redisUtil.setDataExpire(FIND_ID_PREFIX + request.getEmail(), authCode, VERIFY_TIME_LIMIT);
+
+        mailService.sendAuthCodeEmail(member.getEmail(), authCode);
+    }
+
+    public String verifyFindIdCode(FindIdVerifyRequest request) {
+        String savedCode = redisUtil.getData(FIND_ID_PREFIX + request.getEmail());
+
+        if (savedCode == null || !savedCode.equals(request.getCode())) {
+            throw new CustomException(ErrorCode.INVALID_VERIFICATION_CODE);
+        }
+
+        Member member = memberRepository.findByNameAndEmail(request.getName(), request.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        redisUtil.deleteData(FIND_ID_PREFIX + request.getEmail());
+
+        return member.getLoginId();
     }
 
     @Transactional
