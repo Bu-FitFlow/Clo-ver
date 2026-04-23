@@ -65,8 +65,7 @@ public class Member extends BaseTimeEntity {
         this.totpSecret = null;
     }
 
-    public void updateProfile(String name, String nickname, String email) {
-        this.name = name;
+    public void updateProfile(String nickname, String email) {
         this.nickname = nickname;
         this.email = email;
     }
