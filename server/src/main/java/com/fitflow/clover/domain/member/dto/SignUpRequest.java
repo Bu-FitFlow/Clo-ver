@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class SignUpRequest {
     @NotBlank(message = "아이디는 필수 입력 값입니다.")
     @Size(min = 6, max = 25, message = "아이디는 6~25자리여야 합니다.")
-    @Pattern(regexp = "^[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]+$", message = "아이디는 영어/숫자/특수문자만 가능합니다.")
+    @Pattern(regexp = "^[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]+$", message = "아이디는 영어/숫자/특수문자만 가능합니다.")
     private String loginId;
 
     @NotBlank(message = "비밀번호는 필수 입력 값입니다.")

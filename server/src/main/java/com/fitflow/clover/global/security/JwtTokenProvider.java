@@ -1,5 +1,7 @@
 package com.fitflow.clover.global.security;
 
+import com.fitflow.clover.domain.member.dto.TokenResponse;
+import com.fitflow.clover.global.util.RedisUtil;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -20,6 +22,7 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class JwtTokenProvider {
     private final CustomUserDetailsService customUserDetailsService;
+    private final RedisUtil redisUtil;
 
     @Value("${jwt.secret}")
     private String secretKey;
@@ -56,6 +59,15 @@ public class JwtTokenProvider {
                 .expiration(new Date(now.getTime() + refreshTokenValidityInMilliseconds))
                 .signWith(key)
                 .compact();
+    }
+
+    public TokenResponse issueTokenResponse(Long memberId, String role) {
+        String accessToken = createAccessToken(memberId, role);
+        String refreshToken = createRefreshToken(memberId);
+
+        redisUtil.setDataExpire("RT:" + memberId, refreshToken, 14 * 24 * 60 * 60 * 1000L);
+
+        return new TokenResponse(accessToken, refreshToken);
     }
 
     public String getUserId(String token) {

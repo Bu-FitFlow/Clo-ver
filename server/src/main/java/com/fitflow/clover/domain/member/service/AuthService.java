@@ -48,12 +48,7 @@ public class AuthService {
             totpService.verifyCode(member.getTotpSecret(), request.getTotpCode());
         }
 
-        String accessToken = jwtTokenProvider.createAccessToken(member.getMemberId(), member.getRole());
-        String refreshToken = jwtTokenProvider.createRefreshToken(member.getMemberId());
-
-        redisUtil.setDataExpire("RT:" + member.getMemberId(), refreshToken, 14 * 24 * 60 * 60 * 1000L);
-
-        return new TokenResponse(accessToken, refreshToken);
+        return jwtTokenProvider.issueTokenResponse(member.getMemberId(), member.getRole());
     }
 
     @Transactional

@@ -48,6 +48,8 @@ dependencies {
 
     implementation 'dev.samstevens.totp:totp-spring-boot-starter:1.7.1'
 
+    implementation 'com.yubico:webauthn-server-core:2.4.0'
+
     // Spring Boot 3.5.13 패키지 의존성 보안 취약점 업데이트
     implementation 'org.apache.tomcat.embed:tomcat-embed-core:10.1.54'
     implementation 'org.apache.commons:commons-lang3:3.18.0'

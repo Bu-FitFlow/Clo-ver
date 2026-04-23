@@ -4,8 +4,6 @@ CREATE DATABASE CLOVER;
 
 USE CLOVER;
 
-TRUNCATE TABLE member;
-
 -- 1. 회원 (member) 테이블
 CREATE TABLE member
 (
@@ -22,6 +20,22 @@ CREATE TABLE member
     role              VARCHAR(20)  NOT NULL DEFAULT 'USER' COMMENT '권한 (USER, ADMIN)',
     created_at        DATETIME(6)  NOT NULL COMMENT '가입 일시',
     updated_at        DATETIME(6)  NOT NULL COMMENT '정보 수정 일시'
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+
+-- 2. 패스키 (passkey_credential) 테이블
+CREATE TABLE passkey_credential
+(
+    passkey_id    BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '패스키 고유 식별자',
+    member_id     BIGINT      NOT NULL COMMENT '회원 PK',
+    credential_id BLOB        NOT NULL COMMENT '기기에서 생성한 고유 자격증명 ID',
+    public_key    BLOB        NOT NULL COMMENT '검증을 위한 기기의 공개키',
+    sign_count    BIGINT      NOT NULL DEFAULT 0 COMMENT '복제 방지용 서명 카운트',
+    user_handle   BLOB        NOT NULL COMMENT '사용자 식별용 고유 핸들',
+    created_at    DATETIME(6) NOT NULL COMMENT '패스키 생성 일자',
+    updated_at    DATETIME(6) NOT NULL COMMENT '패스키 수정 일자',
+    CONSTRAINT fk_passkey_member FOREIGN KEY (member_id) REFERENCES member (member_id) ON DELETE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
