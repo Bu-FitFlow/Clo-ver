@@ -32,6 +32,7 @@ public enum ErrorCode {
 
     PASSKEY_TIMEOUT(HttpStatus.BAD_REQUEST, "패스키 인증 시간이 초과되었습니다. 다시 시도해 주세요."),
     INVALID_PASSKEY_REQUEST(HttpStatus.BAD_REQUEST, "유효하지 않은 패스키 요청입니다."),
+    PASSKEY_NOT_FOUND(HttpStatus.NOT_FOUND, "등록된 패스키가 없습니다."),
 
     UNVERIFIED_EMAIL(HttpStatus.UNAUTHORIZED, "인증되지 않은 이메일입니다. 이메일 인증을 먼저 진행해 주세요."),
     EMAIL_VERIFICATION_PENDING(HttpStatus.FORBIDDEN, "인증 메일이 이미 발송되었습니다. 메일함을 확인해주세요."),

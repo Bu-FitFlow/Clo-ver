@@ -1,5 +1,6 @@
 package com.fitflow.clover.domain.member.service;
 
+import com.fitflow.clover.domain.member.dto.response.PasskeyResponse;
 import com.fitflow.clover.domain.member.dto.response.TokenResponse;
 import com.fitflow.clover.domain.member.entity.Member;
 import com.fitflow.clover.domain.member.entity.PasskeyCredential;
@@ -15,6 +16,10 @@ import lombok.RequiredArgsConstructor;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Base64;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -178,5 +183,26 @@ public class PasskeyService {
         } catch (Exception e) {
             throw new CustomException(ErrorCode.INVALID_PASSKEY_REQUEST);
         }
+    }
+
+    public List<PasskeyResponse> getMyPasskeys(Long memberId) {
+        List<PasskeyCredential> credentials = passkeyRepository.findAllByMember_MemberId(memberId);
+
+        return credentials.stream()
+                .map(cred -> PasskeyResponse.builder()
+                        .id(cred.getPasskeyId())
+                        .credentialId(Base64.getUrlEncoder().withoutPadding().encodeToString(cred.getCredentialId()))
+                        .signCount(cred.getSignCount())
+                        .createdAt(cred.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deletePasskey(Long memberId, Long passkeyId) {
+        PasskeyCredential credential = passkeyRepository.findByPasskeyIdAndMember_MemberId(passkeyId, memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PASSKEY_NOT_FOUND));
+
+        passkeyRepository.delete(credential);
     }
 }
