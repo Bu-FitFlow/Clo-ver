@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MailService mailService;
 
     @Transactional
     public MemberResponse signUp(SignUpRequest request) {
@@ -30,10 +31,13 @@ public class MemberService {
                 .name(request.getName())
                 .nickname(request.getNickname())
                 .email(request.getEmail())
+                .isEmailVerified(false)
                 .gender(request.getGender())
                 .build();
 
         Member savedMember = memberRepository.save(member);
+
+        mailService.sendVerificationEmail(member.getEmail());
 
         return MemberResponse.from(savedMember);
     }

@@ -12,6 +12,7 @@ CREATE TABLE member (
                         name VARCHAR(20) NOT NULL COMMENT '회원 이름',
                         nickname VARCHAR(40) NOT NULL UNIQUE COMMENT '커뮤니티 닉네임',
                         email VARCHAR(100) NOT NULL UNIQUE COMMENT '이메일 주소',
+                        is_email_verified TINYINT(1) NOT NULL DEFAULT 0 COMMENT '이메일 인증 여부 (0: 미인증, 1: 인증됨)',
                         gender VARCHAR(10) COMMENT '성별(MALE, FEMALE)',
                         role VARCHAR(20) NOT NULL DEFAULT 'USER' COMMENT '권한 (USER, ADMIN)',
                         created_at DATETIME(6) NOT NULL COMMENT '가입 일시',

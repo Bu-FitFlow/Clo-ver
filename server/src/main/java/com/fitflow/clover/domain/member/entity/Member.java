@@ -22,7 +22,6 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false)
     private String password;
 
-
     @Column(nullable = false, length = 20)
     private String name;
 
@@ -32,6 +31,9 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
+    @Column(nullable = false)
+    private boolean isEmailVerified = false;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
     private Gender gender;
@@ -39,6 +41,10 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     @Builder.Default
     private String role = "USER";
+
+    public void verifyEmail() {
+        this.isEmailVerified = true;
+    }
 
     public void updateProfile(String name, String nickname, String email) {
         this.name = name;
