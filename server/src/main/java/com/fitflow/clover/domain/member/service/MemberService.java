@@ -210,4 +210,12 @@ public class MemberService {
             throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
     }
+
+    public boolean checkLoginIdAvailable(String loginId) {
+        return !memberRepository.existsByLoginId(loginId);
+    }
+
+    public boolean checkNicknameAvailable(String nickname) {
+        return !memberRepository.existsByNickname(nickname);
+    }
 }

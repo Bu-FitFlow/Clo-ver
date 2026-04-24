@@ -2,6 +2,7 @@ package com.fitflow.clover.domain.member.controller;
 
 import com.fitflow.clover.domain.member.dto.request.*;
 import com.fitflow.clover.domain.member.dto.response.*;
+import com.fitflow.clover.domain.member.repository.MemberRepository;
 import com.fitflow.clover.domain.member.service.MemberService;
 import com.fitflow.clover.domain.member.service.PasskeyService;
 import com.fitflow.clover.domain.member.service.TotpService;
@@ -23,11 +24,25 @@ public class MemberController {
     private final MemberService memberService;
     private final TotpService totpService;
     private final PasskeyService passkeyService;
+    private final MemberRepository memberRepository;
 
     @PostMapping("/signup")
     public ResponseEntity<MemberResponse> signup(@Valid @RequestBody SignUpRequest request) {
         MemberResponse response = memberService.signUp(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/check-id")
+    public ResponseEntity<Boolean> checkLoginId(@RequestParam String loginId) {
+        // memberRepository.existsByLoginId(loginId) 결과를 반대로 뒤집어서 리턴
+        boolean isAvailable = !memberRepository.existsByLoginId(loginId);
+        return ResponseEntity.ok(isAvailable);
+    }
+
+    @GetMapping("/check-nickname")
+    public ResponseEntity<Boolean> checkNickname(@RequestParam String nickname) {
+        boolean isAvailable = !memberRepository.existsByNickname(nickname);
+        return ResponseEntity.ok(isAvailable);
     }
 
     @PostMapping("/find-id/send")
