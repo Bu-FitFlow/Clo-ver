@@ -39,6 +39,12 @@ public class MemberController {
         return ResponseEntity.ok(isAvailable);
     }
 
+    @GetMapping("/check-email")
+    public ResponseEntity<Boolean> checkEmail(@RequestParam String email) {
+        boolean isAvailable = memberService.checkEmailAvailable(email);
+        return ResponseEntity.ok(isAvailable);
+    }
+
     @GetMapping("/check-nickname")
     public ResponseEntity<Boolean> checkNickname(@RequestParam String nickname) {
         boolean isAvailable = !memberRepository.existsByNickname(nickname);

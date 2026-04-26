@@ -215,6 +215,10 @@ public class MemberService {
         return !memberRepository.existsByLoginId(loginId);
     }
 
+    public boolean checkEmailAvailable(String email) {
+        return !memberRepository.existsByEmail(email);
+    }
+
     public boolean checkNicknameAvailable(String nickname) {
         return !memberRepository.existsByNickname(nickname);
     }

@@ -47,9 +47,16 @@ public class SecurityConfig {
                                 "/api/members/find-id/**",
                                 "/api/members/password/find/**",
                                 "/api/members/password/reset",
-                                "/api/members/passkey/login/**"
+                                "/api/members/passkey/login/**",
+                                "/api/members/check-id",
+                                "/api/members/check-email",
+                                "/api/members/check-nickname"
                         ).permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
