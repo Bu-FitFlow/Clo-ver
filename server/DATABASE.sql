@@ -9,7 +9,7 @@ CREATE TABLE member
 (
     member_id         BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '회원 고유 식별자',
     login_id          VARCHAR(50)  NOT NULL UNIQUE COMMENT '로그인 ID (6~25 자리, 영어/숫자/특수문자)',
-    password          VARCHAR(255) NOT NULL COMMENT '비밀번호(BCrypt 암호화?)',
+    password          VARCHAR(255) NOT NULL COMMENT '비밀번호(BCrypt 암호화)',
     totp_secret       VARCHAR(64)  NULL COMMENT 'TOTP 비밀키(Base32)',
     is_totp_enabled   TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '2차 인증 사용 여부 (0: 미사용, 1: 사용)',
     name              VARCHAR(20)  NOT NULL COMMENT '회원 이름',
@@ -204,7 +204,7 @@ CREATE TABLE deal
     buyer_id     BIGINT      NOT NULL COMMENT 'FK: 구매자 회원 번호',
     seller_id    BIGINT      NOT NULL COMMENT 'FK: 판매자 회원 번호',
     community_id BIGINT      NOT NULL COMMENT 'FK: 거래 대상 개시글 번호',
-    deal_status  VARCHAR(20) NOT NULL DEFAULT 'IN_PROGRESS' COMMENT '거래 상태(IN_PROGRESS, COMPLETED, CANCELED, ABDORTED)',
+    deal_status  VARCHAR(20) NOT NULL DEFAULT 'IN_PROGRESS' COMMENT '거래 상태(IN_PROGRESS, COMPLETED, CANCELED, ABORTED)',
     created_at   DATETIME(6) NOT NULL COMMENT '거래 시작 일시',
     updated_at   DATETIME(6) NOT NULL COMMENT '거래 상태 수정/완료 일시'
 ) ENGINE = InnoDB

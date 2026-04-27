@@ -25,6 +25,7 @@ public class Member extends BaseTimeEntity {
     @Column(name = "totp_secret")
     private String totpSecret;
 
+    @Builder.Default
     @Column(name = "is_totp_enabled", nullable = false)
     private boolean totpEnabled = false;
 
@@ -37,6 +38,7 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean isEmailVerified = false;
 
@@ -48,6 +50,7 @@ public class Member extends BaseTimeEntity {
     @Builder.Default
     private String role = "USER";
 
+    @Builder.Default
     private boolean isDeleted = false;
 
     public void verifyEmail() {
