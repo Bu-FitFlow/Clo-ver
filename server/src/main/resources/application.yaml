@@ -3,14 +3,14 @@ spring:
     name: clover
 
   datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: ${DB_USER}
     password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -18,7 +18,7 @@ spring:
         highlight_sql: true
         default_batch_fetch_size: 1000
     open-in-view: false
-
+    database-platform: org.hibernate.dialect.MySQL8Dialect
   cloud:
     aws:
       credentials:
