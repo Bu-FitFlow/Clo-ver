@@ -15,14 +15,14 @@ import java.io.IOException;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtProvider jwtProvider;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         String token = resolveToken(request);
-        if (token != null && jwtProvider.validateToken(token)) {
-            Authentication authentication = jwtProvider.getAuthentication(token);
+        if (token != null && jwtTokenProvider.validateToken(token)) {
+            Authentication authentication = jwtTokenProvider.getAuthentication(token);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(request, response);

@@ -2,6 +2,8 @@ package com.fitflow.clover.global.config;
 
 import com.fitflow.clover.global.error.JwtAccessDeniedHandler;
 import com.fitflow.clover.global.error.JwtAuthenticationEntryPoint;
+import com.fitflow.clover.global.security.JwtAuthenticationFilter;
+import com.fitflow.clover.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -19,6 +22,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -35,13 +39,31 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/members/signup").permitAll()
+                        .requestMatchers(
+                                "/api/members/signup",
+                                "/api/members/login",
+                                "/api/members/refresh",
+                                "/api/members/emails/**",
+                                "/api/members/find-id/**",
+                                "/api/members/password/find/**",
+                                "/api/members/password/reset",
+                                "/api/members/passkey/login/**",
+                                "/api/members/check-id",
+                                "/api/members/check-email",
+                                "/api/members/check-nickname"
+                        ).permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                         .accessDeniedHandler(jwtAccessDeniedHandler)
-                );
+                )
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
