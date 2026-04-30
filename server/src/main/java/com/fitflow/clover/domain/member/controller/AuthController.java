@@ -5,6 +5,8 @@ import com.fitflow.clover.domain.member.dto.response.TokenResponse;
 import com.fitflow.clover.domain.member.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,5 +25,12 @@ public class AuthController {
     public ResponseEntity<TokenResponse> refresh(@RequestHeader("Authorization-Refresh") String refreshToken) {
         TokenResponse tokenResponse = authService.refresh(refreshToken);
         return ResponseEntity.ok(tokenResponse);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@AuthenticationPrincipal UserDetails userDetails) {
+        Long memberId = Long.parseLong(userDetails.getUsername());
+        authService.logout(memberId);
+        return ResponseEntity.ok("성공적으로 로그아웃되었습니다.");
     }
 }

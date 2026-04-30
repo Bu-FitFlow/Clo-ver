@@ -75,4 +75,12 @@ public class AuthService {
 
         return new TokenResponse(newAccessToken, refreshToken);
     }
+
+    @Transactional
+    public void logout(Long memberId) {
+        String redisKey = "RT:" + memberId;
+        if (redisUtil.getData(redisKey) != null) {
+            redisUtil.deleteData(redisKey);
+        }
+    }
 }
