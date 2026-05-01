@@ -8,6 +8,7 @@ import com.fitflow.clover.global.util.RedisUtil;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -22,16 +23,23 @@ public class MailService {
     private final RedisUtil redisUtil;
     private final MemberRepository memberRepository;
 
+    @Value("${app.base-url}")
+    private String baseUrl;
+
+    @Value("${app.mail.from}")
+    private String fromEmail;
+
     public void sendVerificationEmail(String toEmail) {
         String token = UUID.randomUUID().toString();
 
         redisUtil.setDataExpire(toEmail, token, 60 * 10L * 1000);
 
-        String verificationLink = "http://localhost:8080/api/members/emails/verify?email=" + toEmail + "&token=" + token;
+        String verificationLink = baseUrl + "/api/members/emails/verify?email=" + toEmail + "&token=" + token;
 
         MimeMessage message = emailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail);
             helper.setTo(toEmail);
             helper.setSubject("[Clo-ver] 중고 의류 플랫폼 회원가입 이메일 인증");
 
@@ -64,6 +72,7 @@ public class MailService {
         MimeMessage message = emailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail);
             helper.setTo(toEmail);
             helper.setSubject("[Clo-ver] 계정 찾기 인증번호 안내");
 

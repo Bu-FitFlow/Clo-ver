@@ -1,8 +1,8 @@
-DROP DATABASE CLOVER;
+DROP DATABASE clover;
 
-CREATE DATABASE CLOVER;
+CREATE DATABASE clover;
 
-USE CLOVER;
+USE clover;
 
 -- 1. 회원 (member) 테이블
 CREATE TABLE member
