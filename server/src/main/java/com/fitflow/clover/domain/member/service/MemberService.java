@@ -9,7 +9,7 @@ import com.fitflow.clover.domain.member.repository.MemberRepository;
 import com.fitflow.clover.domain.member.repository.PasskeyRepository;
 import com.fitflow.clover.global.error.CustomException;
 import com.fitflow.clover.global.error.ErrorCode;
-import com.fitflow.clover.global.util.RedisUtil;
+import com.fitflow.clover.global.infra.redis.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

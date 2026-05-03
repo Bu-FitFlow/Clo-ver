@@ -1,4 +1,4 @@
-package com.fitflow.clover.global.config;
+package com.fitflow.clover.global.security.config;
 
 import dev.samstevens.totp.code.*;
 import dev.samstevens.totp.qr.QrGenerator;

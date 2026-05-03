@@ -1,4 +1,4 @@
-package com.fitflow.clover.global.security;
+package com.fitflow.clover.global.security.auth;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

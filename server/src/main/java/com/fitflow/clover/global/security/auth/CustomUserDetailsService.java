@@ -1,4 +1,4 @@
-package com.fitflow.clover.global.security;
+package com.fitflow.clover.global.security.auth;
 
 import com.fitflow.clover.domain.member.entity.Member;
 import com.fitflow.clover.domain.member.repository.MemberRepository;

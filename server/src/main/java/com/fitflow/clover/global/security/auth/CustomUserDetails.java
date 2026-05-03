@@ -1,4 +1,4 @@
-package com.fitflow.clover.global.security;
+package com.fitflow.clover.global.security.auth;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

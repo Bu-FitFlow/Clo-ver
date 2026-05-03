@@ -1,9 +1,9 @@
-package com.fitflow.clover.global.config;
+package com.fitflow.clover.global.security.config;
 
 import com.fitflow.clover.global.error.JwtAccessDeniedHandler;
 import com.fitflow.clover.global.error.JwtAuthenticationEntryPoint;
-import com.fitflow.clover.global.security.JwtAuthenticationFilter;
-import com.fitflow.clover.global.security.JwtTokenProvider;
+import com.fitflow.clover.global.security.jwt.JwtAuthenticationFilter;
+import com.fitflow.clover.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

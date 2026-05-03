@@ -1,4 +1,4 @@
-package com.fitflow.clover.global.security;
+package com.fitflow.clover.global.security.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -1,4 +1,4 @@
-package com.fitflow.clover.global.util;
+package com.fitflow.clover.global.infra.aws;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

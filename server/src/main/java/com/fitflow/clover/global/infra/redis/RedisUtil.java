@@ -1,4 +1,4 @@
-package com.fitflow.clover.global.util;
+package com.fitflow.clover.global.infra.redis;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;

@@ -1,7 +1,8 @@
-package com.fitflow.clover.global.security;
+package com.fitflow.clover.global.security.jwt;
 
 import com.fitflow.clover.domain.member.dto.response.TokenResponse;
-import com.fitflow.clover.global.util.RedisUtil;
+import com.fitflow.clover.global.infra.redis.RedisUtil;
+import com.fitflow.clover.global.security.auth.CustomUserDetailsService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;

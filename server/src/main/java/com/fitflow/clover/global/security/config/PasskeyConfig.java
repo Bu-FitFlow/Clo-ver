@@ -1,4 +1,4 @@
-package com.fitflow.clover.global.config;
+package com.fitflow.clover.global.security.config;
 
 import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.RelyingParty;

@@ -1,4 +1,4 @@
-package com.fitflow.clover.global.config;
+package com.fitflow.clover.global.infra.aws;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
