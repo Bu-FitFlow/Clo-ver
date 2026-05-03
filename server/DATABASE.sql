@@ -45,11 +45,19 @@ CREATE TABLE passkey_credential
 CREATE TABLE product
 (
     product_id       BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '상품 고유 식별자',
-    name             VARCHAR(100) NOT NULL COMMENT '상품명',
-    grade            VARCHAR(20)  NOT NULL COMMENT '상품 상태',
-    recommended_type VARCHAR(50) COMMENT '상품을 추천하는 체형',
+    seller_id        BIGINT       NOT NULL COMMENT 'FK: 판매자 회원 번호',
     category_id      BIGINT       NOT NULL COMMENT 'FK: 카테고리 식별자',
     color_id         BIGINT COMMENT 'FK: 색상 식별자',
+    name             VARCHAR(100) NOT NULL COMMENT '상품명',
+    price            INT          NOT NULL COMMENT '판매가',
+    content          TEXT         NOT NULL COMMENT '판매글 내용',
+    size             VARCHAR(50)  NOT NULL COMMENT '의류 사이즈',
+    grade            VARCHAR(20)  NOT NULL COMMENT '상품 상태',
+    trading_area     VARCHAR(100) NOT NULL COMMENT '거래 가능 지역 (예: 천안, 서울 등)',
+    recommended_type VARCHAR(50) COMMENT '상품을 추천하는 체형',
+    post_status      VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE' COMMENT '판매 상태(ACTIVE, RESERVED, SOLD_OUT, HIDDEN)',
+    view_count       INT          NOT NULL DEFAULT 0 COMMENT '조회수',
+    wishlist_count   INT          NOT NULL DEFAULT 0 COMMENT '찜/장바구니 담긴 수',
     created_at       DATETIME(6)  NOT NULL COMMENT '상품 등록 일시',
     updated_at       DATETIME(6)  NOT NULL COMMENT '상품 정보 수정 일시'
 ) ENGINE = InnoDB
@@ -59,18 +67,16 @@ CREATE TABLE product
 -- 4. 커뮤니티 (community) 테이블
 CREATE TABLE community
 (
-    community_id   BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '개시글 고유 식별자',
-    board_type     VARCHAR(20)  NOT NULL COMMENT '개시글 분류',
-    member_id      BIGINT       NOT NULL COMMENT 'FK: 작성자 회원 번호',
-    title          VARCHAR(255) NOT NULL COMMENT '개시글 제목',
-    content        TEXT         NOT NULL COMMENT '개시글 내용',
-    view_count     INT          NOT NULL DEFAULT 0 COMMENT '조회수',
-    comment_count  INT          NOT NULL DEFAULT 0 COMMENT '댓글 수',
-    wishlist_count INT          NOT NULL DEFAULT 0 COMMENT '찜/장바구니 담긴 수',
-    price          INT COMMENT '판매가(판매 개시글에만, NULL 허용)',
-    post_status    VARCHAR(20) COMMENT '개시글 상태(ACTIVE, HIDDEN, DELETED)',
-    created_at     DATETIME(6) COMMENT '작성일시',
-    updated_at     DATETIME(6) COMMENT '수정일시'
+    community_id  BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '게시글 고유 식별자',
+    board_type    VARCHAR(20)  NOT NULL COMMENT '게시글 분류',
+    member_id     BIGINT       NOT NULL COMMENT 'FK: 작성자 회원 번호',
+    title         VARCHAR(255) NOT NULL COMMENT '게시글 제목',
+    content       TEXT         NOT NULL COMMENT '게시글 내용',
+    view_count    INT          NOT NULL DEFAULT 0 COMMENT '조회수',
+    comment_count INT          NOT NULL DEFAULT 0 COMMENT '댓글 수',
+    post_status   VARCHAR(20) COMMENT '게시글 상태(ACTIVE, HIDDEN, DELETED)',
+    created_at    DATETIME(6) COMMENT '작성일시',
+    updated_at    DATETIME(6) COMMENT '수정일시'
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -79,7 +85,7 @@ CREATE TABLE community
 CREATE TABLE chat_room
 (
     chat_room_id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '채팅방 고유 식별자',
-    community_id BIGINT      NOT NULL COMMENT 'FK: 채팅이 시작된 개시글',
+    product_id   BIGINT      NOT NULL COMMENT 'FK: 채팅이 시작된 상품 번호',
     buyer_id     BIGINT      NOT NULL COMMENT 'FK: 구매자 회원 번호',
     seller_id    BIGINT      NOT NULL COMMENT 'FK: 판매자 회원 번호',
     created_at   DATETIME(6) NOT NULL COMMENT '채팅방 생성 일시',
@@ -104,10 +110,10 @@ CREATE TABLE chat_message
 -- 7. 장바구니/찜 (wishlist) 테이블
 CREATE TABLE wishlist
 (
-    wishlist_id  BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '찜 내역 고유 식별자',
-    member_id    BIGINT      NOT NULL COMMENT 'FK: 찜을 누른 회원 번호',
-    community_id BIGINT      NOT NULL COMMENT 'FK: 찜한 판매글 번호',
-    created_at   DATETIME(6) NOT NULL COMMENT '찜 누른 일시'
+    wishlist_id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '찜 내역 고유 식별자',
+    member_id   BIGINT      NOT NULL COMMENT 'FK: 찜을 누른 회원 번호',
+    product_id  BIGINT      NOT NULL COMMENT 'FK: 찜한 상품 번호',
+    created_at  DATETIME(6) NOT NULL COMMENT '찜 누른 일시'
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -134,7 +140,7 @@ CREATE TABLE bodytype
 CREATE TABLE comment
 (
     comment_id   BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '댓글 고유 식별자',
-    community_id BIGINT      NOT NULL COMMENT 'FK: 어느 개시글에 달린 댓글인지',
+    community_id BIGINT      NOT NULL COMMENT 'FK: 어느 게시글에 달린 댓글인지',
     member_id    BIGINT      NOT NULL COMMENT 'FK: 댓글 작성자 회원 번호',
     content      TEXT        NOT NULL COMMENT '댓글 내용',
     parent_id    BIGINT COMMENT 'FK: 대댓글 기능 구현용(원 댓글의 ID 저장)',
@@ -148,16 +154,17 @@ CREATE TABLE comment
 -- 10. 신고 (report) 테이블
 CREATE TABLE report
 (
-    report_id    BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '신고 기록 고유 식별자',
-    reporter_id  BIGINT      NOT NULL COMMENT 'FK: 신고자 회원 번호',
-    reported_id  BIGINT      NOT NULL COMMENT 'FK: 피신고자 회원 번호',
-    community_id BIGINT COMMENT 'FK: 피신고 개시글 번호',
-    report_type  VARCHAR(50) NOT NULL COMMENT '신고 카테고리',
-    content      TEXT        NOT NULL COMMENT '상세 신고 사유',
-    status       VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '처리 상태(PENDING, RESOLVED, REJECTED)',
-    admin_memo   TEXT COMMENT '관리자 처리 결과 및 메모',
-    created_at   DATETIME(6) NOT NULL COMMENT '신고 접수 일시',
-    updated_at   DATETIME(6) NOT NULL COMMENT '처리(수정) 일시'
+    report_id   BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '신고 기록 고유 식별자',
+    reporter_id BIGINT      NOT NULL COMMENT 'FK: 신고자 회원 번호',
+    reported_id BIGINT      NOT NULL COMMENT 'FK: 피신고자 회원 번호',
+    target_type VARCHAR(20) NOT NULL COMMENT '신고 대상 종류(PRODUCT, COMMUNITY, CHAT_MESSAGE, MEMBER)',
+    target_id   BIGINT      NOT NULL COMMENT 'FK: 신고 대상 고유 식별자(상품번호, 게시글번호 등)',
+    report_type VARCHAR(50) NOT NULL COMMENT '신고 카테고리',
+    content     TEXT        NOT NULL COMMENT '상세 신고 사유',
+    status      VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '처리 상태(PENDING, RESOLVED, REJECTED)',
+    admin_memo  TEXT COMMENT '관리자 처리 결과 및 메모',
+    created_at  DATETIME(6) NOT NULL COMMENT '신고 접수 일시',
+    updated_at  DATETIME(6) NOT NULL COMMENT '처리(수정) 일시'
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -172,17 +179,27 @@ CREATE TABLE hashtag
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
--- 12. 개시글-해시태그 연결 (community_hashtag) 테이블
+-- 12. 게시글-해시태그 연결 (community_hashtag) 테이블
 CREATE TABLE community_hashtag
 (
     community_hashtag_id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '매핑 고유 식별자',
-    community_id         BIGINT NOT NULL COMMENT 'FK: 어느 개시글인지',
+    community_id         BIGINT NOT NULL COMMENT 'FK: 어느 게시글인지',
     hashtag_id           BIGINT NOT NULL COMMENT 'FK: 어떤 해시태그가 달렸는지'
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
--- 13. 알림 (notification) 테이블
+-- 13. 상품-해시태그 연결 (product_hashtag) 테이블
+CREATE TABLE product_hashtag
+(
+    product_hashtag_id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '매핑 고유 식별자',
+    product_id         BIGINT NOT NULL COMMENT 'FK: 어떤 상품인지',
+    hashtag_id         BIGINT NOT NULL COMMENT 'FK: 어떤 해시태그가 달렸는지'
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+
+-- 14. 알림 (notification) 테이블
 CREATE TABLE notification
 (
     notification_id   BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '알림 고유 식별자',
@@ -197,21 +214,21 @@ CREATE TABLE notification
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
--- 14. 거래 (deal) 테이블
+-- 15. 거래 (deal) 테이블
 CREATE TABLE deal
 (
-    deal_id      BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '거래 고유 번호',
-    buyer_id     BIGINT      NOT NULL COMMENT 'FK: 구매자 회원 번호',
-    seller_id    BIGINT      NOT NULL COMMENT 'FK: 판매자 회원 번호',
-    community_id BIGINT      NOT NULL COMMENT 'FK: 거래 대상 개시글 번호',
-    deal_status  VARCHAR(20) NOT NULL DEFAULT 'IN_PROGRESS' COMMENT '거래 상태(IN_PROGRESS, COMPLETED, CANCELED, ABORTED)',
-    created_at   DATETIME(6) NOT NULL COMMENT '거래 시작 일시',
-    updated_at   DATETIME(6) NOT NULL COMMENT '거래 상태 수정/완료 일시'
+    deal_id     BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '거래 고유 번호',
+    buyer_id    BIGINT      NOT NULL COMMENT 'FK: 구매자 회원 번호',
+    seller_id   BIGINT      NOT NULL COMMENT 'FK: 판매자 회원 번호',
+    product_id  BIGINT      NOT NULL COMMENT 'FK: 거래 대상 상품 번호',
+    deal_status VARCHAR(20) NOT NULL DEFAULT 'IN_PROGRESS' COMMENT '거래 상태(IN_PROGRESS, COMPLETED, CANCELED, ABORTED)',
+    created_at  DATETIME(6) NOT NULL COMMENT '거래 시작 일시',
+    updated_at  DATETIME(6) NOT NULL COMMENT '거래 상태 수정/완료 일시'
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
--- 15. 거래 후기 (deal_review) 테이블
+-- 16. 거래 후기 (deal_review) 테이블
 CREATE TABLE deal_review
 (
     review_id  BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '거래 후기 고유 번호',
@@ -226,12 +243,12 @@ CREATE TABLE deal_review
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
--- 16. 이미지 관리 (image) 테이블
+-- 17. 이미지 관리 (image) 테이블
 CREATE TABLE image
 (
     image_id       BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '이미지 고유 식별자',
     image_url      VARCHAR(500) NOT NULL COMMENT '클라우드 스토리지 이미지 URL 도메인',
-    reference_type VARCHAR(20)  NOT NULL COMMENT '구분자(PROFILE, COMMUNITY, CHAT)',
+    reference_type VARCHAR(20)  NOT NULL COMMENT '구분자(PROFILE, COMMUNITY, CHAT, PRODUCT)',
     reference_id   BIGINT       NOT NULL COMMENT '연결 대상 고유 번호',
     sort_order     INT          NOT NULL DEFAULT 0 COMMENT '사진 표시 순서',
     created_at     DATETIME(6)  NOT NULL COMMENT '이미지 등록 일시'
