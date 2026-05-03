@@ -47,7 +47,6 @@ CREATE TABLE product
     product_id       BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '상품 고유 식별자',
     seller_id        BIGINT       NOT NULL COMMENT 'FK: 판매자 회원 번호',
     category_id      BIGINT       NOT NULL COMMENT 'FK: 카테고리 식별자',
-    color_id         BIGINT COMMENT 'FK: 색상 식별자',
     name             VARCHAR(100) NOT NULL COMMENT '상품명',
     price            INT          NOT NULL COMMENT '판매가',
     content          TEXT         NOT NULL COMMENT '판매글 내용',
@@ -64,7 +63,23 @@ CREATE TABLE product
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
--- 4. 커뮤니티 (community) 테이블
+-- 4. 카테고리 (category) 테이블
+CREATE TABLE category
+(
+    category_id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '카테고리 고유 식별자',
+    parent_id   BIGINT COMMENT '상위 카테고리 식별자 (대분류는 NULL, 소분류는 대분류의 ID)',
+    name        VARCHAR(50) NOT NULL COMMENT '카테고리명',
+    depth_level INT         NOT NULL DEFAULT 1 COMMENT '카테고리 깊이 (1: 대분류, 2: 소분류)',
+    sort_order  INT         NOT NULL DEFAULT 0 COMMENT '동일 계층 내 UI 노출 정렬 순서',
+    created_at  DATETIME(6) NOT NULL COMMENT '생성 일시',
+    updated_at  DATETIME(6) NOT NULL COMMENT '수정 일시',
+
+    CONSTRAINT fk_category_parent FOREIGN KEY (parent_id) REFERENCES category (category_id) ON DELETE CASCADE
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+
+-- 5. 커뮤니티 (community) 테이블
 CREATE TABLE community
 (
     community_id  BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '게시글 고유 식별자',
@@ -81,7 +96,7 @@ CREATE TABLE community
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
--- 5. 채팅방 (chat_room) 테이블
+-- 6. 채팅방 (chat_room) 테이블
 CREATE TABLE chat_room
 (
     chat_room_id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '채팅방 고유 식별자',
@@ -94,7 +109,7 @@ CREATE TABLE chat_room
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
--- 6. 채팅 메시지 (chat_message) 테이블
+-- 7. 채팅 메시지 (chat_message) 테이블
 CREATE TABLE chat_message
 (
     message_id   BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '채팅 메시지 고유 식별자',
@@ -107,7 +122,7 @@ CREATE TABLE chat_message
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
--- 7. 장바구니/찜 (wishlist) 테이블
+-- 8. 장바구니/찜 (wishlist) 테이블
 CREATE TABLE wishlist
 (
     wishlist_id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '찜 내역 고유 식별자',
@@ -118,7 +133,7 @@ CREATE TABLE wishlist
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
--- 8. 체형 분석 (bodytype) 테이블
+-- 9. 체형 분석 (bodytype) 테이블
 CREATE TABLE bodytype
 (
     bodytype_id      BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '체형 분석 식별 번호',
@@ -136,7 +151,7 @@ CREATE TABLE bodytype
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
--- 9. 댓글 (comment) 테이블
+-- 10. 댓글 (comment) 테이블
 CREATE TABLE comment
 (
     comment_id   BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '댓글 고유 식별자',
@@ -151,7 +166,7 @@ CREATE TABLE comment
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
--- 10. 신고 (report) 테이블
+-- 11. 신고 (report) 테이블
 CREATE TABLE report
 (
     report_id   BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '신고 기록 고유 식별자',
@@ -169,22 +184,12 @@ CREATE TABLE report
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
--- 11. 해시태그 사전 (hashtag) 테이블
+-- 12. 해시태그 사전 (hashtag) 테이블
 CREATE TABLE hashtag
 (
     hashtag_id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '해시태그 고유 식별자',
     tag_name   VARCHAR(50) NOT NULL UNIQUE COMMENT '태그 단어',
     created_at DATETIME(6) NOT NULL COMMENT '태그 최초 생성 일시'
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_unicode_ci;
-
--- 12. 게시글-해시태그 연결 (community_hashtag) 테이블
-CREATE TABLE community_hashtag
-(
-    community_hashtag_id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '매핑 고유 식별자',
-    community_id         BIGINT NOT NULL COMMENT 'FK: 어느 게시글인지',
-    hashtag_id           BIGINT NOT NULL COMMENT 'FK: 어떤 해시태그가 달렸는지'
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
