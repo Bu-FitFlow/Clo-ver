@@ -11,14 +11,14 @@ CREATE TABLE member
     login_id          VARCHAR(50)  NOT NULL UNIQUE COMMENT '로그인 ID (6~25 자리, 영어/숫자/특수문자)',
     password          VARCHAR(255) NOT NULL COMMENT '비밀번호(BCrypt 암호화)',
     totp_secret       VARCHAR(64)  NULL COMMENT 'TOTP 비밀키(Base32)',
-    is_totp_enabled   TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '2차 인증 사용 여부 (0: 미사용, 1: 사용)',
+    is_totp_enabled   TINYINT      NOT NULL DEFAULT 0 COMMENT '2차 인증 사용 여부 (0: 미사용, 1: 사용)',
     name              VARCHAR(20)  NOT NULL COMMENT '회원 이름',
     nickname          VARCHAR(40)  NOT NULL UNIQUE COMMENT '커뮤니티 닉네임',
     email             VARCHAR(100) NOT NULL UNIQUE COMMENT '이메일 주소',
-    is_email_verified TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '이메일 인증 여부 (0: 미인증, 1: 인증됨)',
+    is_email_verified TINYINT      NOT NULL DEFAULT 0 COMMENT '이메일 인증 여부 (0: 미인증, 1: 인증됨)',
     gender            VARCHAR(10) COMMENT '성별(MALE, FEMALE)',
     role              VARCHAR(20)  NOT NULL DEFAULT 'USER' COMMENT '권한 (USER, ADMIN)',
-    is_deleted        TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '탈퇴 정보 (0: 정상 회원, 1: 탈퇴 회원)',
+    is_deleted        TINYINT      NOT NULL DEFAULT 0 COMMENT '탈퇴 정보 (0: 정상 회원, 1: 탈퇴 회원)',
     created_at        DATETIME(6)  NOT NULL COMMENT '가입 일시',
     updated_at        DATETIME(6)  NOT NULL COMMENT '정보 수정 일시'
 ) ENGINE = InnoDB
@@ -159,7 +159,7 @@ CREATE TABLE comment
     member_id    BIGINT      NOT NULL COMMENT 'FK: 댓글 작성자 회원 번호',
     content      TEXT        NOT NULL COMMENT '댓글 내용',
     parent_id    BIGINT COMMENT 'FK: 대댓글 기능 구현용(원 댓글의 ID 저장)',
-    is_deleted   TINYINT(1)  NOT NULL DEFAULT 0 COMMENT '삭제 여부(0: 정상, 1: 삭제됨)',
+    is_deleted   TINYINT     NOT NULL DEFAULT 0 COMMENT '삭제 여부(0: 정상, 1: 삭제됨)',
     created_at   DATETIME(6) NOT NULL COMMENT '댓글 작성 일시',
     updated_at   DATETIME(6) NOT NULL COMMENT '댓글 수정 일시'
 ) ENGINE = InnoDB
@@ -213,7 +213,7 @@ CREATE TABLE notification
     notification_type VARCHAR(50)  NOT NULL COMMENT '알림 종류(CHAT, COMMENT, DEAL)',
     content           VARCHAR(255) NOT NULL COMMENT '알림 메시지 내용',
     related_id        BIGINT COMMENT '알림 클릭 시 이동할 타겟 ID',
-    is_read           TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '알림 읽음 여부(0: 안 읽음, 1: 읽음)',
+    is_read           TINYINT      NOT NULL DEFAULT 0 COMMENT '알림 읽음 여부(0: 안 읽음, 1: 읽음)',
     created_at        DATETIME(6)  NOT NULL COMMENT '알림 발생 일시'
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -240,7 +240,7 @@ CREATE TABLE deal_review
     deal_id    BIGINT      NOT NULL UNIQUE COMMENT 'FK: 어느 거래에 대한 후기인지',
     author_id  BIGINT      NOT NULL COMMENT 'FK: 후기 작성자 회원 번호',
     target_id  BIGINT      NOT NULL COMMENT 'FK: 후기 대상자',
-    rating     TINYINT(1)  NOT NULL COMMENT '평점',
+    rating     TINYINT     NOT NULL COMMENT '평점',
     content    TEXT COMMENT '상세 후기 내용',
     created_at DATETIME(6) NOT NULL COMMENT '후기 작성 일시',
     updated_at DATETIME(6) NOT NULL COMMENT '후기 수정 일시'
