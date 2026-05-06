@@ -22,11 +22,11 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false)
     private String password;
 
-    @Column(name = "totp_secret")
+    @Column(name = "totp_secret", length = 64)
     private String totpSecret;
 
     @Builder.Default
-    @Column(name = "is_totp_enabled", nullable = false)
+    @Column(name = "is_totp_enabled", nullable = false, columnDefinition = "TINYINT")
     private boolean totpEnabled = false;
 
     @Column(nullable = false, length = 20)
@@ -39,7 +39,7 @@ public class Member extends BaseTimeEntity {
     private String email;
 
     @Builder.Default
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT")
     private boolean isEmailVerified = false;
 
     @Enumerated(EnumType.STRING)
@@ -51,6 +51,7 @@ public class Member extends BaseTimeEntity {
     private String role = "USER";
 
     @Builder.Default
+    @Column(name = "is_deleted", columnDefinition = "TINYINT")
     private boolean isDeleted = false;
 
     public void verifyEmail() {
