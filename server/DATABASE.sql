@@ -128,7 +128,8 @@ CREATE TABLE wishlist
     wishlist_id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '찜 내역 고유 식별자',
     member_id   BIGINT      NOT NULL COMMENT 'FK: 찜을 누른 회원 번호',
     product_id  BIGINT      NOT NULL COMMENT 'FK: 찜한 상품 번호',
-    created_at  DATETIME(6) NOT NULL COMMENT '찜 누른 일시'
+    created_at  DATETIME(6) NOT NULL COMMENT '찜 누른 일시',
+    CONSTRAINT uk_wishlist_member_product UNIQUE (member_id, product_id) COMMENT '찜 중복 방지 제약조건'
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
