@@ -68,6 +68,7 @@ public class MailService {
         return false;
     }
 
+    // TODO: 회원가입 이메일 인증 디자인
     public void sendAuthCodeEmail(String toEmail, String authCode) {
         MimeMessage message = emailSender.createMimeMessage();
         try {
