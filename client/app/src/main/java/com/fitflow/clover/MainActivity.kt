@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
             CloverTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Android",
+                        name = "이렇게 하면 업데이트가 되는 건가?",
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
