@@ -54,6 +54,8 @@ jwt:
 app:
   base-url: http://localhost:8080
   mail:
-    from: ${EMAIL_USERNAME}
+    from:
+      verification: ${EMAIL_USERNAME}
+      no-reply: ${EMAIL_USERNAME}
   cdn:
     url: https://cdn.clo-ver.shop

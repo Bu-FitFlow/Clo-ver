@@ -26,7 +26,7 @@ public class MailService {
     @Value("${app.base-url}")
     private String baseUrl;
 
-    @Value("${app.mail.from}")
+    @Value("${app.mail.from.verification}")
     private String fromEmail;
 
     public void sendVerificationEmail(String toEmail) {
