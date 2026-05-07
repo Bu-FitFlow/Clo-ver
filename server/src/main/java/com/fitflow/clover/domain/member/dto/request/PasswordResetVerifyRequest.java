@@ -1,19 +1,18 @@
 package com.fitflow.clover.domain.member.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
 
-@Getter
-public class PasswordResetVerifyRequest {
-    @NotBlank
-    private String loginId;
-    
-    @NotBlank
-    private String name;
+public record PasswordResetVerifyRequest(
+        @NotBlank
+        String loginId,
 
-    @NotBlank
-    private String email;
+        @NotBlank
+        String name,
 
-    @NotBlank
-    private String code;
+        @NotBlank
+        String email,
+
+        @NotBlank
+        String code
+) {
 }

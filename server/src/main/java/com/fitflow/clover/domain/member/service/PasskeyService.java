@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Base64;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -189,13 +188,14 @@ public class PasskeyService {
         List<PasskeyCredential> credentials = passkeyRepository.findAllByMember_MemberId(memberId);
 
         return credentials.stream()
-                .map(cred -> PasskeyResponse.builder()
-                        .id(cred.getPasskeyId())
-                        .credentialId(Base64.getUrlEncoder().withoutPadding().encodeToString(cred.getCredentialId()))
-                        .signCount(cred.getSignCount())
-                        .createdAt(cred.getCreatedAt())
-                        .build())
-                .collect(Collectors.toList());
+                .map(cred -> new PasskeyResponse(
+                        cred.getPasskeyId(),
+                        Base64.getUrlEncoder()
+                                .withoutPadding()
+                                .encodeToString(cred.getCredentialId()),
+                        cred.getSignCount(),
+                        cred.getCreatedAt()))
+                .toList();
     }
 
     @Transactional

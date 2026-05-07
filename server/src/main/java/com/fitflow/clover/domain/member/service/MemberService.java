@@ -33,16 +33,16 @@ public class MemberService {
     public MemberResponse signUp(SignUpRequest request) {
         checkDuplicateMember(request);
 
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        String encodedPassword = passwordEncoder.encode(request.password());
 
         Member member = Member.builder()
-                .loginId(request.getLoginId())
+                .loginId(request.loginId())
                 .password(encodedPassword)
-                .name(request.getName())
-                .nickname(request.getNickname())
-                .email(request.getEmail())
+                .name(request.name())
+                .nickname(request.nickname())
+                .email(request.email())
                 .isEmailVerified(false)
-                .gender(request.getGender())
+                .gender(request.gender())
                 .build();
 
         Member savedMember = memberRepository.save(member);
@@ -66,8 +66,8 @@ public class MemberService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (!member.getEmail().equals(request.getEmail())) {
-            String verifiedKey = "VERIFIED_EMAIL:" + request.getEmail();
+        if (!member.getEmail().equals(request.email())) {
+            String verifiedKey = "VERIFIED_EMAIL:" + request.email();
             String isVerified = redisUtil.getData(verifiedKey);
 
             if (isVerified == null || !isVerified.equals("true")) {
@@ -75,7 +75,7 @@ public class MemberService {
             }
             redisUtil.deleteData(verifiedKey);
         }
-        member.updateProfile(request.getNickname(), request.getEmail());
+        member.updateProfile(request.nickname(), request.email());
     }
 
     @Transactional
@@ -83,76 +83,76 @@ public class MemberService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (!passwordEncoder.matches(request.getCurrentPassword(), member.getPassword())) {
+        if (!passwordEncoder.matches(request.currentPassword(), member.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
         }
 
-        if (passwordEncoder.matches(request.getNewPassword(), member.getPassword())) {
+        if (passwordEncoder.matches(request.newPassword(), member.getPassword())) {
             throw new CustomException(ErrorCode.SAME_AS_OLD_PASSWORD);
         }
 
-        String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
+        String encodedNewPassword = passwordEncoder.encode(request.newPassword());
         member.updatePassword(encodedNewPassword);
 
         redisUtil.deleteData("RT:" + memberId);
     }
 
     public void sendFindIdCode(FindIdSendRequest request) {
-        Member member = memberRepository.findByNameAndEmail(request.getName(), request.getEmail())
+        Member member = memberRepository.findByNameAndEmail(request.name(), request.email())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         String authCode = String.valueOf((int) (Math.random() * 899999) + 100000);
 
-        redisUtil.setDataExpire(FIND_ID_PREFIX + request.getEmail(), authCode, VERIFY_TIME_LIMIT);
+        redisUtil.setDataExpire(FIND_ID_PREFIX + request.email(), authCode, VERIFY_TIME_LIMIT);
 
         mailService.sendAuthCodeEmail(member.getEmail(), authCode);
     }
 
     public String verifyFindIdCode(FindIdVerifyRequest request) {
-        String savedCode = redisUtil.getData(FIND_ID_PREFIX + request.getEmail());
+        String savedCode = redisUtil.getData(FIND_ID_PREFIX + request.email());
 
-        if (savedCode == null || !savedCode.equals(request.getCode())) {
+        if (savedCode == null || !savedCode.equals(request.code())) {
             throw new CustomException(ErrorCode.INVALID_VERIFICATION_CODE);
         }
 
-        Member member = memberRepository.findByNameAndEmail(request.getName(), request.getEmail())
+        Member member = memberRepository.findByNameAndEmail(request.name(), request.email())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        redisUtil.deleteData(FIND_ID_PREFIX + request.getEmail());
+        redisUtil.deleteData(FIND_ID_PREFIX + request.email());
 
         return member.getLoginId();
     }
 
     public void sendPasswordResetCode(PasswordResetSendRequest request) {
-        memberRepository.findByLoginIdAndNameAndEmail(request.getLoginId(), request.getName(), request.getEmail())
+        memberRepository.findByLoginIdAndNameAndEmail(request.loginId(), request.name(), request.email())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         String authCode = String.valueOf((int) (Math.random() * 899999) + 100000);
 
-        redisUtil.setDataExpire(PWD_RESET_PREFIX + request.getEmail(), authCode, VERIFY_TIME_LIMIT);
+        redisUtil.setDataExpire(PWD_RESET_PREFIX + request.email(), authCode, VERIFY_TIME_LIMIT);
 
-        mailService.sendAuthCodeEmail(request.getEmail(), authCode);
+        mailService.sendAuthCodeEmail(request.email(), authCode);
     }
 
     public String verifyPasswordResetCode(PasswordResetVerifyRequest request) {
-        String savedCode = redisUtil.getData(PWD_RESET_PREFIX + request.getEmail());
+        String savedCode = redisUtil.getData(PWD_RESET_PREFIX + request.email());
 
-        if (savedCode == null || !savedCode.equals(request.getCode())) {
+        if (savedCode == null || !savedCode.equals(request.code())) {
             throw new CustomException(ErrorCode.INVALID_VERIFICATION_CODE);
         }
 
-        redisUtil.deleteData(PWD_RESET_PREFIX + request.getEmail());
+        redisUtil.deleteData(PWD_RESET_PREFIX + request.email());
 
         String resetToken = java.util.UUID.randomUUID().toString();
 
-        redisUtil.setDataExpire(PWD_RESET_TOKEN_PREFIX + resetToken, request.getLoginId(), 300000L);
+        redisUtil.setDataExpire(PWD_RESET_TOKEN_PREFIX + resetToken, request.loginId(), 300000L);
 
         return resetToken;
     }
 
     @Transactional
     public void resetPassword(PasswordResetRequest request) {
-        String loginId = redisUtil.getData(PWD_RESET_TOKEN_PREFIX + request.getResetToken());
+        String loginId = redisUtil.getData(PWD_RESET_TOKEN_PREFIX + request.resetToken());
 
         if (loginId == null) {
             throw new CustomException(ErrorCode.INVALID_VERIFICATION_CODE);
@@ -161,13 +161,13 @@ public class MemberService {
         Member member = memberRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (passwordEncoder.matches(request.getNewPassword(), member.getPassword())) {
+        if (passwordEncoder.matches(request.newPassword(), member.getPassword())) {
             throw new CustomException(ErrorCode.SAME_AS_OLD_PASSWORD);
         }
 
-        member.updatePassword(passwordEncoder.encode(request.getNewPassword()));
+        member.updatePassword(passwordEncoder.encode(request.newPassword()));
 
-        redisUtil.deleteData(PWD_RESET_TOKEN_PREFIX + request.getResetToken());
+        redisUtil.deleteData(PWD_RESET_TOKEN_PREFIX + request.resetToken());
 
         redisUtil.deleteData("RT:" + member.getMemberId());
     }
@@ -193,13 +193,13 @@ public class MemberService {
     }
 
     private void checkDuplicateMember(SignUpRequest request) {
-        if (memberRepository.existsByLoginId(request.getLoginId())) {
+        if (memberRepository.existsByLoginId(request.loginId())) {
             throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
         }
-        if (memberRepository.existsByEmail(request.getEmail())) {
+        if (memberRepository.existsByEmail(request.email())) {
             throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
         }
-        if (memberRepository.existsByNickname(request.getNickname())) {
+        if (memberRepository.existsByNickname(request.nickname())) {
             throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
     }

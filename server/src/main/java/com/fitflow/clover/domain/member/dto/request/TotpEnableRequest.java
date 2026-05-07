@@ -1,8 +1,6 @@
 package com.fitflow.clover.domain.member.dto.request;
 
-import lombok.Getter;
-
-@Getter
-public class TotpEnableRequest {
-    private String code;
+public record TotpEnableRequest(
+        String code
+) {
 }

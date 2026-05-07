@@ -84,7 +84,7 @@ public class MemberSecurityController {
             @RequestBody TotpEnableRequest request) { // 우리가 만든 DTO 사용
 
         Long memberId = Long.parseLong(userDetails.getUsername());
-        totpService.enableTotp(memberId, request.getCode());
+        totpService.enableTotp(memberId, request.code());
 
         return ResponseEntity.ok("2차 인증이 성공적으로 활성화되었습니다.");
     }

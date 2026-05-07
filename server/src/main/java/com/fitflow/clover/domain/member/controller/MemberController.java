@@ -75,7 +75,7 @@ public class MemberController {
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody @Valid MemberWithdrawRequest request) {
         Long memberId = Long.parseLong(userDetails.getUsername());
-        memberService.withdraw(memberId, request.getPassword());
+        memberService.withdraw(memberId, request.password());
         return ResponseEntity.ok("회원 탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다.");
     }
 }

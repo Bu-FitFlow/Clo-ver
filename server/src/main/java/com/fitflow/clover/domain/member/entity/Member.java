@@ -50,6 +50,7 @@ public class Member extends BaseTimeEntity {
     @Builder.Default
     private String role = "USER";
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "member_rank", nullable = false)
     private MemberRank rank = MemberRank.SEED;
