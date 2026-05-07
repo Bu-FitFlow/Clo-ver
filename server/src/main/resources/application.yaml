@@ -56,6 +56,6 @@ app:
   mail:
     from:
       verification: ${EMAIL_USERNAME}
-      no-reply: ${EMAIL_USERNAME}
+      #no-reply: ${EMAIL_USERNAME}
   cdn:
     url: https://cdn.clo-ver.shop
