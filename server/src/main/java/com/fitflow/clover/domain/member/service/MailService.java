@@ -26,8 +26,8 @@ public class MailService {
     @Value("${app.base-url}")
     private String baseUrl;
 
-    @Value("${app.mail.from}")
-    private String fromEmail;
+    @Value("${app.mail.from.verification}")
+    private String verificationSender;
 
     public void sendVerificationEmail(String toEmail) {
         String token = UUID.randomUUID().toString();
@@ -39,7 +39,7 @@ public class MailService {
         MimeMessage message = emailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromEmail);
+            helper.setFrom(verificationSender);
             helper.setTo(toEmail);
             helper.setSubject("[Clo-ver] 중고 의류 플랫폼 회원가입 이메일 인증");
 
@@ -68,11 +68,12 @@ public class MailService {
         return false;
     }
 
+    // TODO: 회원가입 이메일 인증 디자인
     public void sendAuthCodeEmail(String toEmail, String authCode) {
         MimeMessage message = emailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromEmail);
+            helper.setFrom(verificationSender);
             helper.setTo(toEmail);
             helper.setSubject("[Clo-ver] 계정 찾기 인증번호 안내");
 
