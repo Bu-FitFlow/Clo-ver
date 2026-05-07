@@ -50,6 +50,10 @@ public class Member extends BaseTimeEntity {
     @Builder.Default
     private String role = "USER";
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "member_rank", nullable = false)
+    private MemberRank rank = MemberRank.SEED;
+
     @Builder.Default
     @Column(name = "is_deleted", columnDefinition = "TINYINT")
     private boolean isDeleted = false;

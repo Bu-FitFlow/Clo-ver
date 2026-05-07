@@ -1,15 +1,26 @@
 package com.fitflow.clover.domain.member.dto.response;
 
-import lombok.Builder;
-import lombok.Getter;
+import com.fitflow.clover.domain.member.entity.Member;
+import com.fitflow.clover.domain.member.entity.MemberRank;
 
-@Getter
-@Builder
-public class MemberInfoResponse {
-    private String loginId;
-    private String name;
-    private String nickname;
-    private String email;
-    private boolean totpEnabled;
-    private boolean hasPasskey;
+public record MemberInfoResponse(
+        String loginId,
+        String name,
+        String nickname,
+        String email,
+        MemberRank rank,
+        boolean totpEnabled,
+        boolean hasPasskey
+) {
+    public static MemberInfoResponse from(Member member, boolean hasPasskey) {
+        return new MemberInfoResponse(
+                member.getLoginId(),
+                member.getName(),
+                member.getNickname(),
+                member.getEmail(),
+                member.getRank(),
+                member.isTotpEnabled(),
+                hasPasskey
+        );
+    }
 }

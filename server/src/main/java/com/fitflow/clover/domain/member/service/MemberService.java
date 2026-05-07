@@ -56,16 +56,9 @@ public class MemberService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        boolean hasPasskey = !passkeyRepository.findAllByMember_MemberId(memberId).isEmpty();
+        boolean hasPasskey = passkeyRepository.existsByMember(member);
 
-        return MemberInfoResponse.builder()
-                .loginId(member.getLoginId())
-                .name(member.getName())
-                .nickname(member.getNickname())
-                .email(member.getEmail())
-                .totpEnabled(member.isTotpEnabled())
-                .hasPasskey(hasPasskey)
-                .build();
+        return MemberInfoResponse.from(member, hasPasskey);
     }
 
     @Transactional
