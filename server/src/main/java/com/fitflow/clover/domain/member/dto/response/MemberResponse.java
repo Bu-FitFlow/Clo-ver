@@ -2,29 +2,25 @@ package com.fitflow.clover.domain.member.dto.response;
 
 import com.fitflow.clover.domain.member.entity.Gender;
 import com.fitflow.clover.domain.member.entity.Member;
-import lombok.Builder;
-import lombok.Getter;
 
-@Getter
-@Builder
-public class MemberResponse {
-    private Long memberId;
-    private String loginId;
-    private String name;
-    private String nickname;
-    private String email;
-    private Gender gender;
-    private String role;
-
+public record MemberResponse(
+        Long memberId,
+        String loginId,
+        String name,
+        String nickname,
+        String email,
+        Gender gender,
+        String role
+) {
     public static MemberResponse from(Member member) {
-        return MemberResponse.builder()
-                .memberId(member.getMemberId())
-                .loginId(member.getLoginId())
-                .name(member.getName())
-                .nickname(member.getNickname())
-                .email(member.getEmail())
-                .gender(member.getGender())
-                .role(member.getRole())
-                .build();
+        return new MemberResponse(
+                member.getMemberId(),
+                member.getLoginId(),
+                member.getName(),
+                member.getNickname(),
+                member.getEmail(),
+                member.getGender(),
+                member.getRole()
+        );
     }
 }
