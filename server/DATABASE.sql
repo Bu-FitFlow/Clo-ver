@@ -55,7 +55,7 @@ CREATE TABLE product
     grade            VARCHAR(20)  NOT NULL COMMENT '상품 상태',
     trading_area     VARCHAR(100) NOT NULL COMMENT '거래 가능 지역 (예: 천안, 서울 등)',
     recommended_type VARCHAR(50) COMMENT '상품을 추천하는 체형',
-    post_status      VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE' COMMENT '판매 상태(ACTIVE, RESERVED, SOLD_OUT, HIDDEN)',
+    post_status      VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE' COMMENT '판매 상태(ACTIVE, RESERVED, SOLD_OUT, HIDDEN, DELETED)',
     view_count       INT          NOT NULL DEFAULT 0 COMMENT '조회수',
     wishlist_count   INT          NOT NULL DEFAULT 0 COMMENT '찜/장바구니 담긴 수',
     created_at       DATETIME(6)  NOT NULL COMMENT '상품 등록 일시',
@@ -262,3 +262,28 @@ CREATE TABLE image
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
+
+-- 1. 대분류 (Root Category) 추가: parent_id는 NULL, depth_level은 1
+INSERT INTO category (category_id, parent_id, name, depth_level, sort_order, created_at, updated_at)
+VALUES (1, NULL, '남성의류', 1, 1, NOW(), NOW()),
+       (2, NULL, '여성의류', 1, 2, NOW(), NOW()),
+       (3, NULL, '전자기기', 1, 3, NOW(), NOW());
+
+-- 2. 소분류 (Sub Category) 추가: parent_id에 위에서 만든 대분류 ID 매핑, depth_level은 2
+-- 남성의류(1)의 하위 카테고리
+INSERT INTO category (parent_id, name, depth_level, sort_order, created_at, updated_at)
+VALUES (1, '아우터', 2, 1, NOW(), NOW()),
+       (1, '상의', 2, 2, NOW(), NOW()),
+       (1, '하의', 2, 3, NOW(), NOW());
+
+-- 여성의류(2)의 하위 카테고리
+INSERT INTO category (parent_id, name, depth_level, sort_order, created_at, updated_at)
+VALUES (2, '아우터', 2, 1, NOW(), NOW()),
+       (2, '상의', 2, 2, NOW(), NOW()),
+       (2, '원피스/스커트', 2, 3, NOW(), NOW());
+
+-- 전자기기(3)의 하위 카테고리
+INSERT INTO category (parent_id, name, depth_level, sort_order, created_at, updated_at)
+VALUES (3, '스마트폰', 2, 1, NOW(), NOW()),
+       (3, '태블릿/PC', 2, 2, NOW(), NOW()),
+       (3, '웨어러블', 2, 3, NOW(), NOW());

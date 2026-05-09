@@ -12,6 +12,7 @@ public enum ErrorCode {
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "허용되지 않은 HTTP 메서드입니다."),
 
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요한 서비스입니다."),
+    UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "해당 작업에 대한 권한이 없습니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다."),
 
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "인증 정보가 만료되었거나 유효하지 않습니다. 다시 로그인해 주세요."),
@@ -36,7 +37,10 @@ public enum ErrorCode {
 
     UNVERIFIED_EMAIL(HttpStatus.UNAUTHORIZED, "인증되지 않은 이메일입니다. 이메일 인증을 먼저 진행해 주세요."),
     EMAIL_VERIFICATION_PENDING(HttpStatus.FORBIDDEN, "인증 메일이 이미 발송되었습니다. 메일함을 확인해주세요."),
-    EMAIL_VERIFICATION_RESENT(HttpStatus.FORBIDDEN, "인증 유효시간이 만료되어 새 인증 메일을 발송했습니다. 메일함을 확인해주세요.");
+    EMAIL_VERIFICATION_RESENT(HttpStatus.FORBIDDEN, "인증 유효시간이 만료되어 새 인증 메일을 발송했습니다. 메일함을 확인해주세요."),
+
+    PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 상품입니다."),
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 카테고리입니다.");
 
     private final HttpStatus status;
     private final String message;
