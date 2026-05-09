@@ -9,14 +9,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @Tag(name = "상품 관리", description = "상품 등록, 조회, 수정, 삭제 관련 API")
 @RestController
@@ -37,10 +38,12 @@ public class ProductController {
         return ResponseEntity.ok(savedProductId + "번 상품이 성공적으로 등록되었습니다.");
     }
 
-    @Operation(summary = "상품 전체 목록 조회")
+    @Operation(summary = "상품 전체 목록 조회 (No-Offset 무한 스크롤)")
     @GetMapping
-    public ResponseEntity<List<ProductListResponse>> getProductList() {
-        List<ProductListResponse> response = productService.getProductList();
+    public ResponseEntity<Slice<ProductListResponse>> getProductList(
+            @RequestParam(required = false) Long cursorId,
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
+        Slice<ProductListResponse> response = productService.getProductList(cursorId, pageable);
         return ResponseEntity.ok(response);
     }
 
@@ -56,8 +59,7 @@ public class ProductController {
     public ResponseEntity<String> updateProduct(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long productId,
-            @Valid @ModelAttribute ProductUpdateRequest request,
-            List<MultipartFile> images) {
+            @Valid @ModelAttribute ProductUpdateRequest request) {
         Long memberId = Long.parseLong(userDetails.getUsername());
         productService.updateProduct(memberId, productId, request, request.images());
 

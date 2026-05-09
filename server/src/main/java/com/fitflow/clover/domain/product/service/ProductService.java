@@ -15,6 +15,9 @@ import com.fitflow.clover.global.error.ErrorCode;
 import com.fitflow.clover.global.image.entity.Image;
 import com.fitflow.clover.global.image.service.ImageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -95,8 +98,10 @@ public class ProductService {
         return ProductDetailResponse.from(product, imageUrls, hashtags);
     }
 
-    public List<ProductListResponse> getProductList() {
-        List<Product> products = productRepository.findAllByOrderByCreatedAtDesc();
+    public Slice<ProductListResponse> getProductList(Long cursorId, Pageable pageable) {
+        Slice<Product> productSlice = productRepository.searchProducts(cursorId, pageable);
+
+        List<Product> products = productSlice.getContent();
 
         List<Long> productIds = products.stream()
                 .map(Product::getProductId)
@@ -104,13 +109,16 @@ public class ProductService {
 
         Map<Long, List<String>> imageUrlMap = imageService.getImageUrlMap(Image.ReferenceType.PRODUCT, productIds);
 
-        return products.stream()
+        List<ProductListResponse> content = products.stream()
                 .map(product -> {
                     List<String> images = imageUrlMap.getOrDefault(product.getProductId(), Collections.emptyList());
                     String thumbnail = images.isEmpty() ? null : images.getFirst();
                     return ProductListResponse.from(product, thumbnail);
                 })
                 .toList();
+
+        return new SliceImpl<>(content, pageable, productSlice.hasNext());
+
     }
 
     @Transactional
