@@ -1,11 +1,7 @@
 package com.fitflow.clover.domain.member.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
-@Getter
-@AllArgsConstructor
-public class TokenResponse {
-    private String accessToken;
-    private String refreshToken;
+public record TokenResponse(
+        String accessToken,
+        String refreshToken
+) {
 }
