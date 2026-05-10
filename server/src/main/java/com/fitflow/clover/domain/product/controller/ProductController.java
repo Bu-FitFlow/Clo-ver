@@ -76,4 +76,16 @@ public class ProductController {
         productService.deleteProduct(memberId, productId);
         return ResponseEntity.ok("상품이 성공적으로 삭제되었습니다.");
     }
+
+    @Operation(summary = "상품 찜하기 / 취소 토글")
+    @PostMapping("/{productId}/wishlist")
+    public ResponseEntity<String> toggleWishlist(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long productId) {
+        Long memberId = Long.parseLong(userDetails.getUsername());
+
+        String resultMessage = productService.toggleWishlist(memberId, productId);
+
+        return ResponseEntity.ok(resultMessage);
+    }
 }

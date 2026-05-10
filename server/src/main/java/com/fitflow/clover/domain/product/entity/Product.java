@@ -80,6 +80,16 @@ public class Product extends BaseTimeEntity {
         this.productHashtags.add(productHashtag);
     }
 
+    public void increaseWishlistCount() {
+        this.wishlistCount++;
+    }
+
+    public void decreaseWishlistCount() {
+        if (this.wishlistCount > 0) {
+            this.wishlistCount--;
+        }
+    }
+
     public void update(Category category, ProductUpdateRequest request) {
         this.category = category;
         this.name = request.name();

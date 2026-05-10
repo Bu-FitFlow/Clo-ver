@@ -11,6 +11,7 @@ import com.fitflow.clover.domain.product.entity.*;
 import com.fitflow.clover.domain.product.repository.CategoryRepository;
 import com.fitflow.clover.domain.product.repository.HashtagRepository;
 import com.fitflow.clover.domain.product.repository.ProductRepository;
+import com.fitflow.clover.domain.product.repository.WishlistRepository;
 import com.fitflow.clover.global.error.CustomException;
 import com.fitflow.clover.global.error.ErrorCode;
 import com.fitflow.clover.global.image.entity.Image;
@@ -26,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +37,7 @@ public class ProductService {
     private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
     private final HashtagRepository hashtagRepository;
+    private final WishlistRepository wishlistRepository;
     private final ImageService imageService;
 
     @Transactional
@@ -165,5 +168,31 @@ public class ProductService {
         }
 
         product.changeStatus(ProductStatus.DELETED);
+    }
+
+    @Transactional
+    public String toggleWishlist(Long memberId, Long productId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        Optional<Wishlist> existingWishlist = wishlistRepository.findByMember_MemberIdAndProduct_ProductId(memberId, productId);
+
+        if (existingWishlist.isPresent()) {
+            wishlistRepository.delete(existingWishlist.get());
+            product.decreaseWishlistCount();
+            return "찜이 취소되었습니다.";
+        } else {
+            Wishlist newWishlist = Wishlist.builder()
+                    .member(member)
+                    .product(product)
+                    .build();
+
+            wishlistRepository.save(newWishlist);
+            product.increaseWishlistCount();
+            return "찜 목록에 추가되었습니다.";
+        }
     }
 }
