@@ -20,10 +20,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,7 @@ public class ProductService {
     private final HashtagRepository hashtagRepository;
     private final WishlistRepository wishlistRepository;
     private final ImageService imageService;
+    private final StringRedisTemplate redisTemplate;
 
     @Transactional
     public Long createProduct(Long memberId, ProductCreateRequest request, List<MultipartFile> images) {
@@ -89,11 +92,17 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductDetailResponse getProductDetail(Long productId) {
+    public ProductDetailResponse getProductDetail(Long productId, String viewerId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        product.increaseViewCount();
+        String redisKey = "view:product:" + productId + ":" + viewerId;
+
+        Boolean isFirstView = redisTemplate.opsForValue().setIfAbsent(redisKey, "viewed", Duration.ofHours(24));
+
+        if (Boolean.TRUE.equals(isFirstView)) {
+            product.increaseViewCount();
+        }
 
         List<String> imageUrls = imageService.getImageUrlList(Image.ReferenceType.PRODUCT, productId);
         List<String> hashtags = product.getProductHashtags().stream()

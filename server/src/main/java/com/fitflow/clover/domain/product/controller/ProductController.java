@@ -8,6 +8,7 @@ import com.fitflow.clover.domain.product.dto.response.ProductListResponse;
 import com.fitflow.clover.domain.product.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -50,8 +51,19 @@ public class ProductController {
 
     @Operation(summary = "상품 상세 조회")
     @GetMapping("/{productId}")
-    public ResponseEntity<ProductDetailResponse> getProductDetail(@PathVariable Long productId) {
-        ProductDetailResponse response = productService.getProductDetail(productId);
+    public ResponseEntity<ProductDetailResponse> getProductDetail(
+            @PathVariable Long productId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request) {
+        String viewerId;
+        if (userDetails != null) viewerId = "member_" + userDetails.getUsername();
+        else {
+            String clientIp = request.getHeader("X-Forwarded-For");
+            if (clientIp == null || clientIp.isEmpty()) clientIp = request.getRemoteAddr();
+            viewerId = "ip_" + clientIp;
+        }
+
+        ProductDetailResponse response = productService.getProductDetail(productId, viewerId);
         return ResponseEntity.ok(response);
     }
 
