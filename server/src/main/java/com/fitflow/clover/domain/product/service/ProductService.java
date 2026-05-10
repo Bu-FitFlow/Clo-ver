@@ -3,6 +3,7 @@ package com.fitflow.clover.domain.product.service;
 import com.fitflow.clover.domain.member.entity.Member;
 import com.fitflow.clover.domain.member.repository.MemberRepository;
 import com.fitflow.clover.domain.product.dto.request.ProductCreateRequest;
+import com.fitflow.clover.domain.product.dto.request.ProductSearchCondition;
 import com.fitflow.clover.domain.product.dto.request.ProductUpdateRequest;
 import com.fitflow.clover.domain.product.dto.response.ProductDetailResponse;
 import com.fitflow.clover.domain.product.dto.response.ProductListResponse;
@@ -98,8 +99,8 @@ public class ProductService {
         return ProductDetailResponse.from(product, imageUrls, hashtags);
     }
 
-    public Slice<ProductListResponse> getProductList(Long cursorId, Pageable pageable) {
-        Slice<Product> productSlice = productRepository.searchProducts(cursorId, pageable);
+    public Slice<ProductListResponse> getProductList(ProductSearchCondition condition, Pageable pageable) {
+        Slice<Product> productSlice = productRepository.searchProducts(condition, pageable);
 
         List<Product> products = productSlice.getContent();
 

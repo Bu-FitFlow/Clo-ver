@@ -1,15 +1,18 @@
 package com.fitflow.clover.domain.product.repository;
 
+import com.fitflow.clover.domain.product.dto.request.ProductSearchCondition;
 import com.fitflow.clover.domain.product.entity.Product;
 
 import static com.fitflow.clover.domain.product.entity.QProduct.product;
 
+import com.fitflow.clover.domain.product.entity.ProductStatus;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -18,11 +21,15 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Slice<Product> searchProducts(Long cursorId, Pageable pageable) {
+    public Slice<Product> searchProducts(ProductSearchCondition condition, Pageable pageable) {
         List<Product> products = queryFactory
                 .selectFrom(product)
                 .where(
-                        ltProductId(cursorId)
+                        ltProductId(condition.cursorId()),
+                        eqCategoryId(condition.categoryId()),
+                        eqTradingArea(condition.tradingArea()),
+                        containsKeyword(condition.keyword()),
+                        isActiveOrEqStatus(condition.status())
                 )
                 .orderBy(product.productId.desc())
                 .limit(pageable.getPageSize() + 1)
@@ -39,11 +46,25 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     }
 
     private BooleanExpression ltProductId(Long cursorId) {
-        // cursorId가 안 들어왔다? (첫 페이지) -> 조건 없이 전체 조회 (return null)
         if (cursorId == null) {
             return null;
         }
-        // cursorId가 들어왔다? (스크롤) -> product.productId < cursorId 조건 추가!
         return product.productId.lt(cursorId);
+    }
+
+    private BooleanExpression eqCategoryId(Long categoryId) {
+        return categoryId != null ? product.category.categoryId.eq(categoryId) : null;
+    }
+
+    private BooleanExpression eqTradingArea(String tradingArea) {
+        return StringUtils.hasText(tradingArea) ? product.tradingArea.eq(tradingArea) : null;
+    }
+
+    private BooleanExpression containsKeyword(String keyword) {
+        return StringUtils.hasText(keyword) ? product.name.containsIgnoreCase(keyword) : null;
+    }
+
+    private BooleanExpression isActiveOrEqStatus(ProductStatus status) {
+        return status != null ? product.postStatus.eq(status) : product.postStatus.eq(ProductStatus.ACTIVE);
     }
 }

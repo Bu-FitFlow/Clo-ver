@@ -1,6 +1,7 @@
 package com.fitflow.clover.domain.product.controller;
 
 import com.fitflow.clover.domain.product.dto.request.ProductCreateRequest;
+import com.fitflow.clover.domain.product.dto.request.ProductSearchCondition;
 import com.fitflow.clover.domain.product.dto.request.ProductUpdateRequest;
 import com.fitflow.clover.domain.product.dto.response.ProductDetailResponse;
 import com.fitflow.clover.domain.product.dto.response.ProductListResponse;
@@ -41,9 +42,9 @@ public class ProductController {
     @Operation(summary = "상품 전체 목록 조회 (No-Offset 무한 스크롤)")
     @GetMapping
     public ResponseEntity<Slice<ProductListResponse>> getProductList(
-            @RequestParam(required = false) Long cursorId,
+            @ParameterObject @ModelAttribute ProductSearchCondition condition,
             @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
-        Slice<ProductListResponse> response = productService.getProductList(cursorId, pageable);
+        Slice<ProductListResponse> response = productService.getProductList(condition, pageable);
         return ResponseEntity.ok(response);
     }
 
