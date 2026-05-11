@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.*;
 public class ProductController {
     private final ProductService productService;
 
-    @Operation(summary = "상품 등록")
+    @Operation(summary = "상품 등록", description = "상품 상세 정보와 다중 이미지(multipart/form-data)를 입력받아 중고거래 상품을 등록합니다.")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> createProduct(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -40,7 +40,7 @@ public class ProductController {
         return ResponseEntity.ok(savedProductId + "번 상품이 성공적으로 등록되었습니다.");
     }
 
-    @Operation(summary = "상품 전체 목록 조회 (No-Offset 무한 스크롤)")
+    @Operation(summary = "상품 전체 목록 조회 (No-Offset 무한 스크롤)", description = "검색 조건에 맞는 상품 목록을 No-Offset 기반 무한 스크롤(Slice) 방식으로 조회합니다.")
     @GetMapping
     public ResponseEntity<Slice<ProductListResponse>> getProductList(
             @ParameterObject @ModelAttribute ProductSearchCondition condition,
@@ -49,7 +49,7 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "상품 상세 조회")
+    @Operation(summary = "상품 상세 조회", description = "특정 상품의 상세 정보를 조회하며, 로그인 회원과 비회원(IP 기반)을 구분하여 조회수를 증가시킵니다.")
     @GetMapping("/{productId}")
     public ResponseEntity<ProductDetailResponse> getProductDetail(
             @PathVariable Long productId,
@@ -67,7 +67,7 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "상품 수정")
+    @Operation(summary = "상품 수정", description = "등록된 상품 정보를 수정합니다. (이미지 추가/삭제 포함)")
     @PatchMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> updateProduct(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -79,7 +79,7 @@ public class ProductController {
         return ResponseEntity.ok("상품 정보가 성공적으로 수정되었습니다.");
     }
 
-    @Operation(summary = "상품 삭제")
+    @Operation(summary = "상품 삭제", description = "특정 상품과 관련된 이미지, 찜 내역 등을 모두 삭제합니다.")
     @DeleteMapping("/{productId}")
     public ResponseEntity<String> deleteProduct(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -89,7 +89,7 @@ public class ProductController {
         return ResponseEntity.ok("상품이 성공적으로 삭제되었습니다.");
     }
 
-    @Operation(summary = "상품 찜하기 / 취소 토글")
+    @Operation(summary = "상품 찜하기 / 취소 토글", description = "특정 상품을 찜 목록에 추가하거나 제거(토글)합니다.")
     @PostMapping("/{productId}/wishlist")
     public ResponseEntity<String> toggleWishlist(
             @AuthenticationPrincipal UserDetails userDetails,
