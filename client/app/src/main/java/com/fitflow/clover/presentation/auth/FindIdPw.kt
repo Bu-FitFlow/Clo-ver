@@ -38,7 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.fitflow.clover.CloverGreen
+import com.fitflow.clover.core.theme.CloverGreen
 import com.fitflow.clover.core.component.CloverTextField
 import com.fitflow.clover.R
 import com.fitflow.clover.core.component.CloverButton

@@ -48,7 +48,7 @@ import com.fitflow.clover.core.component.CloverTextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import com.fitflow.clover.CustomCheckBoxRow
+import com.fitflow.clover.core.component.CustomCheckBoxRow
 
 
 // 1. 로그인 화면 (기존 유지)
@@ -64,7 +64,7 @@ fun LoginMain(navController: NavController) {
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(value = pw, onValueChange = { pw = it }, label = { Text("Password") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = { }, modifier = Modifier.fillMaxWidth().height(62.dp), colors = ButtonDefaults.buttonColors(containerColor = com.fitflow.clover.CloverGreen), shape = RoundedCornerShape(5.dp)) { Text("로그인", color = Color.Black) }
+            Button(onClick = { }, modifier = Modifier.fillMaxWidth().height(62.dp), colors = ButtonDefaults.buttonColors(containerColor = com.fitflow.clover.core.theme.CloverGreen), shape = RoundedCornerShape(5.dp)) { Text("로그인", color = Color.Black) }
             Row(modifier = Modifier.padding(top = 16.dp)) {
                 Text("아이디/비밀번호 찾기", modifier = Modifier.clickable { navController.navigate("find_id_pw") }, color = Color.Gray, fontSize = 12.sp)
                 Spacer(modifier = Modifier.width(100.dp))
@@ -115,7 +115,7 @@ fun JoinTerms(navController: NavController) {
                 onClick = { navController.navigate("join_detail") },
                 modifier = Modifier.fillMaxWidth().height(55.dp).padding(bottom = 10.dp),
                 enabled = term1 && term2,
-                colors = ButtonDefaults.buttonColors(containerColor = com.fitflow.clover.CloverGreen, disabledContainerColor = Color(0xFFC8E6C9)),
+                colors = ButtonDefaults.buttonColors(containerColor = com.fitflow.clover.core.theme.CloverGreen, disabledContainerColor = Color(0xFFC8E6C9)),
                 shape = RoundedCornerShape(8.dp)
             ) { Text("다음", color = Color.Black, fontWeight = FontWeight.Bold) }
         }

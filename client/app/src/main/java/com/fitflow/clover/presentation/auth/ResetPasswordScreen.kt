@@ -35,7 +35,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.fitflow.clover.CloverGreen
+import com.fitflow.clover.core.theme.CloverGreen
 import com.fitflow.clover.core.component.CustomOutlinedInput
 import com.fitflow.clover.R
 
