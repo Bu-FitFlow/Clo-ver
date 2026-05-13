@@ -117,6 +117,7 @@ CREATE TABLE chat_message
     chat_room_id BIGINT      NOT NULL COMMENT 'FK: 어느 채팅방에 속한 메시지인지',
     sender_id    BIGINT      NOT NULL COMMENT 'FK: 메시지를 보낸 사용자의 회원 번호',
     content      TEXT        NOT NULL COMMENT '실제 채팅 내용',
+    is_read      TINYINT(1)  NOT NULL DEFAULT 0 COMMENT '읽음 여부 (0: 안읽음, 1: 읽음)',
     message_type VARCHAR(20) NOT NULL DEFAULT 'TEXT' COMMENT '메시지 종류(TEXT, IMAGE, FILE)',
     created_at   DATETIME(6) NOT NULL COMMENT '메시지 전송 일시'
 ) ENGINE = InnoDB
