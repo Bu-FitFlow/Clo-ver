@@ -48,7 +48,9 @@ public enum ErrorCode {
     COMPLETED_DEAL_CANNOT_DELETE(HttpStatus.BAD_REQUEST, "이미 완료된 거래는 삭제할 수 없습니다."),
 
     DEAL_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "거래가 완료(COMPLETED)된 상태에서만 후기를 작성할 수 있습니다."),
-    ALREADY_REVIEWED(HttpStatus.CONFLICT, "해당 거래에 이미 작성된 후기가 존재합니다.");
+    ALREADY_REVIEWED(HttpStatus.CONFLICT, "해당 거래에 이미 작성된 후기가 존재합니다."),
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 후기입니다."),
+    ALREADY_EDITED_REVIEW(HttpStatus.BAD_REQUEST, "후기는 단 한 번만 수정할 수 있습니다.");
 
     private final HttpStatus status;
     private final String message;
