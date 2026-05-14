@@ -1,4 +1,4 @@
-DROP DATABASE clover;
+DROP DATABASE IF EXISTS clover;
 
 CREATE DATABASE clover;
 
