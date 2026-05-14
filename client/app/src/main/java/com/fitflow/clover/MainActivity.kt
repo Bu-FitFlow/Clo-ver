@@ -16,6 +16,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+<<<<<<< HEAD
             // MaterialTheme로 감싸줘야 기본 디자인이 먹힘
             MaterialTheme {
                 Surface(
@@ -23,6 +24,14 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     SignupScreen()
+=======
+            CloverTheme {
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    Greeting(
+                        name = "이렇게 하면 업데이트가 되는 건가?",
+                        modifier = Modifier.padding(innerPadding)
+                    )
+>>>>>>> ede9787de6f7b3ab630986a87c9cc98c7b42e6e8
                 }
             }
         }
