@@ -25,7 +25,7 @@ public class AuthController {
         return ResponseEntity.ok(tokenResponse);
     }
 
-    @Operation(summary = "토큰 재발급", description = "만료된 Accss Token을 헤더의 Refresh Token을 이용해 재발급 받습니다.")
+    @Operation(summary = "토큰 재발급", description = "만료된 Access Token을 헤더의 Refresh Token을 이용해 재발급 받습니다.")
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponse> refresh(@RequestHeader("Authorization-Refresh") String refreshToken) {
         TokenResponse tokenResponse = authService.refresh(refreshToken);
