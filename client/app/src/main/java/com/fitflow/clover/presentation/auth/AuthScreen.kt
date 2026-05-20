@@ -50,7 +50,7 @@ import androidx.compose.ui.*
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.core.content.pm.ShortcutInfoCompat
 import com.fitflow.clover.core.component.CustomCheckBoxRow
-
+import androidx.compose.foundation.layout.navigationBarsPadding
 
 // 1. 로그인 화면 (기존 유지)
 @Composable
@@ -74,7 +74,6 @@ fun LoginMain(navController: NavController) {
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JoinDetail(navController: NavController) {
@@ -88,17 +87,24 @@ fun JoinDetail(navController: NavController) {
     var idCheckStatus by remember { mutableIntStateOf(0) }
     var isEmailDuplicate by remember { mutableStateOf(false) }
 
-    // Scaffold를 사용하여 바닥글(bottomBar)에 버튼을 고정합니다.
     Scaffold(
         containerColor = Color.White,
         bottomBar = {
             // 하단에 고정된 완료 버튼
             Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shadowElevation = 8.dp) {
+                modifier = Modifier
+                    .fillMaxWidth()
+                    // ⭐ [핵심 추가] 시스템 네비게이션 바(홈/뒤로가기) 두께만큼 하단 패딩을 자동으로 부여합니다.
+                    .navigationBarsPadding(),
+                shadowElevation = 8.dp
+            ) {
+                // 패딩 공간과 분리하기 위해 겉을 조금 더 깔끔하게 감싸줍니다.
                 Button(
                     onClick = { navController.navigate("login") },
-                    modifier = Modifier.fillMaxWidth().height(55.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp)
+                        .padding(horizontal = 20.dp, vertical = 4.dp), // 버튼 좌우 여백 및 아래 미세 정렬
                     colors = ButtonDefaults.buttonColors(containerColor = CloverGreen),
                     shape = RoundedCornerShape(8.dp),
                     border = BorderStroke(1.dp, Color.Black)
@@ -111,12 +117,11 @@ fun JoinDetail(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues) // Scaffold의 패딩 적용
+                .padding(paddingValues) // Scaffold가 계산해 준 패딩(bottomBar의 높이 포함)을 적용
                 .padding(horizontal = 35.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 로고 크기를 200 -> 120으로 대폭 축소 (UX 개선)
             Spacer(modifier = Modifier.height(30.dp))
             Image(
                 painter = painterResource(id = R.drawable.frame_31),
@@ -125,7 +130,6 @@ fun JoinDetail(navController: NavController) {
             )
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 입력 칸들 사이의 간격을 10 -> 8로 최적화
             CloverTextField(value = name, onValueChange = { name = it }, label = "이름")
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -175,7 +179,6 @@ fun JoinDetail(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 로그인 유도 텍스트
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -193,12 +196,11 @@ fun JoinDetail(navController: NavController) {
                 )
             }
 
-            // 하단 여유 공간 (스크롤 끝까지 올렸을 때 버튼에 가리지 않게)
-            Spacer(modifier = Modifier.height(20.dp))
+            // 스크롤 영역 최하단 여유 마진
+            Spacer(modifier = Modifier.height(30.dp))
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JoinTerms(navController: NavController) {
