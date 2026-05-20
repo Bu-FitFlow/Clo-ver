@@ -40,7 +40,9 @@ public enum ErrorCode {
     EMAIL_VERIFICATION_RESENT(HttpStatus.FORBIDDEN, "인증 유효시간이 만료되어 새 인증 메일을 발송했습니다. 메일함을 확인해주세요."),
 
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 상품입니다."),
-    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 카테고리입니다.");
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 카테고리입니다."),
+
+    AI_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AI 분석 서버와의 통신에 실패했습니다.");
 
     private final HttpStatus status;
     private final String message;
