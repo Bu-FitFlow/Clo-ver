@@ -1,4 +1,4 @@
-DROP DATABASE clover;
+DROP DATABASE IF EXISTS clover;
 
 CREATE DATABASE clover;
 
@@ -239,14 +239,17 @@ CREATE TABLE deal
 -- 16. 거래 후기 (deal_review) 테이블
 CREATE TABLE deal_review
 (
-    review_id  BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '거래 후기 고유 번호',
-    deal_id    BIGINT      NOT NULL UNIQUE COMMENT 'FK: 어느 거래에 대한 후기인지',
-    author_id  BIGINT      NOT NULL COMMENT 'FK: 후기 작성자 회원 번호',
-    target_id  BIGINT      NOT NULL COMMENT 'FK: 후기 대상자',
-    rating     TINYINT     NOT NULL COMMENT '평점',
-    content    TEXT COMMENT '상세 후기 내용',
-    created_at DATETIME(6) NOT NULL COMMENT '후기 작성 일시',
-    updated_at DATETIME(6) NOT NULL COMMENT '후기 수정 일시'
+    review_id        BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '거래 후기 고유 번호',
+    deal_id          BIGINT      NOT NULL UNIQUE COMMENT 'FK: 어느 거래에 대한 후기인지',
+    author_id        BIGINT      NOT NULL COMMENT 'FK: 후기 작성자 회원 번호',
+    target_id        BIGINT      NOT NULL COMMENT 'FK: 후기 대상자',
+    rating           TINYINT     NOT NULL COMMENT '현재 평점',
+    content          TEXT COMMENT '현재 상세 후기 내용',
+    original_rating  TINYINT COMMENT '수정 전 원본 평점',
+    original_content TEXT COMMENT '수정 전 원본 후기 내용',
+    is_edited        TINYINT(1)  NOT NULL DEFAULT 0 COMMENT '수정 여부 (0: 미수정, 1: 수정됨)',
+    created_at       DATETIME(6) NOT NULL COMMENT '후기 작성 일시',
+    updated_at       DATETIME(6) NOT NULL COMMENT '후기 수정 일시'
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
