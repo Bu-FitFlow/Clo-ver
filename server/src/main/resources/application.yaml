@@ -59,3 +59,4 @@ app:
       #no-reply: ${EMAIL_USERNAME}
   cdn:
     url: https://cdn.clo-ver.shop
+  ai-diagnosis-url: http://206.189.46.237:8000
