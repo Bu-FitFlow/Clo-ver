@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fitflow.clover.presentation.chat.ChatScreen
+import com.fitflow.clover.presentation.chat.ChatViewModel
 import com.fitflow.clover.presentation.diagnosis.BodyAnalysisScreen
 import com.fitflow.clover.presentation.diagnosis.DiagnosisViewModel
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorResultScreen
@@ -34,6 +36,10 @@ fun CloverNavHost() {
 
     val diagnosisViewModel = remember {
         DiagnosisViewModel()
+    }
+
+    val chatViewModel = remember {
+        ChatViewModel()
     }
 
     when (currentScreen.value) {
@@ -96,6 +102,7 @@ fun CloverNavHost() {
                     currentScreen.value = ScreenRoute.Notification
                 },
                 onClickChat = {
+                    chatViewModel.backToChatList()
                     currentScreen.value = ScreenRoute.Chat
                 },
                 onClickTradePost = {
@@ -181,21 +188,27 @@ fun CloverNavHost() {
         }
 
         ScreenRoute.Chat -> {
-            MainPlaceholderScreen(
-                title = "채팅방",
-                description = "채팅방 목록 화면으로 연결될 예정입니다.",
-                onBackToMain = {
+            ChatScreen(
+                viewModel = chatViewModel,
+                openProductChatOnStart = false,
+                onBackClick = {
+                    currentScreen.value = ScreenRoute.Main
+                },
+                onLogoClick = {
                     currentScreen.value = ScreenRoute.Main
                 }
             )
         }
 
         ScreenRoute.ChatRoom -> {
-            MainPlaceholderScreen(
-                title = "채팅",
-                description = "판매자와의 채팅방 화면으로 연결될 예정입니다.",
-                onBackToMain = {
+            ChatScreen(
+                viewModel = chatViewModel,
+                openProductChatOnStart = true,
+                onBackClick = {
                     currentScreen.value = ScreenRoute.ProductDetail
+                },
+                onLogoClick = {
+                    currentScreen.value = ScreenRoute.Main
                 }
             )
         }
