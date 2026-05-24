@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +22,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.fitflow.clover.core.theme.CloverGreen
 import com.fitflow.clover.R
 import kotlinx.coroutines.delay
 
@@ -66,15 +63,9 @@ fun SplashScreen(navController: NavController) {
                 contentDescription = "Clover Logo",
                 modifier = Modifier.size(200.dp)
             )
-            Spacer(modifier = Modifier.height(24.dp))
 
-            // progress 파라미터를 비워두면(무한 루프 형태) 하드코딩 없이
-            // 시스템이 알아서 부드럽게 흐르는 로딩 바 애니메이션을 그려줍니다.
-            LinearProgressIndicator(
-                modifier = Modifier.width(200.dp),
-                color = CloverGreen
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            // 로고와 문구 사이의 간격을 적절하게 조정 (24.dp)
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = "당신의 옷장에 행운을 배달 중이에요",

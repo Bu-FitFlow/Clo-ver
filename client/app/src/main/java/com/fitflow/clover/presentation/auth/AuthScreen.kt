@@ -74,6 +74,7 @@ fun LoginMain(navController: NavController) {
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JoinDetail(navController: NavController) {
@@ -84,7 +85,10 @@ fun JoinDetail(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var nickname by remember { mutableStateOf("") }
 
-    var idCheckStatus by remember { mutableIntStateOf(0) }
+    // ⭐ [개선 포인트] 기존 복잡한 숫자를 버리고, 명확한 상태 2개로 완전히 분리
+    var isIdChecked by remember { mutableStateOf(false) }     // 중복 확인을 한 번이라도 눌렀는가?
+    var isIdAvailable by remember { mutableStateOf(false) }   // 그 아이디를 사용할 수 있는가?
+
     var isEmailDuplicate by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -94,17 +98,15 @@ fun JoinDetail(navController: NavController) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    // ⭐ [핵심 추가] 시스템 네비게이션 바(홈/뒤로가기) 두께만큼 하단 패딩을 자동으로 부여합니다.
                     .navigationBarsPadding(),
                 shadowElevation = 8.dp
             ) {
-                // 패딩 공간과 분리하기 위해 겉을 조금 더 깔끔하게 감싸줍니다.
                 Button(
                     onClick = { navController.navigate("login") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(55.dp)
-                        .padding(horizontal = 20.dp, vertical = 4.dp), // 버튼 좌우 여백 및 아래 미세 정렬
+                        .padding(horizontal = 20.dp, vertical = 4.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = CloverGreen),
                     shape = RoundedCornerShape(8.dp),
                     border = BorderStroke(1.dp, Color.Black)
@@ -117,7 +119,7 @@ fun JoinDetail(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues) // Scaffold가 계산해 준 패딩(bottomBar의 높이 포함)을 적용
+                .padding(paddingValues)
                 .padding(horizontal = 35.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -133,31 +135,68 @@ fun JoinDetail(navController: NavController) {
             CloverTextField(value = name, onValueChange = { name = it }, label = "이름")
             Spacer(modifier = Modifier.height(8.dp))
 
+            // -----------------------------------------------------------------
+            // ⭐ [ID 입력 및 중복 확인/체크마크 분리 영역]
+            // -----------------------------------------------------------------
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CloverTextField(
                     value = id,
-                    onValueChange = { id = it; idCheckStatus = 0 },
+                    onValueChange = {
+                        id = it
+                        // 유저가 아이디를 타이핑하면 "중복 확인 안 한 상태"로 실시간 리셋!
+                        isIdChecked = false
+                        isIdAvailable = false
+                    },
                     label = "ID",
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(10.dp))
 
-                when (idCheckStatus) {
-                    1 -> Image(painter = painterResource(id = R.drawable.check), contentDescription = null, modifier = Modifier.size(24.dp))
-                    2 -> Button(
-                        onClick = { idCheckStatus = 1 },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6B6B)),
+                // 중복 확인 통과 여부에 따라 UI 컴포넌트 자체를 철저히 분리
+                if (isIdChecked && isIdAvailable) {
+                    // ① 중복 없음! 사용 가능할 땐 '체크 이미지'만 독립적으로 노출
+                    Image(
+                        painter = painterResource(id = R.drawable.check),
+                        contentDescription = "사용 가능",
+                        modifier = Modifier.size(28.dp)
+                    )
+                } else {
+                    // ② 아직 누르지 않았거나 중복되어 통과를 못 했을 땐 '버튼'이 상시 대기
+                    Button(
+                        onClick = {
+                            isIdChecked = true
+                            // [임시 테스트용 규칙]: 아이디가 비어있지 않고 "test"가 아니면 통과!
+                            // 나중에 조원들과 백엔드 합칠 때 이 자리에 서버 통신 로직을 넣으시면 됩니다.
+                            isIdAvailable = id.isNotBlank() && id != "test"
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            // 중복 실패 시 버튼을 경고 색상(레드)으로 피드백 변경
+                            containerColor = if (isIdChecked && !isIdAvailable) Color(0xFFFF6B6B) else CloverGreen
+                        ),
                         shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.height(40.dp)
-                    ) { Text("중복", color = Color.White, fontSize = 12.sp) }
-                    else -> Button(
-                        onClick = { idCheckStatus = 2 },
-                        colors = ButtonDefaults.buttonColors(containerColor = CloverGreen),
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.height(40.dp)
-                    ) { Text("중복 확인", color = Color.Black, fontSize = 11.sp) }
+                        modifier = Modifier.height(40.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp)
+                    ) {
+                        Text(
+                            text = if (isIdChecked && !isIdAvailable) "사용 불가 (재시도)" else "중복 확인",
+                            color = if (isIdChecked && !isIdAvailable) Color.White else Color.Black,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
+
+            // [추가 디자인] 아이디가 중복되었을 때 텍스트 필드 밑에 노출되는 친절한 빨간색 경고 에러 가이드
+            if (isIdChecked && !isIdAvailable) {
+                Text(
+                    text = "이미 사용 중이거나 유효하지 않은 아이디입니다.",
+                    color = Color.Red,
+                    fontSize = 12.sp,
+                    modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 4.dp)
+                )
+            }
+            // -----------------------------------------------------------------
 
             Spacer(modifier = Modifier.height(8.dp))
             CloverTextField(value = pw, onValueChange = { pw = it }, label = "password")
@@ -196,11 +235,11 @@ fun JoinDetail(navController: NavController) {
                 )
             }
 
-            // 스크롤 영역 최하단 여유 마진
             Spacer(modifier = Modifier.height(30.dp))
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JoinTerms(navController: NavController) {
