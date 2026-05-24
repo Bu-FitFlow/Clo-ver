@@ -12,5 +12,6 @@ public record ReviewDetailResponse(
         String writerProfileImg,
         int viewCount,
         int commentCount,
+        int wishlistCount,
         LocalDateTime createdAt
 ) {}

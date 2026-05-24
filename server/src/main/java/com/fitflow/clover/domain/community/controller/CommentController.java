@@ -1,6 +1,7 @@
 package com.fitflow.clover.domain.community.controller;
 
 import com.fitflow.clover.domain.community.dto.request.CommentPostRequest;
+import com.fitflow.clover.domain.community.dto.response.CommentResponse;
 import com.fitflow.clover.domain.community.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 @Tag(name = "댓글", description = "댓글 통합 관리 API")
 @RestController
 @RequestMapping("/api/community/{communityId}/comments")
@@ -16,6 +20,16 @@ import org.springframework.web.bind.annotation.*;
 public class CommentController {
 
     private final CommentService commentService;
+
+    @Operation(summary = "댓글 목록 조회")
+    @GetMapping
+    public ResponseEntity<List<CommentResponse>> getComments(
+            @PathVariable Long communityId,
+            Authentication authentication
+    ) {
+        Long memberId = Long.parseLong(authentication.getName());
+        return ResponseEntity.ok(commentService.getComments(communityId, memberId));
+    }
 
     @Operation(summary = "댓글 등록")
     @PostMapping

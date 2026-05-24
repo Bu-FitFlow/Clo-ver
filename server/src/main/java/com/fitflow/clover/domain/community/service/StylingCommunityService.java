@@ -9,6 +9,7 @@ import com.fitflow.clover.domain.community.repository.CommentRepository;
 import com.fitflow.clover.domain.community.repository.CommunityRepository;
 import com.fitflow.clover.domain.member.entity.Member;
 import com.fitflow.clover.domain.member.repository.MemberRepository;
+import com.fitflow.clover.global.infra.redis.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,10 +25,12 @@ public class StylingCommunityService {
     private final CommunityRepository communityRepository;
     private final CommentRepository commentRepository;
     private final MemberRepository memberRepository;
+    private final RedisUtil redisUtil;
+    private final BlockService blockService;
 
-    /** 스타일링 게시판 목록 조회 */
-    public List<CommunityListResponse> getStylingList() {
+    public List<CommunityListResponse> getStylingList(Long currentMemberId) {
         return communityRepository.findByBoardType(BoardType.STYLING).stream()
+                .filter(c -> !blockService.isBlocked(currentMemberId, c.getMemberId()))
                 .map(c -> new CommunityListResponse(
                         c.getCommunityId(),
                         c.getTitle(),
@@ -38,7 +41,6 @@ public class StylingCommunityService {
                 ))
                 .collect(Collectors.toList());
     }
-
 
     @Transactional
     public Long createStylingPost(StylingPostRequest request, Long memberId) {
@@ -51,10 +53,12 @@ public class StylingCommunityService {
         return communityRepository.save(community).getCommunityId();
     }
 
-
+    @Transactional
     public StylingDetailResponse getStylingPost(Long communityId) {
         Community community = communityRepository.findById(communityId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 스타일링 게시글입니다."));
+
+        communityRepository.updateViewCount(communityId);
 
         Member writer = memberRepository.findById(community.getMemberId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
@@ -67,12 +71,12 @@ public class StylingCommunityService {
                 List.of(),
                 writer.getNickname(),
                 null,
-                community.getViewCount(),
+                community.getViewCount() + 1,
                 community.getCommentCount(),
+                community.getWishlistCount(),
                 community.getCreatedAt()
         );
     }
-
 
     @Transactional
     public void updateStylingPost(Long communityId, StylingPostRequest request, Long memberId) {
@@ -86,7 +90,6 @@ public class StylingCommunityService {
         community.updateFreePost(request.title(), request.content());
     }
 
-
     @Transactional
     public void deleteStylingPost(Long communityId, Long memberId) {
         Community community = communityRepository.findById(communityId)
@@ -97,5 +100,22 @@ public class StylingCommunityService {
         }
 
         communityRepository.delete(community);
+    }
+
+    @Transactional
+    public int toggleLike(Long communityId, Long memberId) {
+        String redisKey = "LIKE:" + memberId + ":" + communityId;
+
+        Community community = communityRepository.findById(communityId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+
+        if (redisUtil.getData(redisKey) != null) {
+            throw new IllegalStateException("이미 좋아요를 눌렀습니다.");
+        }
+
+        community.increaseLikeCount();
+        redisUtil.setDataExpire(redisKey, "liked", 24 * 60 * 60 * 1000L);
+
+        return community.getWishlistCount();
     }
 }

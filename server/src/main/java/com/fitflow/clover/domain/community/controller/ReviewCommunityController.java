@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 @Tag(name = "리뷰게시판", description = "리뷰게시판 통합 관리 API")
 @RestController
 @RequestMapping("/api/community/review")
@@ -23,8 +24,11 @@ public class ReviewCommunityController {
 
     @Operation(summary = "리뷰 게시판 목록 조회")
     @GetMapping
-    public ResponseEntity<List<CommunityListResponse>> getReviewList() {
-        return ResponseEntity.ok(reviewCommunityService.getReviewList());
+    public ResponseEntity<List<CommunityListResponse>> getReviewList(
+            Authentication authentication
+    ) {
+        Long memberId = Long.parseLong(authentication.getName());
+        return ResponseEntity.ok(reviewCommunityService.getReviewList(memberId));
     }
 
     @Operation(summary = "리뷰 게시글 등록")
@@ -66,5 +70,15 @@ public class ReviewCommunityController {
         Long memberId = Long.parseLong(authentication.getName());
         reviewCommunityService.deleteReviewPost(communityId, memberId);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "리뷰 게시글 좋아요")
+    @PostMapping("/{communityId}/like")
+    public ResponseEntity<Integer> toggleLike(
+            @PathVariable Long communityId,
+            Authentication authentication
+    ) {
+        Long memberId = Long.parseLong(authentication.getName());
+        return ResponseEntity.ok(reviewCommunityService.toggleLike(communityId, memberId));
     }
 }

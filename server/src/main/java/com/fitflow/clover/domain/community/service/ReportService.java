@@ -15,7 +15,6 @@ public class ReportService {
 
     public CommunityReportResponse processCommunityReport(CommunityReportRequest request, Long memberId) {
         return new CommunityReportResponse(
-                701L,
                 request.communityId(),
                 request.reportReason(),
                 "RECEIVED",
@@ -23,11 +22,10 @@ public class ReportService {
         );
     }
 
-
     public CommentReportResponse processCommentReport(CommentReportRequest request, Long memberId) {
         return new CommentReportResponse(
-                703L,
                 request.commentId(),
+                request.reportReason(),
                 "RECEIVED",
                 LocalDateTime.now()
         );

@@ -39,8 +39,8 @@ public class Community extends BaseTimeEntity {
     @Builder.Default
     private int commentCount = 0;
 
-    // ================= DB에 컬럼 없음 → @Transient로 변경 ================= //
-    @Transient
+    @Column(name = "wishlist_count", nullable = false)
+    @Builder.Default
     private int wishlistCount = 0;
 
     @Transient
@@ -50,7 +50,6 @@ public class Community extends BaseTimeEntity {
     @Column(name = "post_status", length = 20)
     private PostStatus postStatus;
 
-    // ================= 마켓 관련 가상 필드 ================= //
     @Transient
     private String grade;
 
@@ -66,11 +65,24 @@ public class Community extends BaseTimeEntity {
     @Transient
     private Long colorId;
 
-
-    // ================= 비즈니스 메서드 ================= //
-
     public void increaseCommentCount() {
         this.commentCount++;
+    }
+
+    public void decreaseCommentCount() {
+        if (this.commentCount > 0) {
+            this.commentCount--;
+        }
+    }
+
+    public void increaseLikeCount() {
+        this.wishlistCount++;
+    }
+
+    public void decreaseLikeCount() {
+        if (this.wishlistCount > 0) {
+            this.wishlistCount--;
+        }
     }
 
     public void assignMarketOptions(Integer price, String grade, String recommendedType, String faceShape, Long categoryId, Long colorId) {
@@ -82,15 +94,11 @@ public class Community extends BaseTimeEntity {
         this.colorId = colorId;
     }
 
-    public boolean toggleWishlistSingleTable(Long memberId) {
-        this.wishlistCount++;
-        return true;
-    }
-
     public void updateFreePost(String title, String content) {
         this.title = title;
         this.content = content;
     }
+
     public void increaseViewCount() {
         this.viewCount++;
     }
