@@ -5,5 +5,4 @@ public enum BoardType {
     FREE,
     REVIEW,
     STYLING,
-    SELL;
 }
