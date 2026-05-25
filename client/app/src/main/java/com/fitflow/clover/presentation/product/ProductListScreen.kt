@@ -12,13 +12,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -50,6 +49,8 @@ fun ProductListScreen(
     onWriteClick: () -> Unit = {},
     onBackClick: () -> Unit = {}
 ) {
+    var isFabMenuExpanded by remember { mutableStateOf(false) }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color.White
@@ -62,10 +63,8 @@ fun ProductListScreen(
                         .fillMaxWidth()
                         .statusBarsPadding()
                 ) {
-                    // 로고 상단바
                     ProductTopBar(onBackClick = onBackClick)
 
-                    // 드롭다운 + 검색 + 필터 버튼 행
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -73,7 +72,6 @@ fun ProductListScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // 대분류 드롭다운 (전체)
                         MainCategoryDropdown(
                             selectedCategory = uiState.selectedMainCategory,
                             isExpanded = uiState.isMainCategoryExpanded,
@@ -81,7 +79,6 @@ fun ProductListScreen(
                             onCategorySelect = onMainCategorySelect
                         )
 
-                        // 세부 드롭다운 (스타일) - 항상 활성화
                         SubCategoryDropdown(
                             selectedSubCategory = uiState.selectedSubCategory,
                             subCategoryList = uiState.subCategoryList,
@@ -93,7 +90,6 @@ fun ProductListScreen(
 
                         Spacer(modifier = Modifier.weight(1f))
 
-                        // 검색 버튼
                         IconButton(
                             onClick = onSearchClick,
                             modifier = Modifier.size(36.dp)
@@ -106,15 +102,14 @@ fun ProductListScreen(
                             )
                         }
 
-                        // 필터 버튼 (최신순) - 토글 없이 단순 클릭
                         IconButton(
                             onClick = onFilterClick,
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
-                                painter = painterResource(id = android.R.drawable.ic_menu_sort_by_size),
+                                painter = painterResource(id = R.drawable.filter),
                                 contentDescription = "최신순 필터",
-                                tint = Color.Black,
+                                tint = Color.Unspecified,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -124,21 +119,62 @@ fun ProductListScreen(
                 }
             },
             floatingActionButton = {
-                FloatingActionButton(
-                    onClick = onWriteClick,
-                    containerColor = CloverGreen,
-                    shape = CircleShape
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "글쓰기",
-                        tint = Color.White
+                Box {
+                    Image(
+                        painter = painterResource(id = R.drawable.listbar),
+                        contentDescription = "메뉴",
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) { isFabMenuExpanded = !isFabMenuExpanded }
                     )
+
+                    DropdownMenu(
+                        expanded = isFabMenuExpanded,
+                        onDismissRequest = { isFabMenuExpanded = false },
+                        containerColor = Color.White
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("알림", fontSize = 15.sp, color = Color.Black) },
+                            onClick = { isFabMenuExpanded = false }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("채팅방", fontSize = 15.sp, color = Color.Black) },
+                            onClick = { isFabMenuExpanded = false }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("판매글", fontSize = 15.sp, color = Color.Black) },
+                            onClick = { isFabMenuExpanded = false }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("커뮤니티", fontSize = 15.sp, color = Color.Black) },
+                            onClick = { isFabMenuExpanded = false }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("마이 페이지", fontSize = 15.sp, color = Color.Black) },
+                            onClick = { isFabMenuExpanded = false }
+                        )
+
+                        HorizontalDivider(color = Color.LightGray, thickness = 0.5.dp)
+
+                        DropdownMenuItem(
+                            text = { Text("판매", fontSize = 15.sp, color = Color.Black) },
+                            onClick = { isFabMenuExpanded = false }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("글쓰기", fontSize = 15.sp, color = Color.Black) },
+                            onClick = {
+                                isFabMenuExpanded = false
+                                onWriteClick()
+                            }
+                        )
+                    }
                 }
             }
         ) { paddingValues ->
             when {
-                // 로딩 중
                 uiState.isLoading -> {
                     Box(
                         modifier = Modifier
@@ -149,7 +185,6 @@ fun ProductListScreen(
                         CircularProgressIndicator(color = CloverGreen)
                     }
                 }
-                // 에러
                 uiState.errorMessage != null -> {
                     Box(
                         modifier = Modifier
@@ -164,7 +199,6 @@ fun ProductListScreen(
                         )
                     }
                 }
-                // 상품 없음
                 uiState.products.isEmpty() -> {
                     Box(
                         modifier = Modifier
@@ -179,7 +213,6 @@ fun ProductListScreen(
                         )
                     }
                 }
-                // 2열 그리드 피드
                 else -> {
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
@@ -220,12 +253,11 @@ fun ProductGridCard(
                 interactionSource = remember { MutableInteractionSource() }
             ) { onProductClick(product.productId) }
     ) {
-        // 상품 이미지
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(12.dp))
                 .background(Color(0xFFEEEEEE))
         ) {
             if (product.thumbnailImageUrl != null) {
@@ -256,7 +288,6 @@ fun ProductGridCard(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        // 상품 제목
         Text(
             text = product.title,
             fontSize = 13.sp,
@@ -267,7 +298,6 @@ fun ProductGridCard(
 
         Spacer(modifier = Modifier.height(2.dp))
 
-        // 가격
         Text(
             text = formatPrice(product.price),
             fontSize = 14.sp,
@@ -277,7 +307,6 @@ fun ProductGridCard(
 
         Spacer(modifier = Modifier.height(2.dp))
 
-        // 작성 시간 + 좋아요 (좋아요 오른쪽 정렬)
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -288,8 +317,6 @@ fun ProductGridCard(
                 fontSize = 11.sp,
                 color = Color.Gray
             )
-
-            // 좋아요 (빨간 하트 + 숫자)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -432,11 +459,19 @@ private val dummyProducts = listOf(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ProductListPreview() {
+    var showEdit by remember { mutableStateOf(false) }
     var uiState by remember {
         mutableStateOf(ProductListUiState(products = dummyProducts))
     }
+
+    if (showEdit) {
+        ProductEditScreen(onBackClick = { showEdit = false })
+        return@ProductListPreview
+    }
+
     ProductListScreen(
         uiState = uiState,
+        onWriteClick = { showEdit = true },
         onMainCategorySelect = { category ->
             uiState = uiState.copy(
                 selectedMainCategory = category,

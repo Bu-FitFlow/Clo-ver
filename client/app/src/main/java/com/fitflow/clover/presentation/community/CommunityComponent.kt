@@ -7,8 +7,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PersonOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -55,7 +59,6 @@ fun PostItem(
             verticalAlignment = Alignment.Top
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                // 카테고리 태그
                 Text(
                     text = "[${post.category.displayName}]",
                     fontSize = 12.sp,
@@ -65,7 +68,6 @@ fun PostItem(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // 제목
                 Text(
                     text = post.title,
                     fontSize = 15.sp,
@@ -77,7 +79,6 @@ fun PostItem(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // 본문 미리보기
                 Text(
                     text = post.contentPreview,
                     fontSize = 13.sp,
@@ -88,7 +89,6 @@ fun PostItem(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // 시간 + 댓글
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -98,7 +98,6 @@ fun PostItem(
                 }
             }
 
-            // 더보기 버튼 (⋮)
             IconButton(
                 onClick = { onMenuClick(post.postId) },
                 modifier = Modifier.size(32.dp)
@@ -341,7 +340,16 @@ fun PostMenuPopup(
         containerColor = Color.White
     ) {
         if (isMyPost) {
+            // 내 글일 때: 수정 / 삭제
             DropdownMenuItem(
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = Color.DarkGray,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
                 text = { Text("수정하기", fontSize = 14.sp) },
                 onClick = {
                     onEditClick()
@@ -349,6 +357,14 @@ fun PostMenuPopup(
                 }
             )
             DropdownMenuItem(
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        tint = Color.Red,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
                 text = { Text("삭제하기", fontSize = 14.sp, color = Color.Red) },
                 onClick = {
                     onDeleteClick()
@@ -356,14 +372,13 @@ fun PostMenuPopup(
                 }
             )
         } else {
+            // 다른 사람 글일 때: 신고 / 차단
             DropdownMenuItem(
                 leadingIcon = {
                     Icon(
-                        painter = androidx.compose.ui.res.painterResource(
-                            id = android.R.drawable.ic_menu_close_clear_cancel
-                        ),
+                        imageVector = Icons.Default.Block,
                         contentDescription = null,
-                        tint = Color.Gray,
+                        tint = Color.Red,
                         modifier = Modifier.size(18.dp)
                     )
                 },
@@ -376,9 +391,7 @@ fun PostMenuPopup(
             DropdownMenuItem(
                 leadingIcon = {
                     Icon(
-                        painter = androidx.compose.ui.res.painterResource(
-                            id = android.R.drawable.ic_menu_close_clear_cancel
-                        ),
+                        imageVector = Icons.Default.PersonOff,
                         contentDescription = null,
                         tint = Color.Gray,
                         modifier = Modifier.size(18.dp)

@@ -10,17 +10,12 @@ import com.fitflow.clover.domain.modal.ProductSummary
 data class ProductListUiState(
     val isLoading: Boolean = false,
     val products: List<ProductSummary> = emptyList(),
-
-    // 대분류 드롭다운 (전체/상의/바지/아우터/원피스·스커트)
     val selectedMainCategory: ProductMainCategory = ProductMainCategory.ALL,
     val isMainCategoryExpanded: Boolean = false,
-
-    // 세부 드롭다운 (대분류 선택 시 자동 연동)
     val selectedSubCategory: ProductSubCategory? = null,
     val isSubCategoryExpanded: Boolean = false,
     val subCategoryList: List<ProductSubCategory> = emptyList(),
-
-    val isLatestOrder: Boolean = true,        // 필터 버튼 → 최신순
+    val isLatestOrder: Boolean = true,
     val errorMessage: String? = null
 )
 
@@ -29,9 +24,32 @@ data class ProductListUiState(
 // ─────────────────────────────────────────────────────────
 data class TradeUiState(
     val isLoading: Boolean = false,
-    val sellingProducts: List<ProductSummary> = emptyList(),   // 판매 중 목록
-    val soldProducts: List<ProductSummary> = emptyList(),      // 거래 완료 목록
-    val isSellingTabSelected: Boolean = false,                 // false = 거래완료 탭
+    val sellingProducts: List<ProductSummary> = emptyList(),
+    val soldProducts: List<ProductSummary> = emptyList(),
+    val isSellingTabSelected: Boolean = true,
     val errorMessage: String? = null
 )
 
+// ─────────────────────────────────────────────────────────
+// 상품 등록/수정 화면 상태
+// ─────────────────────────────────────────────────────────
+data class ProductEditUiState(
+    val isLoading: Boolean = false,
+    val isEditMode: Boolean = false,           // false = 등록, true = 수정
+    val productId: Long? = null,               // 수정 시 기존 상품 ID
+    val title: String = "",                    // 상품명
+    val price: String = "",                    // 판매 가격
+    val description: String = "",              // 상품 정보
+    val tradeLocation: String = "",            // 거래 지역
+    val size: String = "",                     // 사이즈
+    val fit: String = "",                      // 핏 선택 사항
+    val selectedMainCategory: ProductMainCategory? = null,
+    val isMainCategoryExpanded: Boolean = false,
+    val selectedSubCategory: ProductSubCategory? = null,
+    val isSubCategoryExpanded: Boolean = false,
+    val subCategoryList: List<ProductSubCategory> = emptyList(),
+    val imageUris: List<String> = emptyList(), // 선택한 이미지 목록 (최대 5장)
+    val isSubmitting: Boolean = false,
+    val isSubmitSuccess: Boolean = false,
+    val errorMessage: String? = null
+)

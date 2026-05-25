@@ -2,6 +2,8 @@ package com.fitflow.clover.presentation.community
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,10 +11,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PersonOff
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,12 +23,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.painterResource
 import com.fitflow.clover.R
 import com.fitflow.clover.domain.modal.CommunityCategory
 import com.fitflow.clover.domain.modal.CommunityComment
@@ -62,7 +65,6 @@ fun CommunityListScreen(
                         .fillMaxWidth()
                         .statusBarsPadding()
                 ) {
-                    // 뒤로가기 + 타이틀
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -70,20 +72,18 @@ fun CommunityListScreen(
                             .padding(horizontal = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.back_icon),
-                                contentDescription = "뒤로가기",
-                                tint = Color.Unspecified,
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clickable(
-                                        indication = null,
-                                        interactionSource = remember { MutableInteractionSource() }
-                                    ) { onBackClick() }
-                                    .padding(12.dp)
-                            )
-                        }
+                        Icon(
+                            painter = painterResource(id = R.drawable.back_icon),
+                            contentDescription = "뒤로가기",
+                            tint = Color.Unspecified,
+                            modifier = Modifier
+                                .padding(12.dp)
+                                .size(24.dp)
+                                .clickable(
+                                    indication = null,
+                                    interactionSource = remember { MutableInteractionSource() }
+                                ) { onBackClick() }
+                        )
                         Box(
                             modifier = Modifier.weight(1f),
                             contentAlignment = Alignment.Center
@@ -103,7 +103,6 @@ fun CommunityListScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
                     ) {
-                        // 검색창
                         OutlinedTextField(
                             value = uiState.searchQuery,
                             onValueChange = onSearchQueryChange,
@@ -125,7 +124,6 @@ fun CommunityListScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // 카테고리 탭
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(36.dp)
@@ -160,7 +158,6 @@ fun CommunityListScreen(
             }
         ) { paddingValues ->
             when {
-                // 로딩 중
                 uiState.isLoading -> {
                     Box(
                         modifier = Modifier
@@ -171,7 +168,6 @@ fun CommunityListScreen(
                         CircularProgressIndicator(color = CloverGreen)
                     }
                 }
-                // 에러
                 uiState.errorMessage != null -> {
                     Box(
                         modifier = Modifier
@@ -186,7 +182,6 @@ fun CommunityListScreen(
                         )
                     }
                 }
-                // 글 목록
                 else -> {
                     LazyColumn(
                         modifier = Modifier
@@ -254,7 +249,6 @@ fun CommunityDetailScreen(
                             .fillMaxSize()
                             .padding(paddingValues)
                     ) {
-                        // 게시글 본문 카드
                         item {
                             Card(
                                 modifier = Modifier
@@ -265,7 +259,6 @@ fun CommunityDetailScreen(
                                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                             ) {
                                 Column(modifier = Modifier.fillMaxWidth()) {
-                                    // 제목
                                     Text(
                                         text = post.title,
                                         fontSize = 20.sp,
@@ -279,14 +272,12 @@ fun CommunityDetailScreen(
                                         )
                                     )
 
-                                    // 작성자 정보
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(horizontal = 16.dp, vertical = 4.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        // 프로필 이미지 placeholder
                                         Surface(
                                             modifier = Modifier.size(28.dp),
                                             shape = CircleShape,
@@ -318,14 +309,12 @@ fun CommunityDetailScreen(
                                     Spacer(modifier = Modifier.height(8.dp))
                                     HorizontalDivider(color = Color.LightGray)
 
-                                    // 본문 블록 렌더링
                                     post.contentBlocks.forEach { block ->
                                         ContentBlockItem(block = block)
                                     }
 
                                     Spacer(modifier = Modifier.height(8.dp))
 
-                                    // 좋아요 버튼 + 더보기 메뉴
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -363,7 +352,6 @@ fun CommunityDetailScreen(
                             }
                         }
 
-                        // 댓글 섹션
                         item {
                             Card(
                                 modifier = Modifier
@@ -376,7 +364,6 @@ fun CommunityDetailScreen(
                                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                             ) {
                                 Column {
-                                    // 댓글 탭 헤더
                                     Box(
                                         modifier = Modifier
                                             .padding(start = 16.dp, top = 8.dp)
@@ -399,7 +386,6 @@ fun CommunityDetailScreen(
                                         }
                                     }
 
-                                    // 댓글 목록
                                     post.comments.forEach { comment ->
                                         CommentItem(
                                             comment = comment,
@@ -408,7 +394,6 @@ fun CommunityDetailScreen(
                                         )
                                     }
 
-                                    // 댓글 입력창
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -437,7 +422,6 @@ fun CommunityDetailScreen(
                             }
                         }
 
-                        // 하단 여백
                         item { Spacer(modifier = Modifier.height(80.dp)) }
                     }
                 }
@@ -473,7 +457,6 @@ fun CommunityWriteScreen(
                 ) {
                     CommunityCloverTopBar(onBackClick = onBackClick)
 
-                    // 제목 입력 + 등록 버튼
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -511,7 +494,6 @@ fun CommunityWriteScreen(
 
                     HorizontalDivider(color = Color.LightGray)
 
-                    // 카테고리 선택 + 이미지 추가 버튼
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -604,7 +586,6 @@ fun CommunityEditScreen(
                                 onValueChange = onTitleChange
                             )
                         }
-                        // 작성 화면과 다른 점: "수정" 버튼
                         TextButton(
                             onClick = onSubmitClick,
                             enabled = !uiState.isSubmitting
@@ -662,9 +643,8 @@ fun CommunityEditScreen(
 }
 
 // ─────────────────────────────────────────────────────────
-// 공통 - 로고 상단바 (상세/작성/수정 화면)
+// 공통 - 로고 상단바
 // ─────────────────────────────────────────────────────────
-@JvmOverloads
 @Composable
 fun CommunityCloverTopBar(
     onBackClick: () -> Unit = {}
@@ -678,20 +658,18 @@ fun CommunityCloverTopBar(
             .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onBackClick) {
-            Icon(
-                painter = painterResource(id = R.drawable.back_icon),
-                contentDescription = "뒤로가기",
-                tint = Color.Unspecified,
-                modifier = Modifier
-                    .padding(12.dp)
-                    .size(24.dp)
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) { onBackClick() }
-            )
-        }
+        Icon(
+            painter = painterResource(id = R.drawable.back_icon),
+            contentDescription = "뒤로가기",
+            tint = Color.Unspecified,
+            modifier = Modifier
+                .padding(12.dp)
+                .size(24.dp)
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) { onBackClick() }
+        )
         Box(
             modifier = Modifier.weight(1f),
             contentAlignment = Alignment.Center
@@ -699,7 +677,8 @@ fun CommunityCloverTopBar(
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Clo-ver 로고",
-                modifier = Modifier.width(58.dp)
+                modifier = Modifier
+                    .width(58.dp)
                     .height(45.dp),
                 contentScale = ContentScale.Fit
             )
@@ -709,7 +688,7 @@ fun CommunityCloverTopBar(
 }
 
 // ─────────────────────────────────────────────────────────
-// 공통 - 제목 입력 필드 (테두리 없는 스타일)
+// 공통 - 제목 입력 필드
 // ─────────────────────────────────────────────────────────
 @Composable
 fun BasicTitleInput(
@@ -756,6 +735,18 @@ private val dummyPosts = listOf(
     ),
     CommunityPostSummary(
         postId = 2L,
+        category = CommunityCategory.FREE,
+        title = "중고 거래 처음인데 도움 주세요",
+        contentPreview = "처음이라 어떻게 해야 할지 모르겠어요",
+        authorNickname = "초보자",
+        authorProfileImageUrl = null,
+        likeCount = 5,
+        commentCount = 3,
+        createdAt = "2시간 전",
+        thumbnailImageUrl = null
+    ),
+    CommunityPostSummary(
+        postId = 3L,
         category = CommunityCategory.REVIEW,
         title = "무신사 구매 후기 솔직하게 씁니다",
         contentPreview = "배송은 빠른데 사이즈가 생각보다 크게 나왔어요",
@@ -767,7 +758,19 @@ private val dummyPosts = listOf(
         thumbnailImageUrl = null
     ),
     CommunityPostSummary(
-        postId = 3L,
+        postId = 4L,
+        category = CommunityCategory.REVIEW,
+        title = "빈티지샵 후기 남겨요",
+        contentPreview = "퀄리티 대비 가격이 너무 좋아요",
+        authorNickname = "리뷰어",
+        authorProfileImageUrl = null,
+        likeCount = 18,
+        commentCount = 6,
+        createdAt = "4시간 전",
+        thumbnailImageUrl = null
+    ),
+    CommunityPostSummary(
+        postId = 5L,
         category = CommunityCategory.COORDINATION,
         title = "캐주얼 데일리룩 공유해요",
         contentPreview = "흰티에 와이드 팬츠 조합인데 생각보다 잘 어울려요",
@@ -777,6 +780,18 @@ private val dummyPosts = listOf(
         commentCount = 12,
         createdAt = "5시간 전",
         thumbnailImageUrl = null
+    ),
+    CommunityPostSummary(
+        postId = 6L,
+        category = CommunityCategory.COORDINATION,
+        title = "겨울 코디 추천해요",
+        contentPreview = "패딩에 청바지 조합 어떤가요?",
+        authorNickname = "스타일리스트",
+        authorProfileImageUrl = null,
+        likeCount = 22,
+        commentCount = 9,
+        createdAt = "6시간 전",
+        thumbnailImageUrl = null
     )
 )
 
@@ -785,16 +800,9 @@ private val dummyPost = CommunityPost(
     category = CommunityCategory.FREE,
     title = "제목이 들어가는 공간입니다",
     contentBlocks = listOf(
-        CommunityContentBlock.TextBlock(
-            "내용"
-        ),
-        CommunityContentBlock.ImageBlock(
-            imageUrl = "",
-            description = " 이미지 "
-        ),
-        CommunityContentBlock.TextBlock(
-            "내용"
-        )
+        CommunityContentBlock.TextBlock("내용"),
+        CommunityContentBlock.ImageBlock(imageUrl = "", description = "이미지"),
+        CommunityContentBlock.TextBlock("내용")
     ),
     authorNickname = "야르",
     authorProfileImageUrl = null,
@@ -834,30 +842,125 @@ private val dummyPost = CommunityPost(
 )
 
 // ─────────────────────────────────────────────────────────
-// Preview
+// Preview 화면 상태
+// ─────────────────────────────────────────────────────────
+enum class CommunityPreviewScreen {
+    LIST, DETAIL, WRITE
+}
+
+// ─────────────────────────────────────────────────────────
+// Preview - 목록/상세/작성 화면 전환 가능
 // ─────────────────────────────────────────────────────────
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun CommunityListPreview() {
-    CommunityListScreen(
-        uiState = CommunityListUiState(posts = dummyPosts)
-    )
+    var currentScreen by remember { mutableStateOf(CommunityPreviewScreen.LIST) }
+    var listUiState by remember { mutableStateOf(CommunityListUiState(posts = dummyPosts)) }
+    var detailUiState by remember { mutableStateOf(CommunityDetailUiState(post = dummyPost)) }
+    var writeUiState by remember { mutableStateOf(CommunityWriteUiState()) }
+
+    when (currentScreen) {
+        CommunityPreviewScreen.LIST -> {
+            CommunityListScreen(
+                uiState = listUiState,
+                onPostClick = { currentScreen = CommunityPreviewScreen.DETAIL },
+                onWriteClick = { currentScreen = CommunityPreviewScreen.WRITE },
+                onCategorySelect = { category ->
+                    listUiState = listUiState.copy(
+                        selectedCategory = category,
+                        posts = if (category == CommunityCategory.ALL) dummyPosts
+                        else dummyPosts.filter { it.category == category }
+                    )
+                },
+                onSearchQueryChange = { query ->
+                    listUiState = listUiState.copy(
+                        searchQuery = query,
+                        posts = if (query.isEmpty()) dummyPosts
+                        else dummyPosts.filter { it.title.contains(query) }
+                    )
+                }
+            )
+        }
+
+        CommunityPreviewScreen.DETAIL -> {
+            CommunityDetailScreen(
+                uiState = detailUiState,
+                onBackClick = { currentScreen = CommunityPreviewScreen.LIST },
+                onLikeClick = {
+                    val current = detailUiState.post ?: return@CommunityDetailScreen
+                    detailUiState = detailUiState.copy(
+                        post = current.copy(
+                            isLiked = !current.isLiked,
+                            likeCount = if (current.isLiked) current.likeCount - 1
+                            else current.likeCount + 1
+                        )
+                    )
+                },
+                onCommentInputChange = { input ->
+                    detailUiState = detailUiState.copy(commentInput = input)
+                },
+                onCommentSubmit = {
+                    val input = detailUiState.commentInput
+                    if (input.isEmpty()) return@CommunityDetailScreen
+                    val current = detailUiState.post ?: return@CommunityDetailScreen
+                    detailUiState = detailUiState.copy(
+                        post = current.copy(
+                            comments = current.comments + CommunityComment(
+                                commentId = System.currentTimeMillis(),
+                                authorNickname = "나",
+                                authorProfileImageUrl = null,
+                                content = input,
+                                createdAt = "방금 전",
+                                isMyComment = true,
+                                replies = emptyList()
+                            )
+                        ),
+                        commentInput = ""
+                    )
+                },
+                onMenuClick = {
+                    detailUiState = detailUiState.copy(
+                        isMenuExpanded = !detailUiState.isMenuExpanded
+                    )
+                }
+            )
+        }
+
+        CommunityPreviewScreen.WRITE -> {
+            CommunityWriteScreen(
+                uiState = writeUiState,
+                onBackClick = { currentScreen = CommunityPreviewScreen.LIST },
+                onTitleChange = { writeUiState = writeUiState.copy(title = it) },
+                onCategorySelect = { category ->
+                    writeUiState = writeUiState.copy(
+                        selectedCategory = category,
+                        isCategoryDropdownExpanded = false
+                    )
+                },
+                onCategoryDropdownToggle = { isExpanded ->
+                    writeUiState = writeUiState.copy(isCategoryDropdownExpanded = isExpanded)
+                },
+                onSubmitClick = { currentScreen = CommunityPreviewScreen.LIST }
+            )
+        }
+    }
 }
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun CommunityDetailPreview() {
     CommunityDetailScreen(
-        uiState = CommunityDetailUiState(post = dummyPost)
+        uiState = CommunityDetailUiState(
+            post = dummyPost,
+            isMenuExpanded = true
+        )
     )
 }
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun CommunityWritePreview() {
-    var uiState by remember {
-        mutableStateOf(CommunityWriteUiState())
-    }
+    var uiState by remember { mutableStateOf(CommunityWriteUiState()) }
     CommunityWriteScreen(
         uiState = uiState,
         onCategorySelect = { category ->
@@ -869,18 +972,14 @@ fun CommunityWritePreview() {
         onCategoryDropdownToggle = { isExpanded ->
             uiState = uiState.copy(isCategoryDropdownExpanded = isExpanded)
         },
-        onTitleChange = { title ->
-            uiState = uiState.copy(title = title)
-        }
+        onTitleChange = { uiState = uiState.copy(title = it) }
     )
 }
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun CommunityEditPreview() {
-    var uiState by remember {
-        mutableStateOf(CommunityEditUiState())
-    }
+    var uiState by remember { mutableStateOf(CommunityEditUiState()) }
     CommunityEditScreen(
         uiState = uiState,
         onCategorySelect = { category ->
@@ -892,8 +991,6 @@ fun CommunityEditPreview() {
         onCategoryDropdownToggle = { isExpanded ->
             uiState = uiState.copy(isCategoryDropdownExpanded = isExpanded)
         },
-        onTitleChange = { title ->
-            uiState = uiState.copy(title = title)
-        }
+        onTitleChange = { uiState = uiState.copy(title = it) }
     )
 }
