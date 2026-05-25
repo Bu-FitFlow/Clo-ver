@@ -9,7 +9,7 @@ import com.fitflow.clover.presentation.auth.*
 
 @Composable
 fun CloverNavHost(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = "splash") {
+    NavHost(navController = navController, startDestination = "Splash") {
         composable("splash") { SplashScreen(navController) }
         composable("login") { LoginMain(navController) }
         composable("join_terms") { JoinTerms(navController) }

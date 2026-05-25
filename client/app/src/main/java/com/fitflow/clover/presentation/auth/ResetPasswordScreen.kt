@@ -38,7 +38,7 @@ import androidx.navigation.NavController
 import com.fitflow.clover.core.theme.CloverGreen
 import com.fitflow.clover.core.component.CustomOutlinedInput
 import com.fitflow.clover.R
-
+import androidx.compose.ui.tooling.preview.Preview
 
 // 4. 새 비밀번호 입력 화면 (수정 완료)
 @OptIn(ExperimentalMaterial3Api::class)
