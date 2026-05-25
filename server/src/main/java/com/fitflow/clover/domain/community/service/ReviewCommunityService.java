@@ -27,6 +27,7 @@ public class ReviewCommunityService {
     private final MemberRepository memberRepository;
     private final RedisUtil redisUtil;
     private final BlockService blockService;
+    private final NotificationService notificationService;
 
     public List<CommunityListResponse> getReviewList(Long currentMemberId) {
         return communityRepository.findByBoardType(BoardType.REVIEW).stream()
@@ -114,6 +115,11 @@ public class ReviewCommunityService {
 
         community.increaseLikeCount();
         redisUtil.setDataExpire(redisKey, "liked", 24 * 60 * 60 * 1000L);
+
+        Member sender = memberRepository.findById(memberId).orElse(null);
+        if (sender != null) {
+            notificationService.notifyLike(community.getMemberId(), memberId, communityId, sender.getNickname());
+        }
 
         return community.getWishlistCount();
     }

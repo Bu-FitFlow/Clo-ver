@@ -23,13 +23,13 @@ public class CommentService {
     private final CommunityRepository communityRepository;
     private final MemberRepository memberRepository;
     private final BlockService blockService;
+    private final NotificationService notificationService;
 
     @Transactional
     public Long createComment(Long communityId, Long memberId, String content) {
         Community community = communityRepository.findById(communityId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
 
-        // 게시글 작성자를 차단했으면 댓글 못 달게
         if (blockService.isBlocked(memberId, community.getMemberId())) {
             throw new IllegalStateException("차단한 사용자의 게시글에는 댓글을 달 수 없습니다.");
         }
@@ -45,6 +45,11 @@ public class CommentService {
         commentRepository.save(comment);
         community.increaseCommentCount();
 
+        Member sender = memberRepository.findById(memberId).orElse(null);
+        if (sender != null) {
+            notificationService.notifyComment(community.getMemberId(), memberId, communityId, sender.getNickname());
+        }
+
         return comment.getCommentId();
     }
 
@@ -53,7 +58,6 @@ public class CommentService {
         Community community = communityRepository.findById(communityId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
 
-        // 게시글 작성자를 차단했으면 대댓글 못 달게
         if (blockService.isBlocked(memberId, community.getMemberId())) {
             throw new IllegalStateException("차단한 사용자의 게시글에는 댓글을 달 수 없습니다.");
         }
@@ -69,6 +73,12 @@ public class CommentService {
         commentRepository.save(reply);
         community.increaseCommentCount();
 
+        Comment parentComment = commentRepository.findById(parentId).orElse(null);
+        Member sender = memberRepository.findById(memberId).orElse(null);
+        if (parentComment != null && sender != null) {
+            notificationService.notifyReply(parentComment.getMemberId(), memberId, communityId, sender.getNickname());
+        }
+
         return reply.getCommentId();
     }
 
@@ -76,8 +86,7 @@ public class CommentService {
         return commentRepository.findByCommunityIdAndParentIdIsNull(communityId).stream()
                 .filter(comment -> !blockService.isBlocked(currentMemberId, comment.getMemberId()))
                 .map(comment -> {
-                    Member writer = memberRepository.findById(comment.getMemberId())
-                            .orElse(null);
+                    Member writer = memberRepository.findById(comment.getMemberId()).orElse(null);
                     return new CommentResponse(
                             comment.getCommentId(),
                             comment.getCommunityId(),
