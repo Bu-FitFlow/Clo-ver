@@ -43,6 +43,7 @@ import kotlinx.coroutines.delay
 fun PersonalColorScreen(
     viewModel: DiagnosisViewModel,
     onMoveToResult: () -> Unit,
+    onMoveToRetry: () -> Unit,
     onMoveToMain: () -> Unit
 ) {
     val uiState by viewModel.uiState
@@ -56,8 +57,14 @@ fun PersonalColorScreen(
     LaunchedEffect(uiState.isPersonalColorAnalyzing, uiState.personalColorPhotoBitmap) {
         if (uiState.isPersonalColorAnalyzing && uiState.personalColorPhotoBitmap != null) {
             delay(900)
-            viewModel.completePersonalColorAnalysis()
-            onMoveToResult()
+
+            val success = viewModel.completePersonalColorAnalysis()
+
+            if (success) {
+                onMoveToResult()
+            } else {
+                onMoveToRetry()
+            }
         }
     }
 
@@ -99,14 +106,27 @@ fun PersonalColorScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        if (uiState.isPersonalColorAnalyzing) {
-            Text(
-                text = "퍼스널 컬러 데이터를 분석하고 있어요.",
-                modifier = Modifier.fillMaxWidth(),
-                color = Color.Black,
-                fontSize = 13.sp,
-                textAlign = TextAlign.Center
-            )
+        when {
+            uiState.isPersonalColorAnalyzing -> {
+                Text(
+                    text = "퍼스널 컬러 데이터를 분석하고 있어요.",
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color.Black,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            uiState.personalColorAnalysisErrorMessage != null -> {
+                Text(
+                    text = uiState.personalColorAnalysisErrorMessage.orEmpty(),
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFFFF3B30),
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 20.sp
+                )
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -185,18 +205,18 @@ private fun PersonalColorPhotoCaptureBox(
         contentAlignment = Alignment.Center
     ) {
         when {
+            isLoading -> {
+                CircularProgressIndicator(
+                    color = Color(0xFF98DB82)
+                )
+            }
+
             bitmap != null -> {
                 Image(
                     bitmap = bitmap.asImageBitmap(),
                     contentDescription = "촬영한 퍼스널 컬러 진단 사진",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
-                )
-            }
-
-            isLoading -> {
-                CircularProgressIndicator(
-                    color = Color(0xFF98DB82)
                 )
             }
 

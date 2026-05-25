@@ -12,7 +12,9 @@ fun ChatScreen(
     onBackClick: () -> Unit = {},
     onLogoClick: () -> Unit = {},
     viewModel: ChatViewModel? = null,
-    openProductChatOnStart: Boolean = false
+    openProductChatOnStart: Boolean = false,
+    productId: Long? = null,
+    sellerId: Long? = null
 ) {
     val chatViewModel = viewModel ?: remember {
         ChatViewModel()
@@ -20,11 +22,16 @@ fun ChatScreen(
 
     val state by chatViewModel.uiState.collectAsState()
 
-    LaunchedEffect(openProductChatOnStart) {
-        if (openProductChatOnStart) {
-            chatViewModel.openProductChatRoom()
-        } else {
-            chatViewModel.backToChatList()
+    LaunchedEffect(
+        openProductChatOnStart,
+        productId,
+        sellerId
+    ) {
+        if (openProductChatOnStart && productId != null && sellerId != null) {
+            chatViewModel.openProductChatRoom(
+                productId = productId,
+                sellerId = sellerId
+            )
         }
     }
 

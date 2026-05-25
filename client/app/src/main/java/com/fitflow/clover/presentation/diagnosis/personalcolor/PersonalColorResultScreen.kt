@@ -32,17 +32,25 @@ import kotlinx.coroutines.delay
 @Composable
 fun PersonalColorResultScreen(
     result: PersonalColorResultUiModel,
+    userDisplayName: String = "사용자",
     onMoveToMain: () -> Unit
 ) {
-    val progress = remember { mutableStateOf(0.05f) }
+    val progress = remember {
+        mutableStateOf(0.05f)
+    }
 
-    LaunchedEffect(Unit) {
+    val safeUserName = userDisplayName
+        .trim()
+        .takeIf { it.isNotBlank() }
+        ?: "사용자"
+
+    LaunchedEffect(result.personalColor) {
         while (progress.value < 1f) {
             delay(35)
             progress.value = (progress.value + 0.03f).coerceAtMost(1f)
         }
 
-        delay(350)
+        delay(450)
         onMoveToMain()
     }
 
@@ -55,6 +63,7 @@ fun PersonalColorResultScreen(
     ) {
         PersonalColorLoadingResultContent(
             result = result,
+            userDisplayName = safeUserName,
             progress = progress.value
         )
     }
@@ -63,8 +72,11 @@ fun PersonalColorResultScreen(
 @Composable
 private fun PersonalColorLoadingResultContent(
     result: PersonalColorResultUiModel,
+    userDisplayName: String,
     progress: Float
 ) {
+    val seasonLabel = result.personalColor.toPersonalColorSeasonLabel()
+
     Column(
         modifier = Modifier.padding(horizontal = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -72,13 +84,33 @@ private fun PersonalColorLoadingResultContent(
     ) {
         Text(
             text = result.resultTitle.ifBlank {
-                "00님은\n겨울 [쿨톤] 계열이\n잘 어울리는 타입이에요!"
+                "${userDisplayName}님은\n${seasonLabel.koreanName} 계열이\n잘 어울리는 타입이에요!"
             },
             color = Color.Black,
-            fontSize = 34.sp,
+            fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            lineHeight = 44.sp
+            lineHeight = 42.sp
+        )
+
+        Spacer(modifier = Modifier.height(22.dp))
+
+        Text(
+            text = seasonLabel.fullName,
+            color = Color(0xFF5FAE4F),
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        Text(
+            text = result.resultRecommend,
+            color = Color(0xFF555555),
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center,
+            lineHeight = 22.sp
         )
 
         Spacer(modifier = Modifier.height(70.dp))
@@ -90,10 +122,11 @@ private fun PersonalColorLoadingResultContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "이제 00님과 가장 잘 어울리는 옷을 찾으러 갈까요?",
+            text = "이제 ${userDisplayName}님과 가장 잘 어울리는 옷을 찾으러 갈까요?",
             color = Color.Black,
             fontSize = 16.sp,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            lineHeight = 22.sp
         )
     }
 }
@@ -123,5 +156,49 @@ private fun CloverPersonalColorProgressBar(
                 .clip(RoundedCornerShape(999.dp))
                 .background(Color(0xFF98DB82))
         )
+    }
+}
+
+private data class PersonalColorSeasonLabel(
+    val koreanName: String,
+    val fullName: String
+)
+
+private fun String.toPersonalColorSeasonLabel(): PersonalColorSeasonLabel {
+    return when (trim().uppercase()) {
+        "SPRING_WARM" -> {
+            PersonalColorSeasonLabel(
+                koreanName = "봄 웜톤",
+                fullName = "봄 웜톤 (Spring Warm)"
+            )
+        }
+
+        "SUMMER_COOL" -> {
+            PersonalColorSeasonLabel(
+                koreanName = "여름 쿨톤",
+                fullName = "여름 쿨톤 (Summer Cool)"
+            )
+        }
+
+        "AUTUMN_WARM" -> {
+            PersonalColorSeasonLabel(
+                koreanName = "가을 웜톤",
+                fullName = "가을 웜톤 (Autumn Warm)"
+            )
+        }
+
+        "WINTER_COOL" -> {
+            PersonalColorSeasonLabel(
+                koreanName = "겨울 쿨톤",
+                fullName = "겨울 쿨톤 (Winter Cool)"
+            )
+        }
+
+        else -> {
+            PersonalColorSeasonLabel(
+                koreanName = "겨울 쿨톤",
+                fullName = "겨울 쿨톤 (Winter Cool)"
+            )
+        }
     }
 }

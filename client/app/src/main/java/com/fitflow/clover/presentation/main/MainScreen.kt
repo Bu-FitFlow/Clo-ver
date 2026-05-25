@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun MainScreen(
+    bodyType: String? = null,
     onClickLogo: () -> Unit = {},
     onClickNotification: () -> Unit = {},
     onClickChat: () -> Unit = {},
@@ -13,11 +14,13 @@ fun MainScreen(
     onClickSale: () -> Unit = {},
     onClickWrite: () -> Unit = {},
     onClickProductMore: () -> Unit = {},
-    onClickProductDetail: () -> Unit = {},
+    onClickBodyProductMore: () -> Unit = {},
+    onClickProductDetail: (Long) -> Unit = {},
     onClickCommunityMore: () -> Unit = {},
     onClickCarbonBanner: () -> Unit = {}
 ) {
     HomeScreen(
+        bodyType = bodyType,
         onClickLogo = onClickLogo,
         onClickNotification = onClickNotification,
         onClickChat = onClickChat,
@@ -27,6 +30,7 @@ fun MainScreen(
         onClickSale = onClickSale,
         onClickWrite = onClickWrite,
         onClickProductMore = onClickProductMore,
+        onClickBodyProductMore = onClickBodyProductMore,
         onClickProductDetail = onClickProductDetail,
         onClickCommunityMore = onClickCommunityMore,
         onClickCarbonBanner = onClickCarbonBanner

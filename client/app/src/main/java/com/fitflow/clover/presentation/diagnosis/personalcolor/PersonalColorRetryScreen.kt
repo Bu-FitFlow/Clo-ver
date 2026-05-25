@@ -40,11 +40,21 @@ fun PersonalColorRetryScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "확인 할 수 있는 데이터가 부족해요 !!",
+                text = "얼굴을 인식할 수 없어요.",
                 color = Color.Black,
-                fontSize = 15.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Text(
+                text = "밝은 곳에서 얼굴이 정면으로 잘 보이도록\n다시 촬영해 주세요.",
+                color = Color(0xFF555555),
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp
             )
 
             Spacer(modifier = Modifier.height(36.dp))
@@ -57,7 +67,7 @@ fun PersonalColorRetryScreen(
                 )
             ) {
                 Text(
-                    text = "다시 하러 가기",
+                    text = "다시 촬영하기",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )

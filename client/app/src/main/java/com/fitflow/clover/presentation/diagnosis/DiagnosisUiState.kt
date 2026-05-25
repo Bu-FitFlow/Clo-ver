@@ -18,6 +18,8 @@ data class BodyAnalysisResult(
 )
 
 data class DiagnosisUiState(
+    val userDisplayName: String = "사용자",
+
     val selectedGender: DiagnosisGender? = null,
     val selectedHeightCm: Int? = null,
     val selectedWeightKg: Int? = null,
@@ -25,10 +27,12 @@ data class DiagnosisUiState(
     val bodyPhotoBitmap: Bitmap? = null,
     val isBodyAnalyzing: Boolean = false,
     val bodyResult: BodyAnalysisResult? = null,
+    val bodyAnalysisErrorMessage: String? = null,
 
     val personalColorPhotoBitmap: Bitmap? = null,
     val isPersonalColorAnalyzing: Boolean = false,
-    val personalColorResult: PersonalColorResultUiModel? = null
+    val personalColorResult: PersonalColorResultUiModel? = null,
+    val personalColorAnalysisErrorMessage: String? = null
 ) {
     val isInfoCompleted: Boolean
         get() = selectedGender != null &&
@@ -38,10 +42,12 @@ data class DiagnosisUiState(
     val isBodyResultReady: Boolean
         get() = bodyPhotoBitmap != null &&
                 bodyResult != null &&
-                !isBodyAnalyzing
+                !isBodyAnalyzing &&
+                bodyAnalysisErrorMessage == null
 
     val isPersonalColorResultReady: Boolean
         get() = personalColorPhotoBitmap != null &&
                 personalColorResult != null &&
-                !isPersonalColorAnalyzing
+                !isPersonalColorAnalyzing &&
+                personalColorAnalysisErrorMessage == null
 }

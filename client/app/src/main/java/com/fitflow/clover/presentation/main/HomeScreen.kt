@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +45,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fitflow.clover.domain.modal.ProductSummaryModel
+import java.text.NumberFormat
+import java.util.Locale
 
 private val MainGreen = Color(0xFF99DE81)
 private val HeaderGreen = Color(0x3399DE81)
@@ -51,6 +55,7 @@ private val BannerGreen = Color(0xFFB0D9B1)
 
 @Composable
 fun HomeScreen(
+    bodyType: String? = null,
     onClickLogo: () -> Unit,
     onClickNotification: () -> Unit,
     onClickChat: () -> Unit,
@@ -60,13 +65,24 @@ fun HomeScreen(
     onClickSale: () -> Unit,
     onClickWrite: () -> Unit,
     onClickProductMore: () -> Unit,
-    onClickProductDetail: () -> Unit,
+    onClickBodyProductMore: () -> Unit,
+    onClickProductDetail: (Long) -> Unit,
     onClickCommunityMore: () -> Unit,
     onClickCarbonBanner: () -> Unit
 ) {
-    val mainViewModel = remember { MainViewModel() }
+    val mainViewModel = remember {
+        MainViewModel()
+    }
+
+    val mainUiState = mainViewModel.uiState.value
     val scrollState = rememberScrollState()
     var fabExpanded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(bodyType) {
+        mainViewModel.loadMainProducts(
+            bodyType = bodyType
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -105,10 +121,15 @@ fun HomeScreen(
 
                 ProductSection(
                     title = "최근 등록",
-                    products = mainViewModel.recentProducts,
+                    products = mainUiState.recentProducts,
+                    emptyMessage = if (mainUiState.isLoading) {
+                        "최근 상품을 불러오는 중입니다."
+                    } else {
+                        "최근 등록된 상품이 없습니다."
+                    },
                     onClickMore = onClickProductMore,
-                    onClickProduct = {
-                        onClickProductDetail()
+                    onClickProduct = { product ->
+                        onClickProductDetail(product.productId)
                     }
                 )
 
@@ -116,10 +137,15 @@ fun HomeScreen(
 
                 ProductSection(
                     title = "내 체형에 추천",
-                    products = mainViewModel.bodyRecommendProducts,
-                    onClickMore = onClickProductMore,
-                    onClickProduct = {
-                        onClickProductDetail()
+                    products = mainUiState.bodyRecommendProducts,
+                    emptyMessage = if (mainUiState.isLoading) {
+                        "체형 추천 상품을 불러오는 중입니다."
+                    } else {
+                        "추천 상품이 없습니다."
+                    },
+                    onClickMore = onClickBodyProductMore,
+                    onClickProduct = { product ->
+                        onClickProductDetail(product.productId)
                     }
                 )
 
@@ -516,35 +542,22 @@ private fun EarthHandImage(
             path = landPath2,
             color = landColor
         )
-
-        drawLine(
-            color = Color.White,
-            start = Offset(earthCenter.x - earthRadius * 0.78f, earthCenter.y - earthRadius * 0.18f),
-            end = Offset(earthCenter.x - earthRadius * 0.83f, earthCenter.y - earthRadius * 0.03f),
-            strokeWidth = 4.dp.toPx(),
-            cap = StrokeCap.Round
-        )
-
-        drawLine(
-            color = Color.White,
-            start = Offset(earthCenter.x - earthRadius * 0.83f, earthCenter.y + earthRadius * 0.14f),
-            end = Offset(earthCenter.x - earthRadius * 0.77f, earthCenter.y + earthRadius * 0.32f),
-            strokeWidth = 4.dp.toPx(),
-            cap = StrokeCap.Round
-        )
     }
 }
 
 @Composable
 private fun ProductSection(
     title: String,
-    products: List<MainProductUiModel>,
+    products: List<ProductSummaryModel>,
+    emptyMessage: String,
     onClickMore: () -> Unit,
-    onClickProduct: (MainProductUiModel) -> Unit
+    onClickProduct: (ProductSummaryModel) -> Unit
 ) {
     val pageSize = 3
     val pageCount = ((products.size + pageSize - 1) / pageSize).coerceAtLeast(1)
-    var currentPage by remember { mutableIntStateOf(0) }
+    var currentPage by remember(products) {
+        mutableIntStateOf(0)
+    }
 
     val visibleProducts = products
         .drop(currentPage * pageSize)
@@ -556,6 +569,23 @@ private fun ProductSection(
     )
 
     Spacer(modifier = Modifier.height(8.dp))
+
+    if (products.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(205.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = emptyMessage,
+                color = Color(0xFF777777),
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center
+            )
+        }
+        return
+    }
 
     Box(
         modifier = Modifier
@@ -636,7 +666,7 @@ private fun SectionHeader(
 
 @Composable
 private fun ProductCard(
-    product: MainProductUiModel,
+    product: ProductSummaryModel,
     onClick: () -> Unit
 ) {
     Column(
@@ -644,8 +674,7 @@ private fun ProductCard(
             .width(103.dp)
             .clickable(onClick = onClick)
     ) {
-        ProductImageArea(
-            product = product,
+        ProductImagePlaceholder(
             modifier = Modifier
                 .width(103.dp)
                 .height(150.dp)
@@ -654,27 +683,12 @@ private fun ProductCard(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "${product.name}\n${product.brand}\n${product.price}",
+            text = "${product.name}\n${product.grade}\n${formatMainPrice(product.price)}",
             color = Color.Black,
             fontSize = 10.sp,
             lineHeight = 12.sp,
-            fontWeight = FontWeight.Normal
-        )
-    }
-}
-
-@Composable
-private fun ProductImageArea(
-    product: MainProductUiModel,
-    modifier: Modifier = Modifier
-) {
-    if (product.imageUri.isNullOrBlank()) {
-        ProductImagePlaceholder(
-            modifier = modifier
-        )
-    } else {
-        ProductImagePlaceholder(
-            modifier = modifier
+            fontWeight = FontWeight.Normal,
+            maxLines = 3
         )
     }
 }
@@ -703,22 +717,6 @@ private fun ProductImagePlaceholder(
             topLeft = Offset(size.width * 0.38f, size.height * 0.37f),
             size = Size(size.width * 0.30f, size.height * 0.58f),
             cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
-        )
-
-        drawLine(
-            color = Color(0xFFE7EEF2),
-            start = Offset(size.width * 0.30f, size.height * 0.42f),
-            end = Offset(size.width * 0.20f, size.height * 0.76f),
-            strokeWidth = 8.dp.toPx(),
-            cap = StrokeCap.Round
-        )
-
-        drawLine(
-            color = Color(0xFFE7EEF2),
-            start = Offset(size.width * 0.73f, size.height * 0.42f),
-            end = Offset(size.width * 0.86f, size.height * 0.76f),
-            strokeWidth = 8.dp.toPx(),
-            cap = StrokeCap.Round
         )
     }
 }
@@ -1103,4 +1101,10 @@ private fun HamburgerIcon() {
             cap = StrokeCap.Round
         )
     }
+}
+
+private fun formatMainPrice(price: Int): String {
+    return NumberFormat
+        .getNumberInstance(Locale.KOREA)
+        .format(price) + "원"
 }

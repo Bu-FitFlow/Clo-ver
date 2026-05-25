@@ -1,100 +1,116 @@
 package com.fitflow.clover.data.remote.dto
 
-import com.fitflow.clover.domain.modal.ChatGalleryImageModel
+import com.fitflow.clover.domain.modal.ChatImageModel
 import com.fitflow.clover.domain.modal.ChatMessageModel
 import com.fitflow.clover.domain.modal.ChatMessageType
 import com.fitflow.clover.domain.modal.ChatRoomModel
+import com.google.gson.annotations.SerializedName
 
 data class ChatRoomResponse(
-    val chatRoomId: Long,
-    val productId: Long,
-    val productName: String,
-    val productImageUrl: String? = null,
+    @SerializedName("chat_room_id")
+    val chatRoomId: Long? = null,
 
-    val sellerId: Long,
-    val sellerNickname: String,
-    val sellerProfileImageUrl: String? = null,
+    @SerializedName("product_id")
+    val productId: Long? = null,
 
-    val buyerId: Long,
-    val buyerNickname: String,
-    val buyerProfileImageUrl: String? = null,
+    @SerializedName("buyer_id")
+    val buyerId: Long? = null,
 
-    val lastMessage: String? = null,
-    val lastMessageType: String? = "TEXT",
-    val lastMessageCreatedAt: String? = null,
+    @SerializedName("seller_id")
+    val sellerId: Long? = null,
 
-    val unreadCount: Int? = 0,
+    @SerializedName("created_at")
     val createdAt: String? = null,
+
+    @SerializedName("updated_at")
     val updatedAt: String? = null
 )
 
 data class ChatMessageResponse(
-    val messageId: Long,
-    val chatRoomId: Long,
-    val senderId: Long,
-    val senderNickname: String,
-    val senderProfileImageUrl: String? = null,
-    val content: String? = "",
+    @SerializedName("message_id")
+    val messageId: Long? = null,
+
+    @SerializedName("chat_room_id")
+    val chatRoomId: Long? = null,
+
+    @SerializedName("sender_id")
+    val senderId: Long? = null,
+
+    @SerializedName("content")
+    val content: String? = null,
+
+    @SerializedName("message_type")
+    val messageType: String? = null,
+
+    @SerializedName("created_at")
+    val createdAt: String? = null
+)
+
+data class ChatImageResponse(
+    @SerializedName("image_id")
+    val imageId: Long? = null,
+
+    @SerializedName("image_url")
     val imageUrl: String? = null,
-    val messageType: String? = "TEXT",
-    val createdAt: String
+
+    @SerializedName("reference_type")
+    val referenceType: String? = null,
+
+    @SerializedName("reference_id")
+    val referenceId: Long? = null,
+
+    @SerializedName("sort_order")
+    val sortOrder: Int? = null,
+
+    @SerializedName("created_at")
+    val createdAt: String? = null
 )
 
-data class ChatGalleryImageResponse(
-    val imageId: Long,
-    val imageUrl: String,
-    val sortOrder: Int = 0
+data class CreateProductChatRoomRequest(
+    @SerializedName("product_id")
+    val productId: Long,
+
+    @SerializedName("seller_id")
+    val sellerId: Long
 )
 
-data class ChatTextMessageRequest(
+data class CreateChatMessageRequest(
+    @SerializedName("content")
     val content: String,
-    val messageType: String = "TEXT"
-)
 
-data class ChatImageMessageRequest(
-    val imageUrl: String,
-    val messageType: String = "IMAGE"
+    @SerializedName("message_type")
+    val messageType: String
 )
 
 fun ChatRoomResponse.toDomain(): ChatRoomModel {
     return ChatRoomModel(
-        chatRoomId = chatRoomId,
-        productId = productId,
-        productName = productName,
-        productImageUrl = productImageUrl,
-        sellerId = sellerId,
-        sellerNickname = sellerNickname,
-        sellerProfileImageUrl = sellerProfileImageUrl,
-        buyerId = buyerId,
-        buyerNickname = buyerNickname,
-        buyerProfileImageUrl = buyerProfileImageUrl,
-        lastMessage = lastMessage,
-        lastMessageType = ChatMessageType.from(lastMessageType),
-        lastMessageCreatedAt = lastMessageCreatedAt,
-        unreadCount = unreadCount ?: 0,
-        createdAt = createdAt,
-        updatedAt = updatedAt
+        chatRoomId = chatRoomId ?: 0L,
+        productId = productId ?: 0L,
+        buyerId = buyerId ?: 0L,
+        sellerId = sellerId ?: 0L,
+        createdAt = createdAt.orEmpty(),
+        updatedAt = updatedAt.orEmpty()
     )
 }
 
 fun ChatMessageResponse.toDomain(): ChatMessageModel {
     return ChatMessageModel(
-        messageId = messageId,
-        chatRoomId = chatRoomId,
-        senderId = senderId,
-        senderNickname = senderNickname,
-        senderProfileImageUrl = senderProfileImageUrl,
+        messageId = messageId ?: 0L,
+        chatRoomId = chatRoomId ?: 0L,
+        senderId = senderId ?: 0L,
         content = content.orEmpty(),
-        imageUrl = imageUrl,
         messageType = ChatMessageType.from(messageType),
-        createdAt = createdAt
+        createdAt = createdAt.orEmpty()
     )
 }
 
-fun ChatGalleryImageResponse.toDomain(): ChatGalleryImageModel {
-    return ChatGalleryImageModel(
-        imageId = imageId,
-        imageUrl = imageUrl,
-        sortOrder = sortOrder
+fun ChatImageResponse.toDomain(): ChatImageModel {
+    return ChatImageModel(
+        imageId = imageId ?: 0L,
+        imageUrl = imageUrl.orEmpty(),
+        referenceType = referenceType.orEmpty(),
+        referenceId = referenceId ?: 0L,
+        sortOrder = sortOrder ?: 0,
+        createdAt = createdAt.orEmpty()
     )
 }

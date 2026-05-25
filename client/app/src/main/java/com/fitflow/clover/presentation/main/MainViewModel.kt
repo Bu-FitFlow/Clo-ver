@@ -1,15 +1,26 @@
 package com.fitflow.clover.presentation.main
 
-data class MainProductUiModel(
-    val id: Int,
-    val name: String,
-    val brand: String,
-    val price: String,
-    val imageUri: String? = null
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import com.fitflow.clover.data.remote.api.ProductApi
+import com.fitflow.clover.data.repository.ProductRepositoryImpl
+import com.fitflow.clover.di.NetworkModule
+import com.fitflow.clover.domain.modal.ProductSummaryModel
+import com.fitflow.clover.domain.usecase.ProductUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+
+data class MainUiState(
+    val isLoading: Boolean = false,
+    val recentProducts: List<ProductSummaryModel> = emptyList(),
+    val bodyRecommendProducts: List<ProductSummaryModel> = emptyList(),
+    val errorMessage: String? = null
 )
 
 data class MainCommunityPostUiModel(
-    val id: Int,
+    val id: Long,
     val title: String,
     val nickname: String,
     val date: String,
@@ -18,125 +29,23 @@ data class MainCommunityPostUiModel(
     val likeCount: Int
 )
 
-class MainViewModel {
-
-    val recentProducts: List<MainProductUiModel> = listOf(
-        MainProductUiModel(
-            id = 1,
-            name = "최근 1번 자켓",
-            brand = "CLO-VER",
-            price = "39,800원"
-        ),
-        MainProductUiModel(
-            id = 2,
-            name = "최근 2번 셔츠",
-            brand = "CLO-VER",
-            price = "24,900원"
-        ),
-        MainProductUiModel(
-            id = 3,
-            name = "최근 3번 팬츠",
-            brand = "CLO-VER",
-            price = "42,000원"
-        ),
-        MainProductUiModel(
-            id = 4,
-            name = "최근 4번 니트",
-            brand = "Second Wear",
-            price = "18,500원"
-        ),
-        MainProductUiModel(
-            id = 5,
-            name = "최근 5번 후드",
-            brand = "Second Wear",
-            price = "29,000원"
-        ),
-        MainProductUiModel(
-            id = 6,
-            name = "최근 6번 가디건",
-            brand = "Second Wear",
-            price = "33,000원"
-        ),
-        MainProductUiModel(
-            id = 7,
-            name = "최근 7번 코트",
-            brand = "Eco Closet",
-            price = "58,000원"
-        ),
-        MainProductUiModel(
-            id = 8,
-            name = "최근 8번 맨투맨",
-            brand = "Eco Closet",
-            price = "21,000원"
-        ),
-        MainProductUiModel(
-            id = 9,
-            name = "최근 9번 데님",
-            brand = "Eco Closet",
-            price = "35,500원"
+class MainViewModel(
+    private val productUseCase: ProductUseCase = ProductUseCase(
+        productRepository = ProductRepositoryImpl(
+            productApi = NetworkModule.createApi<ProductApi>()
         )
     )
-
-    val bodyRecommendProducts: List<MainProductUiModel> = listOf(
-        MainProductUiModel(
-            id = 10,
-            name = "추천 1번 블레이저",
-            brand = "Fit Pick",
-            price = "49,800원"
-        ),
-        MainProductUiModel(
-            id = 11,
-            name = "추천 2번 슬랙스",
-            brand = "Fit Pick",
-            price = "31,900원"
-        ),
-        MainProductUiModel(
-            id = 12,
-            name = "추천 3번 셔츠",
-            brand = "Fit Pick",
-            price = "22,000원"
-        ),
-        MainProductUiModel(
-            id = 13,
-            name = "추천 4번 점퍼",
-            brand = "Body Match",
-            price = "44,000원"
-        ),
-        MainProductUiModel(
-            id = 14,
-            name = "추천 5번 와이드팬츠",
-            brand = "Body Match",
-            price = "27,500원"
-        ),
-        MainProductUiModel(
-            id = 15,
-            name = "추천 6번 반팔티",
-            brand = "Body Match",
-            price = "12,900원"
-        ),
-        MainProductUiModel(
-            id = 16,
-            name = "추천 7번 롱코트",
-            brand = "Style Mate",
-            price = "66,000원"
-        ),
-        MainProductUiModel(
-            id = 17,
-            name = "추천 8번 청자켓",
-            brand = "Style Mate",
-            price = "37,800원"
-        ),
-        MainProductUiModel(
-            id = 18,
-            name = "추천 9번 조거팬츠",
-            brand = "Style Mate",
-            price = "25,800원"
-        )
+) {
+    private val viewModelScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.Main.immediate
     )
+
+    private val _uiState = mutableStateOf(MainUiState())
+    val uiState: State<MainUiState> = _uiState
 
     val latestCommunityPosts: List<MainCommunityPostUiModel> = listOf(
         MainCommunityPostUiModel(
-            id = 1,
+            id = 1L,
             title = "한정판 콜라보 티셔츠 솔직한 후기",
             nickname = "닉네임",
             date = "2026-04-24",
@@ -145,7 +54,7 @@ class MainViewModel {
             likeCount = 20
         ),
         MainCommunityPostUiModel(
-            id = 2,
+            id = 2L,
             title = "중고 거래할 때 확인해야 할 점",
             nickname = "클로버",
             date = "2026-04-25",
@@ -154,7 +63,7 @@ class MainViewModel {
             likeCount = 15
         ),
         MainCommunityPostUiModel(
-            id = 3,
+            id = 3L,
             title = "데님 자켓 코디 추천 받아요",
             nickname = "스타일러",
             date = "2026-04-26",
@@ -166,7 +75,7 @@ class MainViewModel {
 
     val popularCommunityPosts: List<MainCommunityPostUiModel> = listOf(
         MainCommunityPostUiModel(
-            id = 4,
+            id = 4L,
             title = "겨울 쿨톤에게 잘 맞는 색상 정리",
             nickname = "톤잘알",
             date = "2026-04-24",
@@ -175,13 +84,77 @@ class MainViewModel {
             likeCount = 45
         ),
         MainCommunityPostUiModel(
-            id = 5,
+            id = 5L,
             title = "체형별 아우터 고르는 방법",
             nickname = "핏마스터",
             date = "2026-04-25",
             viewCount = 286,
             commentCount = 9,
             likeCount = 38
+        ),
+        MainCommunityPostUiModel(
+            id = 6L,
+            title = "중고 의류 판매 사진 잘 찍는 팁",
+            nickname = "클로버가이드",
+            date = "2026-04-26",
+            viewCount = 254,
+            commentCount = 7,
+            likeCount = 34
         )
     )
+
+    fun loadMainProducts(
+        bodyType: String?,
+        size: Int = 9
+    ) {
+        val recommendedType = normalizeBodyType(bodyType)
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                errorMessage = null
+            )
+
+            runCatching {
+                val recentProducts = productUseCase.getRecentProducts(
+                    size = size
+                )
+
+                val bodyRecommendProducts = productUseCase.getBodyRecommendedProducts(
+                    recommendedType = recommendedType,
+                    size = size
+                )
+
+                recentProducts to bodyRecommendProducts
+            }.onSuccess { result ->
+                _uiState.value = MainUiState(
+                    isLoading = false,
+                    recentProducts = result.first,
+                    bodyRecommendProducts = result.second,
+                    errorMessage = null
+                )
+            }.onFailure { throwable ->
+                _uiState.value = MainUiState(
+                    isLoading = false,
+                    recentProducts = emptyList(),
+                    bodyRecommendProducts = emptyList(),
+                    errorMessage = throwable.message
+                )
+            }
+        }
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(
+            errorMessage = null
+        )
+    }
+
+    private fun normalizeBodyType(bodyType: String?): String {
+        return bodyType
+            ?.trim()
+            ?.uppercase()
+            ?.takeIf { it.isNotBlank() }
+            ?: "RECTANGLE"
+    }
 }

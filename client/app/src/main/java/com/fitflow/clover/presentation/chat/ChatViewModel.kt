@@ -1,70 +1,136 @@
 package com.fitflow.clover.presentation.chat
 
 import androidx.lifecycle.ViewModel
+import com.fitflow.clover.data.remote.api.ChatApi
+import com.fitflow.clover.data.repository.ChatRepositoryImpl
+import com.fitflow.clover.di.NetworkModule
+import com.fitflow.clover.domain.modal.ChatMessageModel
+import com.fitflow.clover.domain.modal.ChatRoomModel
+import com.fitflow.clover.domain.usecase.ChatUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class ChatViewModel : ViewModel() {
-
-    private val messageStore = mutableMapOf<Long, List<ChatMessageUiModel>>()
-
-    private val _uiState = MutableStateFlow(
-        ChatUiState(
-            galleryImages = createInitialGalleryImages()
+class ChatViewModel(
+    private val chatUseCase: ChatUseCase = ChatUseCase(
+        chatRepository = ChatRepositoryImpl(
+            chatApi = NetworkModule.createApi<ChatApi>()
         )
     )
+) : ViewModel() {
+
+    private val viewModelScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.Main.immediate
+    )
+
+    private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState
 
-    fun openProductChatRoom(
-        productId: Long = 1L,
-        productName: String = "어 뭐 상의라고 해두지",
-        productImageUrl: String? = null,
-        sellerId: Long = 2L,
-        sellerNickname: String = "판매자",
-        sellerProfileImageUrl: String? = null,
-        buyerId: Long = 1L,
-        buyerNickname: String = "구매자",
-        buyerProfileImageUrl: String? = null
-    ) {
-        val existingRoom = _uiState.value.chatRooms.firstOrNull { room ->
-            room.productId == productId &&
-                    room.sellerId == sellerId &&
-                    room.buyerId == buyerId
+    init {
+        loadChatRooms()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        viewModelScope.cancel()
+    }
+
+    fun loadChatRooms() {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = null
+                )
+            }
+
+            runCatching {
+                chatUseCase.getChatRooms(
+                    filter = null
+                )
+            }.onSuccess { rooms ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        chatRooms = rooms.map { room ->
+                            room.toUiModel()
+                        },
+                        errorMessage = null
+                    )
+                }
+            }.onFailure { throwable ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = throwable.message
+                    )
+                }
+            }
         }
+    }
 
-        val room = existingRoom ?: ChatRoomUiModel(
-            chatRoomId = createChatRoomId(
-                productId = productId,
-                sellerId = sellerId,
-                buyerId = buyerId
-            ),
-            productId = productId,
-            productName = productName,
-            productImageUrl = productImageUrl,
-            sellerId = sellerId,
-            sellerNickname = sellerNickname,
-            sellerProfileImageUrl = sellerProfileImageUrl,
-            buyerId = buyerId,
-            buyerNickname = buyerNickname,
-            buyerProfileImageUrl = buyerProfileImageUrl,
-            lastMessage = "",
-            lastMessageTime = "",
-            unreadCount = 0
-        )
+    fun openProductChatRoom(
+        productId: Long,
+        sellerId: Long
+    ) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    isMessageLoading = true,
+                    errorMessage = null
+                )
+            }
 
-        val roomMessages = messageStore[room.chatRoomId].orEmpty()
+            runCatching {
+                val room = chatUseCase.createOrGetProductChatRoom(
+                    productId = productId,
+                    sellerId = sellerId
+                )
 
-        _uiState.update {
-            it.copy(
-                selectedRoom = room,
-                messages = roomMessages,
-                messageInput = "",
-                selectedDateLabel = todayLabel(),
-                isAttachmentPanelVisible = false,
-                isFullGalleryVisible = false,
-                errorMessage = null
-            )
+                val messages = chatUseCase.getChatMessages(
+                    chatRoomId = room.chatRoomId
+                )
+
+                room to messages
+            }.onSuccess { result ->
+                val room = result.first
+                val messages = result.second
+                val roomUiModel = room.toUiModel(messages)
+
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isMessageLoading = false,
+                        selectedRoom = roomUiModel,
+                        chatRooms = upsertChatRoom(
+                            rooms = it.chatRooms,
+                            room = roomUiModel
+                        ),
+                        messages = messages.map { message ->
+                            message.toUiModel()
+                        },
+                        messageInput = "",
+                        selectedDateLabel = messages.lastOrNull()?.createdAt.orEmpty(),
+                        isAttachmentPanelVisible = false,
+                        isFullGalleryVisible = false,
+                        errorMessage = null
+                    )
+                }
+            }.onFailure { throwable ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isMessageLoading = false,
+                        errorMessage = throwable.message
+                    )
+                }
+            }
         }
     }
 
@@ -73,18 +139,50 @@ class ChatViewModel : ViewModel() {
             room.chatRoomId == chatRoomId
         } ?: return
 
-        val roomMessages = messageStore[chatRoomId].orEmpty()
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isMessageLoading = true,
+                    errorMessage = null
+                )
+            }
 
-        _uiState.update {
-            it.copy(
-                selectedRoom = selectedRoom,
-                messages = roomMessages,
-                messageInput = "",
-                selectedDateLabel = todayLabel(),
-                isAttachmentPanelVisible = false,
-                isFullGalleryVisible = false,
-                errorMessage = null
-            )
+            runCatching {
+                chatUseCase.getChatMessages(
+                    chatRoomId = chatRoomId
+                )
+            }.onSuccess { messages ->
+                val updatedRoom = selectedRoom.copy(
+                    lastMessage = messages.lastOrNull()?.content.orEmpty(),
+                    lastMessageTime = messages.lastOrNull()?.createdAt.orEmpty()
+                )
+
+                _uiState.update {
+                    it.copy(
+                        isMessageLoading = false,
+                        selectedRoom = updatedRoom,
+                        chatRooms = upsertChatRoom(
+                            rooms = it.chatRooms,
+                            room = updatedRoom
+                        ),
+                        messages = messages.map { message ->
+                            message.toUiModel()
+                        },
+                        messageInput = "",
+                        selectedDateLabel = messages.lastOrNull()?.createdAt.orEmpty(),
+                        isAttachmentPanelVisible = false,
+                        isFullGalleryVisible = false,
+                        errorMessage = null
+                    )
+                }
+            }.onFailure { throwable ->
+                _uiState.update {
+                    it.copy(
+                        isMessageLoading = false,
+                        errorMessage = throwable.message
+                    )
+                }
+            }
         }
     }
 
@@ -100,6 +198,8 @@ class ChatViewModel : ViewModel() {
                 errorMessage = null
             )
         }
+
+        loadChatRooms()
     }
 
     fun changeFilter(filter: ChatRoomFilterUiType) {
@@ -119,7 +219,9 @@ class ChatViewModel : ViewModel() {
 
     fun updateMessageInput(value: String) {
         _uiState.update {
-            it.copy(messageInput = value)
+            it.copy(
+                messageInput = value
+            )
         }
     }
 
@@ -133,13 +235,17 @@ class ChatViewModel : ViewModel() {
 
     fun openFullGallery() {
         _uiState.update {
-            it.copy(isFullGalleryVisible = true)
+            it.copy(
+                isFullGalleryVisible = true
+            )
         }
     }
 
     fun closeFullGallery() {
         _uiState.update {
-            it.copy(isFullGalleryVisible = false)
+            it.copy(
+                isFullGalleryVisible = false
+            )
         }
     }
 
@@ -164,84 +270,46 @@ class ChatViewModel : ViewModel() {
 
         if (input.isEmpty()) return
 
-        val newMessage = ChatMessageUiModel(
-            messageId = System.currentTimeMillis(),
-            chatRoomId = room.chatRoomId,
-            senderId = state.currentMemberId,
-            senderNickname = room.buyerNickname,
-            senderProfileImageUrl = room.buyerProfileImageUrl,
-            content = input,
-            imageUrl = null,
-            messageType = ChatMessageType.TEXT,
-            createdAt = "방금 전"
-        )
-
-        val updatedMessages = messageStore[room.chatRoomId].orEmpty() + newMessage
-        messageStore[room.chatRoomId] = updatedMessages
-
-        val updatedRoom = room.copy(
-            lastMessage = input,
-            lastMessageTime = "방금 전",
-            unreadCount = 0
-        )
-
-        _uiState.update {
-            it.copy(
-                selectedRoom = updatedRoom,
-                chatRooms = upsertChatRoom(
-                    rooms = it.chatRooms,
-                    room = updatedRoom
-                ),
-                messages = updatedMessages,
-                messageInput = "",
-                selectedDateLabel = todayLabel(),
-                isAttachmentPanelVisible = false,
-                isFullGalleryVisible = false,
-                errorMessage = null
-            )
+        viewModelScope.launch {
+            runCatching {
+                chatUseCase.sendTextMessage(
+                    chatRoomId = room.chatRoomId,
+                    content = input
+                )
+            }.onSuccess {
+                selectChatRoom(room.chatRoomId)
+            }.onFailure { throwable ->
+                _uiState.update {
+                    it.copy(
+                        errorMessage = throwable.message
+                    )
+                }
+            }
         }
     }
 
     fun sendImageMessage(imageUrl: String?) {
         val state = _uiState.value
         val room = state.selectedRoom ?: return
+        val safeImageUrl = imageUrl?.trim().orEmpty()
 
-        val safeImageUrl = imageUrl?.trim()
+        if (safeImageUrl.isBlank()) return
 
-        val newMessage = ChatMessageUiModel(
-            messageId = System.currentTimeMillis(),
-            chatRoomId = room.chatRoomId,
-            senderId = state.currentMemberId,
-            senderNickname = room.buyerNickname,
-            senderProfileImageUrl = room.buyerProfileImageUrl,
-            content = safeImageUrl ?: "사진을 보냈습니다.",
-            imageUrl = safeImageUrl,
-            messageType = ChatMessageType.IMAGE,
-            createdAt = "방금 전"
-        )
-
-        val updatedMessages = messageStore[room.chatRoomId].orEmpty() + newMessage
-        messageStore[room.chatRoomId] = updatedMessages
-
-        val updatedRoom = room.copy(
-            lastMessage = "사진을 보냈습니다.",
-            lastMessageTime = "방금 전",
-            unreadCount = 0
-        )
-
-        _uiState.update {
-            it.copy(
-                selectedRoom = updatedRoom,
-                chatRooms = upsertChatRoom(
-                    rooms = it.chatRooms,
-                    room = updatedRoom
-                ),
-                messages = updatedMessages,
-                selectedDateLabel = todayLabel(),
-                isAttachmentPanelVisible = false,
-                isFullGalleryVisible = false,
-                errorMessage = null
-            )
+        viewModelScope.launch {
+            runCatching {
+                chatUseCase.sendImageMessage(
+                    chatRoomId = room.chatRoomId,
+                    imageUrl = safeImageUrl
+                )
+            }.onSuccess {
+                selectChatRoom(room.chatRoomId)
+            }.onFailure { throwable ->
+                _uiState.update {
+                    it.copy(
+                        errorMessage = throwable.message
+                    )
+                }
+            }
         }
     }
 
@@ -256,27 +324,47 @@ class ChatViewModel : ViewModel() {
         return listOf(room) + filteredRooms
     }
 
-    private fun createChatRoomId(
-        productId: Long,
-        sellerId: Long,
-        buyerId: Long
-    ): Long {
-        return productId * 10_000L + sellerId * 100L + buyerId
+    private fun ChatRoomModel.toUiModel(
+        messages: List<ChatMessageModel> = emptyList()
+    ): ChatRoomUiModel {
+        val lastMessage = messages.lastOrNull()
+
+        return ChatRoomUiModel(
+            chatRoomId = chatRoomId,
+            productId = productId,
+            productName = "상품 번호 $productId",
+            productImageUrl = null,
+            sellerId = sellerId,
+            sellerNickname = "판매자 $sellerId",
+            sellerProfileImageUrl = null,
+            buyerId = buyerId,
+            buyerNickname = "구매자 $buyerId",
+            buyerProfileImageUrl = null,
+            lastMessage = lastMessage?.content.orEmpty(),
+            lastMessageTime = lastMessage?.createdAt.orEmpty(),
+            unreadCount = 0
+        )
     }
 
-    private fun todayLabel(): String {
-        return "2026.04.04 (일요일)"
-    }
-
-    private companion object {
-        fun createInitialGalleryImages(): List<ChatGalleryImageUiModel> {
-            return List(12) { index ->
-                ChatGalleryImageUiModel(
-                    imageId = index.toLong() + 1L,
-                    imageUrl = null,
-                    sortOrder = index
-                )
-            }
-        }
+    private fun ChatMessageModel.toUiModel(): ChatMessageUiModel {
+        return ChatMessageUiModel(
+            messageId = messageId,
+            chatRoomId = chatRoomId,
+            senderId = senderId,
+            senderNickname = "사용자 $senderId",
+            senderProfileImageUrl = null,
+            content = content,
+            imageUrl = if (messageType.name == "IMAGE") {
+                content
+            } else {
+                null
+            },
+            messageType = when (messageType.name) {
+                "IMAGE" -> ChatMessageType.IMAGE
+                "FILE" -> ChatMessageType.FILE
+                else -> ChatMessageType.TEXT
+            },
+            createdAt = createdAt
+        )
     }
 }

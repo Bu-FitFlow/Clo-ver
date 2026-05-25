@@ -1,30 +1,35 @@
 package com.fitflow.clover.data.remote.api
 
-import com.fitflow.clover.data.remote.dto.ChatGalleryImageResponse
-import com.fitflow.clover.data.remote.dto.ChatImageMessageRequest
 import com.fitflow.clover.data.remote.dto.ChatMessageResponse
 import com.fitflow.clover.data.remote.dto.ChatRoomResponse
-import com.fitflow.clover.data.remote.dto.ChatTextMessageRequest
+import com.fitflow.clover.data.remote.dto.CreateChatMessageRequest
+import com.fitflow.clover.data.remote.dto.CreateProductChatRoomRequest
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ChatApi {
 
+    @GET("api/chat/rooms")
     suspend fun getChatRooms(
-        filter: String? = null
+        @Query("filter") filter: String? = null
     ): List<ChatRoomResponse>
 
+    @GET("api/chat/rooms/{chat_room_id}/messages")
     suspend fun getChatMessages(
-        chatRoomId: Long
+        @Path("chat_room_id") chatRoomId: Long
     ): List<ChatMessageResponse>
 
-    suspend fun sendTextMessage(
-        chatRoomId: Long,
-        request: ChatTextMessageRequest
-    ): ChatMessageResponse
+    @POST("api/chat/rooms/product")
+    suspend fun createOrGetProductChatRoom(
+        @Body request: CreateProductChatRoomRequest
+    ): ChatRoomResponse
 
-    suspend fun sendImageMessage(
-        chatRoomId: Long,
-        request: ChatImageMessageRequest
+    @POST("api/chat/rooms/{chat_room_id}/messages")
+    suspend fun sendMessage(
+        @Path("chat_room_id") chatRoomId: Long,
+        @Body request: CreateChatMessageRequest
     ): ChatMessageResponse
-
-    suspend fun getGalleryImages(): List<ChatGalleryImageResponse>
 }

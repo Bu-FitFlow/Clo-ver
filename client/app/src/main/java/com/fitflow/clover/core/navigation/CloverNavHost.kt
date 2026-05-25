@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -24,9 +25,11 @@ import com.fitflow.clover.presentation.diagnosis.BodyAnalysisScreen
 import com.fitflow.clover.presentation.diagnosis.DiagnosisViewModel
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorResultScreen
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorResultUiModel
+import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorRetryScreen
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorScreen
 import com.fitflow.clover.presentation.main.MainScreen
-import com.fitflow.clover.presentation.product.ProductDetailsScreen
+import com.fitflow.clover.presentation.product.ProductDetailScreen
+import com.fitflow.clover.presentation.product.ProductListScreen
 
 @Composable
 fun CloverNavHost() {
@@ -42,7 +45,31 @@ fun CloverNavHost() {
         ChatViewModel()
     }
 
-    when (currentScreen.value) {
+    fun currentBodyType(): String {
+        return diagnosisViewModel.uiState.value.bodyResult?.bodyType
+            ?.trim()
+            ?.takeIf { bodyType -> bodyType.isNotBlank() }
+            ?: "BALANCED"
+    }
+
+    fun currentUserDisplayName(): String {
+        return diagnosisViewModel.uiState.value.userDisplayName
+            .trim()
+            .takeIf { displayName -> displayName.isNotBlank() }
+            ?: "사용자"
+    }
+
+    fun fallbackPersonalColorResult(): PersonalColorResultUiModel {
+        val userName = currentUserDisplayName()
+
+        return PersonalColorResultUiModel(
+            personalColor = "WINTER_COOL",
+            resultTitle = "${userName}님은\n겨울 [쿨톤] 계열이\n잘 어울리는 타입이에요!",
+            resultRecommend = "선명한 색감, 차가운 톤, 대비감이 있는 스타일이 잘 어울려요."
+        )
+    }
+
+    when (val screen = currentScreen.value) {
         ScreenRoute.BodyAnalysis -> {
             BodyAnalysisScreen(
                 viewModel = diagnosisViewModel,
@@ -50,7 +77,7 @@ fun CloverNavHost() {
                     currentScreen.value = ScreenRoute.PersonalColorQuestion
                 },
                 onMoveToMain = {
-                    currentScreen.value = ScreenRoute.Main
+                    currentScreen.value = ScreenRoute.PersonalColorQuestion
                 }
             )
         }
@@ -61,6 +88,9 @@ fun CloverNavHost() {
                 onMoveToResult = {
                     currentScreen.value = ScreenRoute.PersonalColorResult
                 },
+                onMoveToRetry = {
+                    currentScreen.value = ScreenRoute.PersonalColorRetry
+                },
                 onMoveToMain = {
                     currentScreen.value = ScreenRoute.Main
                 }
@@ -70,11 +100,8 @@ fun CloverNavHost() {
         ScreenRoute.PersonalColorResult -> {
             PersonalColorResultScreen(
                 result = diagnosisViewModel.uiState.value.personalColorResult
-                    ?: PersonalColorResultUiModel(
-                        personalColor = "WINTER_COOL",
-                        resultTitle = "00님은\n겨울 [쿨톤] 계열이\n잘 어울리는 타입이에요!",
-                        resultRecommend = "선명한 색감, 차가운 톤, 대비감이 있는 스타일이 잘 어울려요."
-                    ),
+                    ?: fallbackPersonalColorResult(),
+                userDisplayName = currentUserDisplayName(),
                 onMoveToMain = {
                     currentScreen.value = ScreenRoute.Main
                 }
@@ -82,10 +109,10 @@ fun CloverNavHost() {
         }
 
         ScreenRoute.PersonalColorRetry -> {
-            PersonalColorScreen(
-                viewModel = diagnosisViewModel,
-                onMoveToResult = {
-                    currentScreen.value = ScreenRoute.PersonalColorResult
+            PersonalColorRetryScreen(
+                onRetry = {
+                    diagnosisViewModel.resetPersonalColorPhoto()
+                    currentScreen.value = ScreenRoute.PersonalColorQuestion
                 },
                 onMoveToMain = {
                     currentScreen.value = ScreenRoute.Main
@@ -95,6 +122,7 @@ fun CloverNavHost() {
 
         ScreenRoute.Main -> {
             MainScreen(
+                bodyType = currentBodyType(),
                 onClickLogo = {
                     currentScreen.value = ScreenRoute.Main
                 },
@@ -121,10 +149,19 @@ fun CloverNavHost() {
                     currentScreen.value = ScreenRoute.CommunityWrite
                 },
                 onClickProductMore = {
-                    currentScreen.value = ScreenRoute.ProductList
+                    currentScreen.value = ScreenRoute.ProductList(
+                        recommendedType = null
+                    )
                 },
-                onClickProductDetail = {
-                    currentScreen.value = ScreenRoute.ProductDetail
+                onClickBodyProductMore = {
+                    currentScreen.value = ScreenRoute.ProductList(
+                        recommendedType = currentBodyType()
+                    )
+                },
+                onClickProductDetail = { productId ->
+                    currentScreen.value = ScreenRoute.ProductDetail(
+                        productId = productId
+                    )
                 },
                 onClickCommunityMore = {
                     currentScreen.value = ScreenRoute.Community
@@ -135,44 +172,45 @@ fun CloverNavHost() {
             )
         }
 
-        ScreenRoute.ProductDetail -> {
-            ProductDetailsScreen(
+        is ScreenRoute.ProductList -> {
+            ProductListScreen(
+                recommendedType = screen.recommendedType,
                 onBack = {
                     currentScreen.value = ScreenRoute.Main
                 },
-                onClickLogo = {
-                    currentScreen.value = ScreenRoute.Main
-                },
-                onReport = {
-                    currentScreen.value = ScreenRoute.Report
-                },
-                onOpenChat = {
-                    currentScreen.value = ScreenRoute.ChatRoom
-                },
-                onOpenSellerProfile = {
-                    currentScreen.value = ScreenRoute.SellerProfile
-                },
-                onHome = {
-                    currentScreen.value = ScreenRoute.Main
-                },
-                onBoard = {
-                    currentScreen.value = ScreenRoute.Community
-                },
-                onNotification = {
-                    currentScreen.value = ScreenRoute.Notification
-                },
-                onMyPage = {
-                    currentScreen.value = ScreenRoute.MyPage
+                onClickProduct = { productId ->
+                    currentScreen.value = ScreenRoute.ProductDetail(
+                        productId = productId
+                    )
                 }
             )
         }
 
-        ScreenRoute.ProductList -> {
-            MainPlaceholderScreen(
-                title = "전체 상품",
-                description = "상품 전체보기 화면으로 연결될 예정입니다.",
-                onBackToMain = {
+        is ScreenRoute.ProductDetail -> {
+            ProductDetailScreen(
+                productId = screen.productId,
+                onBack = {
                     currentScreen.value = ScreenRoute.Main
+                },
+                onOpenChat = { productId, sellerId ->
+                    chatViewModel.backToChatList()
+
+                    currentScreen.value = ScreenRoute.ChatRoom(
+                        productId = productId,
+                        sellerId = sellerId,
+                        chatRoomId = null
+                    )
+                },
+                onOpenSellerProfile = { sellerId ->
+                    currentScreen.value = ScreenRoute.SellerProfile(
+                        sellerId = sellerId
+                    )
+                },
+                onReportProduct = { productId ->
+                    currentScreen.value = ScreenRoute.Report(
+                        targetType = "PRODUCT",
+                        targetId = productId
+                    )
                 }
             )
         }
@@ -188,6 +226,10 @@ fun CloverNavHost() {
         }
 
         ScreenRoute.Chat -> {
+            LaunchedEffect(Unit) {
+                chatViewModel.backToChatList()
+            }
+
             ChatScreen(
                 viewModel = chatViewModel,
                 openProductChatOnStart = false,
@@ -195,19 +237,33 @@ fun CloverNavHost() {
                     currentScreen.value = ScreenRoute.Main
                 },
                 onLogoClick = {
+                    chatViewModel.backToChatList()
                     currentScreen.value = ScreenRoute.Main
                 }
             )
         }
 
-        ScreenRoute.ChatRoom -> {
+        is ScreenRoute.ChatRoom -> {
+            val hasProductChatArgs = screen.productId != null && screen.sellerId != null
+
             ChatScreen(
                 viewModel = chatViewModel,
-                openProductChatOnStart = true,
+                openProductChatOnStart = hasProductChatArgs,
+                productId = screen.productId,
+                sellerId = screen.sellerId,
                 onBackClick = {
-                    currentScreen.value = ScreenRoute.ProductDetail
+                    chatViewModel.backToChatList()
+
+                    if (screen.productId != null) {
+                        currentScreen.value = ScreenRoute.ProductDetail(
+                            productId = screen.productId
+                        )
+                    } else {
+                        currentScreen.value = ScreenRoute.Main
+                    }
                 },
                 onLogoClick = {
+                    chatViewModel.backToChatList()
                     currentScreen.value = ScreenRoute.Main
                 }
             )
@@ -227,6 +283,16 @@ fun CloverNavHost() {
             MainPlaceholderScreen(
                 title = "커뮤니티",
                 description = "커뮤니티 목록 화면으로 연결될 예정입니다.",
+                onBackToMain = {
+                    currentScreen.value = ScreenRoute.Main
+                }
+            )
+        }
+
+        ScreenRoute.CommunityWrite -> {
+            MainPlaceholderScreen(
+                title = "글쓰기",
+                description = "커뮤니티 글쓰기 화면으로 연결될 예정입니다.",
                 onBackToMain = {
                     currentScreen.value = ScreenRoute.Main
                 }
@@ -253,40 +319,30 @@ fun CloverNavHost() {
             )
         }
 
-        ScreenRoute.CommunityWrite -> {
+        is ScreenRoute.Report -> {
             MainPlaceholderScreen(
-                title = "글쓰기",
-                description = "커뮤니티 글쓰기 화면으로 연결될 예정입니다.",
+                title = "신고",
+                description = "${screen.targetType} ${screen.targetId} 신고 화면으로 연결될 예정입니다.",
                 onBackToMain = {
                     currentScreen.value = ScreenRoute.Main
                 }
             )
         }
 
-        ScreenRoute.Report -> {
+        is ScreenRoute.SellerProfile -> {
             MainPlaceholderScreen(
-                title = "신고 하기",
-                description = "상품 신고 페이지로 연결될 예정입니다.",
+                title = "판매자 프로필",
+                description = "판매자 ID ${screen.sellerId} 프로필 화면으로 연결될 예정입니다.",
                 onBackToMain = {
-                    currentScreen.value = ScreenRoute.ProductDetail
-                }
-            )
-        }
-
-        ScreenRoute.SellerProfile -> {
-            MainPlaceholderScreen(
-                title = "프로필 보기",
-                description = "판매자 프로필 화면으로 연결될 예정입니다.",
-                onBackToMain = {
-                    currentScreen.value = ScreenRoute.ProductDetail
+                    currentScreen.value = ScreenRoute.Main
                 }
             )
         }
 
         ScreenRoute.CarbonPoint -> {
             MainPlaceholderScreen(
-                title = "탄소 포인트 제도",
-                description = "탄소 포인트 제도 안내 화면으로 연결될 예정입니다.",
+                title = "탄소 포인트",
+                description = "탄소 포인트 화면으로 연결될 예정입니다.",
                 onBackToMain = {
                     currentScreen.value = ScreenRoute.Main
                 }
@@ -316,25 +372,27 @@ private fun MainPlaceholderScreen(
             Text(
                 text = title,
                 color = Color.Black,
-                fontSize = 26.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
                 text = description,
-                color = Color.Gray,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(top = 14.dp)
+                modifier = Modifier.padding(top = 12.dp),
+                color = Color(0xFF666666),
+                fontSize = 15.sp
             )
 
             Text(
-                text = "돌아가기",
-                color = Color(0xFF4A9D3A),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
+                text = "메인으로 돌아가기",
                 modifier = Modifier
                     .padding(top = 28.dp)
-                    .clickable(onClick = onBackToMain)
+                    .clickable {
+                        onBackToMain()
+                    },
+                color = Color(0xFF2F68FF),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
             )
         }
     }

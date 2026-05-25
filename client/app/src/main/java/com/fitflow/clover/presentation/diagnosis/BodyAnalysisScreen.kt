@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -58,6 +57,7 @@ import kotlinx.coroutines.delay
 private enum class BodyAnalysisStep {
     USER_INFO,
     BODY_CAMERA,
+    BODY_RETRY,
     BODY_RESULT
 }
 
@@ -73,8 +73,14 @@ fun BodyAnalysisScreen(
     LaunchedEffect(uiState.isBodyAnalyzing, uiState.bodyPhotoBitmap) {
         if (uiState.isBodyAnalyzing && uiState.bodyPhotoBitmap != null) {
             delay(900)
-            viewModel.completeBodyAnalysis()
-            currentStep = BodyAnalysisStep.BODY_RESULT
+
+            val success = viewModel.completeBodyAnalysis()
+
+            currentStep = if (success) {
+                BodyAnalysisStep.BODY_RESULT
+            } else {
+                BodyAnalysisStep.BODY_RETRY
+            }
         }
     }
 
@@ -103,6 +109,18 @@ fun BodyAnalysisScreen(
                     currentStep = BodyAnalysisStep.USER_INFO
                 },
                 onSkip = onMoveToPersonalColor
+            )
+        }
+
+        BodyAnalysisStep.BODY_RETRY -> {
+            BodyRetryContent(
+                message = uiState.bodyAnalysisErrorMessage
+                    ?: "체형을 인식할 수 없어요. 다시 촬영해 주세요.",
+                onRetry = {
+                    viewModel.resetBodyPhoto()
+                    currentStep = BodyAnalysisStep.BODY_CAMERA
+                },
+                onMoveToMain = onMoveToMain
             )
         }
 
@@ -241,7 +259,7 @@ private fun BodyCameraContent(
         Spacer(modifier = Modifier.height(112.dp))
 
         Text(
-            text = "전면으로 보고 사진을 찍어주세요.\n아닐 시 정확하지 않을 수 있습니다.",
+            text = "전신이 잘 보이도록 정면에서 사진을 찍어주세요.\n어둡거나 흐리면 인식이 어려울 수 있습니다.",
             modifier = Modifier.fillMaxWidth(),
             color = Color(0xFFFF3B30),
             fontSize = 14.sp,
@@ -262,17 +280,98 @@ private fun BodyCameraContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        if (uiState.isBodyAnalyzing) {
-            Text(
-                text = "체형 데이터를 분석하고 있어요.",
-                modifier = Modifier.fillMaxWidth(),
-                color = Color.Black,
-                fontSize = 13.sp,
-                textAlign = TextAlign.Center
-            )
+        when {
+            uiState.isBodyAnalyzing -> {
+                Text(
+                    text = "체형 데이터를 분석하고 있어요.",
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color.Black,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            uiState.bodyAnalysisErrorMessage != null -> {
+                Text(
+                    text = uiState.bodyAnalysisErrorMessage.orEmpty(),
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFFFF3B30),
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 20.sp
+                )
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun BodyRetryContent(
+    message: String,
+    onRetry: () -> Unit,
+    onMoveToMain: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .statusBarsPadding()
+            .navigationBarsPadding(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "체형을 인식할 수 없어요.",
+                color = Color.Black,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Text(
+                text = message,
+                color = Color(0xFF555555),
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp
+            )
+
+            Spacer(modifier = Modifier.height(36.dp))
+
+            OutlinedButton(
+                onClick = onRetry,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color.White,
+                    contentColor = Color.Black
+                )
+            ) {
+                Text(
+                    text = "다시 촬영하기",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(22.dp))
+
+            TextButton(
+                onClick = onMoveToMain
+            ) {
+                Text(
+                    text = "메인으로",
+                    color = Color.Black,
+                    fontSize = 11.sp
+                )
+            }
+        }
     }
 }
 
@@ -336,7 +435,7 @@ private fun BodyResultContent(
         Spacer(modifier = Modifier.weight(1f))
 
         GreenBottomButton(
-            text = "퍼스널 진단 하러 가기",
+            text = "퍼스널 컬러 진단 하러 가기",
             enabled = uiState.isBodyResultReady,
             onClick = onMoveToPersonalColor
         )
@@ -622,18 +721,18 @@ private fun PhotoCaptureBox(
         contentAlignment = Alignment.Center
     ) {
         when {
+            isLoading -> {
+                CircularProgressIndicator(
+                    color = Color(0xFF98DB82)
+                )
+            }
+
             bitmap != null -> {
                 Image(
                     bitmap = bitmap.asImageBitmap(),
                     contentDescription = "촬영한 체형 분석 사진",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
-                )
-            }
-
-            isLoading -> {
-                CircularProgressIndicator(
-                    color = Color(0xFF98DB82)
                 )
             }
 
