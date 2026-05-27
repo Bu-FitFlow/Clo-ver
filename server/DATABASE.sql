@@ -91,6 +91,7 @@ CREATE TABLE community
     view_count    INT          NOT NULL DEFAULT 0 COMMENT '조회수',
     comment_count INT          NOT NULL DEFAULT 0 COMMENT '댓글 수',
     post_status   VARCHAR(20) COMMENT '게시글 상태(ACTIVE, HIDDEN, DELETED)',
+    wishlist_count INT NOT NULL DEFAULT 0 COMMENT '좋아요 수',
     created_at    DATETIME(6) COMMENT '작성일시',
     updated_at    DATETIME(6) COMMENT '수정일시'
 ) ENGINE = InnoDB
