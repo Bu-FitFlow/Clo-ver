@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Clo-ver Admin - 신고 내역 관리</title>
+    <link href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAMAAAHgaCuzAAAABgdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExURQAAAKd6PsgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAARSURBVAjXY2sgCMAgkiA6SgAALgB/a7onpQAAAABJRU5ErkJggg=="
+          rel="icon">
+    <link rel="stylesheet" th:href="@{/css/style.css}" type="text/css">
+    <link rel="stylesheet" th:href="@{/css/home.css}" type="text/css">
+</head>
+<body class="dashboard-layout">
+
+<div class="sidebar">
+    <h2>Clo-ver Admin</h2>
+    <ul>
+        <li><a th:href="@{/}">대시보드 홈</a></li>
+        <li><a href="#">커뮤니티 글 관리 (예정)</a></li>
+        <li><a class="active" th:href="@{/reports}">신고 내역 관리</a></li>
+    </ul>
+</div>
+
+<div class="main-content">
+    <div class="topbar">
+        <div class="user-info">환영합니다, <strong th:text="${loginId}">관리자</strong>님!</div>
+        <form method="post" style="margin: 0;" th:action="@{/logout}">
+            <button class="btn-logout" type="submit">로그아웃</button>
+        </form>
+    </div>
+
+    <div class="content-body">
+        <h2>신고 내역 관리</h2>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>신고자</th>
+                    <th>피신고자</th>
+                    <th>대상 유형</th>
+                    <th>대상 ID</th>
+                    <th>유형</th>
+                    <th>신고 내용</th>
+                    <th>상태</th>
+                    <th>관리자 작업 (메모 후 승인/반려)</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="report : ${reports}">
+                    <td th:text="${report.reportId}"></td>
+                    <td th:text="${report.reporterId}"></td>
+                    <td th:text="${report.reportedId}"></td>
+                    <td th:text="${report.targetType}"></td>
+                    <td th:text="${report.targetId}"></td>
+                    <td th:text="${report.reportType}"></td>
+                    <td th:text="${report.content}"></td>
+                    <td>
+                            <span class="badge"
+                                  th:classappend="${report.status == 'PENDING' ? 'badge-warning' : (report.status == 'RESOLVED' ? 'badge-success' : 'badge-danger')}"
+                                  th:text="${report.status}">
+                            </span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 8px;" th:if="${report.status == 'PENDING'}">
+                            <form method="post" style="margin: 0;"
+                                  th:action="@{/reports/{id}/resolve(id=${report.reportId})}">
+                                <input name="adminMemo" placeholder="처리 메모" required
+                                       style="width: 120px; padding: 6px; font-size: 12px;"
+                                       type="text">
+                                <button class="btn btn-success"
+                                        style="padding: 6px 12px; margin-top: 0; font-size: 12px; width: auto;"
+                                        type="submit">승인(완료)
+                                </button>
+                            </form>
+                            <form method="post" style="margin: 0;"
+                                  th:action="@{/reports/{id}/reject(id=${report.reportId})}">
+                                <input name="adminMemo" placeholder="반려 사유" required
+                                       style="width: 120px; padding: 6px; font-size: 12px;"
+                                       type="text">
+                                <button class="btn"
+                                        style="padding: 6px 12px; margin-top: 0; background-color: #6c757d; font-size: 12px; width: auto;"
+                                        type="submit">
+                                    반려
+                                </button>
+                            </form>
+                        </div>
+
+                        <div th:unless="${report.status == 'PENDING'}">
+                            <strong>메모:</strong> <span th:text="${report.adminMemo}"></span>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(reports)}">
+                    <td colspan="8" style="text-align: center;">조회된 신고 내역이 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center;" th:if="${page != null and page.totalPages > 0}">
+            <a style="margin-right: 15px; color: #007bff; text-decoration: none;"
+               th:href="@{/reports(page=${page.number - 1})}"
+               th:if="${page.hasPrevious()}">&laquo; 이전 페이지</a>
+            <strong style="color: #495057;" th:text="${page.number + 1} + ' / ' + ${page.totalPages}"></strong>
+            <a style="margin-left: 15px; color: #007bff; text-decoration: none;"
+               th:href="@{/reports(page=${page.number + 1})}"
+               th:if="${page.hasNext()}">다음 페이지 &raquo;</a>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

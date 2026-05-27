@@ -12,7 +12,6 @@ import lombok.*;
 @Builder
 @Table(name = "report")
 public class Report extends BaseTimeEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "report_id")
@@ -26,8 +25,11 @@ public class Report extends BaseTimeEntity {
     @JoinColumn(name = "reported_id", nullable = false)
     private Member reported;
 
-    @Column(name = "community_id")
-    private Long communityId;
+    @Column(name = "target_type", nullable = false, length = 20)
+    private String targetType;
+
+    @Column(name = "target_id", nullable = false)
+    private Long targetId;
 
     @Column(name = "report_type", nullable = false, length = 50)
     private String reportType;

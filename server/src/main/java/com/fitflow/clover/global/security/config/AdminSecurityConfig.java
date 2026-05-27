@@ -35,11 +35,12 @@ public class AdminSecurityConfig {
         ProviderManager adminAuthenticationManager = new ProviderManager(adminProvider);
 
         http
-                .securityMatcher("/login", "/signup", "/logout", "/login-process", "/")
+                .securityMatcher("/login", "/signup", "/logout", "/login-process", "/", "/reports", "/reports/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .authenticationManager(adminAuthenticationManager)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/signup").permitAll()
+                        .requestMatchers("/reports", "/reports/**").hasRole("ADMIN")
                         .anyRequest().hasRole("ADMIN")
                 )
                 .formLogin(form -> form
