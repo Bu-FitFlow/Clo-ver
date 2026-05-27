@@ -103,26 +103,6 @@ fun MyProfileModify(navController: NavHostController) {
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
                         )
-
-                   /*
-                    // 우측 [수정] 버튼 추가
-                    Button(
-                        onClick = { /* TODO: 완료 버튼 클릭 시 동작할 로직 */ },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF99DE81)
-                        ),
-                        shape = RoundedCornerShape(5.dp), // 살짝 각진 사각형 모양
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp), // 버튼 내 여백
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd) // 오른쪽 정렬 🎯
-                    ) {
-                        Text(
-                            text = "완료",
-                            color = Color.Black,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    */
                     }
                 }
 
