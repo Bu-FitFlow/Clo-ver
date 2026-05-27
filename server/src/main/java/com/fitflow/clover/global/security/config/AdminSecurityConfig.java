@@ -8,7 +8,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -20,27 +19,26 @@ public class AdminSecurityConfig {
     private final PasswordEncoder passwordEncoder;
 
     @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring()
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico");
-    }
-
-    @Bean
     @Order(1)
     public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
-        DaoAuthenticationProvider adminProvider = new DaoAuthenticationProvider();
-        adminProvider.setUserDetailsService(adminDetailsService);
+        DaoAuthenticationProvider adminProvider = new DaoAuthenticationProvider(adminDetailsService);
         adminProvider.setPasswordEncoder(passwordEncoder);
 
         ProviderManager adminAuthenticationManager = new ProviderManager(adminProvider);
 
         http
-                .securityMatcher("/login", "/signup", "/logout", "/login-process", "/", "/reports", "/reports/**")
+                .securityMatchers(matchers -> matchers.requestMatchers(
+                        "/login", "/signup", "/logout", "/login-process", "/",
+                        "/reports", "/reports/**",
+                        "/communities", "/communities/**",
+                        "/css/**", "/js/**", "/images/**", "/favicon.ico"
+                ))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authenticationManager(adminAuthenticationManager)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                         .requestMatchers("/login", "/signup").permitAll()
-                        .requestMatchers("/reports", "/reports/**").hasRole("ADMIN")
+                        .requestMatchers("/reports", "/reports/**", "/communities", "/communities/**").hasRole("ADMIN")
                         .anyRequest().hasRole("ADMIN")
                 )
                 .formLogin(form -> form

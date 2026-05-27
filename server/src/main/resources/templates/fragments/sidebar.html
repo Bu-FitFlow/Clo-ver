@@ -5,7 +5,7 @@
     <h2>Clo-ver Admin</h2>
     <ul>
         <li><a th:classappend="${activeMenu == 'home'} ? 'active'" th:href="@{/}">대시보드 홈</a></li>
-        <li><a href="#" th:classappend="${activeMenu == 'community'} ? 'active'">커뮤니티 글 관리 (예정)</a></li>
+        <li><a th:classappend="${activeMenu == 'community'} ? 'active'" th:href="@{/communities}">커뮤니티 글 관리</a></li>
         <li><a th:classappend="${activeMenu == 'report'} ? 'active'" th:href="@{/reports}">신고 내역 관리</a></li>
     </ul>
 </div>
