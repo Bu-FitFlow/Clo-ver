@@ -7,4 +7,3 @@ val CloverGreen = Color(0xFF98E084) // 원하는 초록색 hex 코드로 변경 
 val CloverLightGreen = Color(0xFFE8F5E9)
 val White = Color(0xFFFFFFFF)
 val Black = Color(0xFF000000)
-val CloverLightGray = Color(0xFFD3D3D3)

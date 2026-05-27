@@ -15,7 +15,7 @@ class ReportViewModel : ViewModel() {
         "기타"
     )
 
-    // 상태 관리 변수
+    // 상태 관리 변수 (노란색 경고 유발하던 <String>, <Boolean> 생략 완료)
     private val _selectedReason = MutableStateFlow("")
     val selectedReason: StateFlow<String> = _selectedReason.asStateFlow()
 
@@ -28,7 +28,7 @@ class ReportViewModel : ViewModel() {
     private val _temporarySelectedReason = MutableStateFlow("")
     val temporarySelectedReason: StateFlow<String> = _temporarySelectedReason.asStateFlow()
 
-    // 실시간으로 제출 조건이 맞는지 검사하는 함수
+    // 🌟 [Unresolved reference 완벽 해결] 실시간으로 제출 조건이 맞는지 검사하는 함수
     fun checkSubmitEnabled(reason: String, content: String): Boolean {
         return reason.isNotEmpty() && content.isNotBlank()
     }
@@ -52,10 +52,5 @@ class ReportViewModel : ViewModel() {
     fun confirmReason() {
         _selectedReason.value = _temporarySelectedReason.value
         _showBottomSheet.value = false
-    }
-
-    // 🌟 [UI 빨간 줄 해결용 추가] 외부 UI에서 확정된 사유를 직접 변경할 수 있도록 함수 추가
-    fun setSelectedReason(reason: String) {
-        _selectedReason.value = reason
     }
 }
