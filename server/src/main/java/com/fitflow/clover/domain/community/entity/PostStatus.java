@@ -4,6 +4,5 @@ public enum PostStatus {
     ACTIVE,
     HIDDEN,
     DELETED,
-    REPORTED;
-
+    REPORTED
 }

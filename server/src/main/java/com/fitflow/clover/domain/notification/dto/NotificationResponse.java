@@ -19,7 +19,7 @@ public record NotificationResponse(
     public static NotificationResponse from(Notification notification) {
         return NotificationResponse.builder()
                 .notificationId(notification.getNotificationId())
-                .receiverId(notification.getReceiver().getMemberId())
+                .receiverId(notification.getReceiverId().getMemberId())
                 .senderId(notification.getSender() != null ? notification.getSender().getMemberId() : null)
                 .notificationType(notification.getNotificationType())
                 .content(notification.getContent())

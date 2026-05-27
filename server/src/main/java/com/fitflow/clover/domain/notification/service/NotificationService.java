@@ -32,7 +32,7 @@ public class NotificationService {
         }
 
         Notification notification = Notification.builder()
-                .receiver(receiver)
+                .receiverId(receiver)
                 .sender(sender)
                 .notificationType(request.notificationType())
                 .content(request.content())
@@ -44,7 +44,7 @@ public class NotificationService {
     }
 
     public List<NotificationResponse> getNotificationsByReceiver(Long receiverId) {
-        return notificationRepository.findByReceiver_MemberIdOrderByCreatedAtDesc(receiverId)
+        return notificationRepository.findByReceiverId_MemberIdOrderByCreatedAtDesc(receiverId)
                 .stream()
                 .map(NotificationResponse::from)
                 .toList();

@@ -7,6 +7,8 @@ import com.fitflow.clover.domain.community.repository.CommentRepository;
 import com.fitflow.clover.domain.community.repository.CommunityRepository;
 import com.fitflow.clover.domain.member.entity.Member;
 import com.fitflow.clover.domain.member.repository.MemberRepository;
+import com.fitflow.clover.domain.notification.dto.NotificationCreateRequest;
+import com.fitflow.clover.domain.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,8 +48,15 @@ public class CommentService {
         community.increaseCommentCount();
 
         Member sender = memberRepository.findById(memberId).orElse(null);
-        if (sender != null) {
-            notificationService.notifyComment(community.getMemberId(), memberId, communityId, sender.getNickname());
+
+        if (sender != null && !community.getMemberId().equals(memberId)) {
+            notificationService.createNotification(new NotificationCreateRequest(
+                    community.getMemberId(),
+                    memberId,
+                    "COMMENT",
+                    sender.getNickname() + "님이 회원님의 게시글에 댓글을 달았습니다.",
+                    communityId
+            ));
         }
 
         return comment.getCommentId();
@@ -75,8 +84,15 @@ public class CommentService {
 
         Comment parentComment = commentRepository.findById(parentId).orElse(null);
         Member sender = memberRepository.findById(memberId).orElse(null);
-        if (parentComment != null && sender != null) {
-            notificationService.notifyReply(parentComment.getMemberId(), memberId, communityId, sender.getNickname());
+
+        if (parentComment != null && sender != null && !parentComment.getMemberId().equals(memberId)) {
+            notificationService.createNotification(new NotificationCreateRequest(
+                    parentComment.getMemberId(),
+                    memberId,
+                    "COMMENT",
+                    sender.getNickname() + "님이 회원님의 댓글에 대댓글을 달았습니다.",
+                    communityId
+            ));
         }
 
         return reply.getCommentId();
@@ -99,6 +115,18 @@ public class CommentService {
                     );
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void updateComment(Long commentId, Long memberId, String content) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+
+        if (!comment.getMemberId().equals(memberId)) {
+            throw new IllegalStateException("본인 댓글만 수정할 수 있습니다.");
+        }
+
+        comment.updateContent(content);
     }
 
     @Transactional

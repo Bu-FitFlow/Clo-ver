@@ -26,10 +26,14 @@ public class Comment extends BaseTimeEntity {
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    // 대댓글 기능 구현용 (nullable = true)
     @Column(name = "parent_id")
     private Long parentId;
 
+    @Builder.Default
     @Column(name = "is_deleted", nullable = false, columnDefinition = "TINYINT")
     private int isDeleted = 0;
+
+    public void updateContent(String content) {
+        this.content = content;
+    }
 }

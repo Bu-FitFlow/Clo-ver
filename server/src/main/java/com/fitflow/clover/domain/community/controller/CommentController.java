@@ -1,6 +1,7 @@
 package com.fitflow.clover.domain.community.controller;
 
 import com.fitflow.clover.domain.community.dto.request.CommentPostRequest;
+import com.fitflow.clover.domain.community.dto.request.CommentUpdateRequest;
 import com.fitflow.clover.domain.community.dto.response.CommentResponse;
 import com.fitflow.clover.domain.community.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,10 +55,23 @@ public class CommentController {
         return ResponseEntity.ok(commentService.createReply(communityId, parentId, memberId, request.content()));
     }
 
+    @Operation(summary = "댓글 수정")
+    @PutMapping("/{commentId}")
+    public ResponseEntity<Void> updateComment(
+            @SuppressWarnings("unused") @PathVariable Long communityId,
+            @PathVariable Long commentId,
+            @RequestBody @Valid CommentUpdateRequest request,
+            Authentication authentication
+    ) {
+        Long memberId = Long.parseLong(authentication.getName());
+        commentService.updateComment(commentId, memberId, request.content());
+        return ResponseEntity.ok().build();
+    }
+
     @Operation(summary = "댓글 삭제")
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteComment(
-            @PathVariable Long communityId,
+            @SuppressWarnings("unused") @PathVariable Long communityId,
             @PathVariable Long commentId,
             Authentication authentication
     ) {
@@ -69,8 +83,8 @@ public class CommentController {
     @Operation(summary = "대댓글 삭제")
     @DeleteMapping("/{parentId}/reply/{commentId}")
     public ResponseEntity<Void> deleteReply(
-            @PathVariable Long communityId,
-            @PathVariable Long parentId,
+            @SuppressWarnings("unused") @PathVariable Long communityId,
+            @SuppressWarnings("unused") @PathVariable Long parentId,
             @PathVariable Long commentId,
             Authentication authentication
     ) {
