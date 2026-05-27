@@ -8,24 +8,11 @@
 </head>
 <body class="dashboard-layout">
 
-<div class="sidebar">
-    <h2>Clo-ver Admin</h2>
-    <ul>
-        <li><a class="active" th:href="@{/}">대시보드 홈</a></li>
-        <li><a href="#">커뮤니티 글 관리 (예정)</a></li>
-        <li><a th:href="@{/reports}">신고 내역 관리</a></li>
-    </ul>
-</div>
+<div th:replace="~{fragments/sidebar :: sidebar('home')}"></div>
 
 <div class="main-content">
 
-    <div class="topbar">
-        <div class="user-info">환영합니다, <strong th:text="${loginId}">관리자</strong>님!</div>
-
-        <form method="post" style="margin: 0;" th:action="@{/logout}">
-            <button class="btn-logout" type="submit">로그아웃</button>
-        </form>
-    </div>
+    <div th:replace="~{fragments/topbar :: topbar}"></div>
 
     <div class="content-body">
         <h3>대시보드 요약</h3>

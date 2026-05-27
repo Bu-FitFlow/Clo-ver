@@ -22,21 +22,21 @@ public class NotificationService {
 
     @Transactional
     public NotificationResponse createNotification(NotificationCreateRequest request) {
-        Member receiver = memberRepository.findById(request.getReceiverId())
+        Member receiver = memberRepository.findById(request.receiverId())
                 .orElseThrow(() -> new IllegalArgumentException("알림 수신자를 찾을 수 없습니다."));
 
         Member sender = null;
-        if (request.getSenderId() != null) {
-            sender = memberRepository.findById(request.getSenderId())
+        if (request.senderId() != null) {
+            sender = memberRepository.findById(request.senderId())
                     .orElseThrow(() -> new IllegalArgumentException("알림 발신자를 찾을 수 없습니다."));
         }
 
         Notification notification = Notification.builder()
                 .receiver(receiver)
                 .sender(sender)
-                .notificationType(request.getNotificationType())
-                .content(request.getContent())
-                .relatedId(request.getRelatedId())
+                .notificationType(request.notificationType())
+                .content(request.content())
+                .relatedId(request.relatedId())
                 .build();
 
         Notification savedNotification = notificationRepository.save(notification);

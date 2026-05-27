@@ -1,7 +1,7 @@
 package com.fitflow.clover.domain.notification.entity;
 
 import com.fitflow.clover.domain.member.entity.Member;
-import com.fitflow.clover.global.common.BaseTimeEntity;
+import com.fitflow.clover.global.common.BaseCreatedTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,7 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Table(name = "notification")
-public class Notification extends BaseTimeEntity {
+public class Notification extends BaseCreatedTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,7 +35,7 @@ public class Notification extends BaseTimeEntity {
     @Column(name = "related_id")
     private Long relatedId;
 
-    @Column(name = "is_read", nullable = false)
+    @Column(name = "is_read", nullable = false, columnDefinition = "TINYINT")
     @Builder.Default
     private boolean isRead = false;
 

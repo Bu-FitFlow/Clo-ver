@@ -10,22 +10,10 @@
 </head>
 <body class="dashboard-layout">
 
-<div class="sidebar">
-    <h2>Clo-ver Admin</h2>
-    <ul>
-        <li><a th:href="@{/}">대시보드 홈</a></li>
-        <li><a href="#">커뮤니티 글 관리 (예정)</a></li>
-        <li><a class="active" th:href="@{/reports}">신고 내역 관리</a></li>
-    </ul>
-</div>
+<div th:replace="~{fragments/sidebar :: sidebar('report')}"></div>
 
 <div class="main-content">
-    <div class="topbar">
-        <div class="user-info">환영합니다, <strong th:text="${loginId}">관리자</strong>님!</div>
-        <form method="post" style="margin: 0;" th:action="@{/logout}">
-            <button class="btn-logout" type="submit">로그아웃</button>
-        </form>
-    </div>
+    <div th:replace="~{fragments/topbar :: topbar}"></div>
 
     <div class="content-body">
         <h2>신고 내역 관리</h2>
@@ -64,9 +52,11 @@
                         <div style="display: flex; gap: 8px;" th:if="${report.status == 'PENDING'}">
                             <form method="post" style="margin: 0;"
                                   th:action="@{/reports/{id}/resolve(id=${report.reportId})}">
-                                <input name="adminMemo" placeholder="처리 메모" required
-                                       style="width: 120px; padding: 6px; font-size: 12px;"
-                                       type="text">
+                                <label>
+                                    <input name="adminMemo" placeholder="처리 메모" required
+                                           style="width: 120px; padding: 6px; font-size: 12px;"
+                                           type="text">
+                                </label>
                                 <button class="btn btn-success"
                                         style="padding: 6px 12px; margin-top: 0; font-size: 12px; width: auto;"
                                         type="submit">승인(완료)
@@ -74,9 +64,11 @@
                             </form>
                             <form method="post" style="margin: 0;"
                                   th:action="@{/reports/{id}/reject(id=${report.reportId})}">
-                                <input name="adminMemo" placeholder="반려 사유" required
-                                       style="width: 120px; padding: 6px; font-size: 12px;"
-                                       type="text">
+                                <label>
+                                    <input name="adminMemo" placeholder="반려 사유" required
+                                           style="width: 120px; padding: 6px; font-size: 12px;"
+                                           type="text">
+                                </label>
                                 <button class="btn"
                                         style="padding: 6px 12px; margin-top: 0; background-color: #6c757d; font-size: 12px; width: auto;"
                                         type="submit">
