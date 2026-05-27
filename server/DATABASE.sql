@@ -267,6 +267,17 @@ CREATE TABLE image
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
+-- 18. 관리자 정보 (admin) 테이블
+CREATE TABLE admin
+(
+    id       BIGINT AUTO_INCREMENT PRIMARY KEY,
+    login_id VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email    VARCHAR(255) NOT NULL,
+    name     VARCHAR(255) NOT NULL,
+    role     VARCHAR(255) NOT NULL DEFAULT 'ROLE_ADMIN'
+);
+
 -- 1. 대분류 (Root Category) 추가: parent_id는 NULL, depth_level은 1
 INSERT INTO category (category_id, parent_id, name, depth_level, sort_order, created_at, updated_at)
 VALUES (1, NULL, '남성의류', 1, 1, NOW(), NOW()),
