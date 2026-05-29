@@ -51,7 +51,7 @@ fun MyProfile(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 상단바
-            MyProfileTopBar()
+            //MyProfileTopBar()
 
             // 위에서 아래로 요소를 배치 (Groovy의 LinearLayout vertical 느낌)
             Column(
@@ -176,6 +176,7 @@ fun ProfileInfoBox(text: String, modifier: Modifier) {
     }
 }
 
+/*
 
 @Composable
 fun MyProfileTopBar() {
@@ -197,6 +198,7 @@ fun MyProfileTopBar() {
     ) {
     }
 }
+ */
 
 
 

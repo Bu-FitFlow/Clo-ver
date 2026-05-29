@@ -19,11 +19,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -41,6 +47,19 @@ import com.fitflow.clover.R
 
 @Composable
 fun MyProfileModify(navController: NavHostController) {
+
+    // 💡 각 드롭다운박스에서 "선택된 값"을 기억할 상태 장치들입니다.
+    var selectedHeight by remember { mutableStateOf("키 선택") }
+    var selectedWeight by remember { mutableStateOf("몸무게 선택") }
+    var selectedObesity by remember { mutableStateOf("상하체 비만 상태 선택") }
+    var selectedFaceShape by remember { mutableStateOf("얼굴형 선택") }
+
+    // 💡 드롭다운 메뉴에 보여줄 리스트 데이터
+    val heightOptions = (140..190 step 3).map { "${it}cm" }
+    val weightOptions = (40..100 step 3).map { "${it}kg" }
+    val obesityOptions = listOf("상체 비만", "하체 비만", "평균")
+    val faceShapeOptions = listOf("계란형", "둥근형", "각진형", "역삼각형")
+
     // 전체 화면을 감싸는 도화지
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -51,7 +70,7 @@ fun MyProfileModify(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 상단바
-            MyProfileModifyTopBar()
+            //MyProfileModifyTopBar()
 
             // 위에서 아래로 요소를 배치 (Groovy의 LinearLayout vertical 느낌)
             Column(
@@ -144,23 +163,115 @@ fun MyProfileModify(navController: NavHostController) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        ProfileDropdownKeyBox(
+                            label = "키",
+                            selectedValue = selectedHeight,
+                            options = heightOptions,
+                            onOptionSelected = { selectedHeight = it },
+                            modifier = Modifier.weight(1f)
+                        )
+                        ProfileDropdownKeyBox(
+                            label = "몸무게",
+                            selectedValue = selectedWeight,
+                            options = weightOptions,
+                            onOptionSelected = { selectedWeight = it },
+                            modifier = Modifier.weight(1f)
+                        )
+                       /*
                         // 키 입력 박스 (Row 안에서 반씩 나눠 갖도록 weight 1f 부여)
                         ProfileModifyInfoBox(text = "키", modifier = Modifier.weight(1f))
                         // 몸무게 입력 박스
                         ProfileModifyInfoBox(text = "몸무게", modifier = Modifier.weight(1f))
+                        */
                     }
+                    // 상하체 비만 박스
+                    ProfileDropdownKeyBox(
+                        label = "상하체 비만",
+                        selectedValue = selectedObesity,
+                        options = obesityOptions,
+                        onOptionSelected = { selectedObesity = it },
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
+                    // 얼굴형 박스
+                    ProfileDropdownKeyBox(
+                        label = "얼굴형",
+                        selectedValue = selectedFaceShape,
+                        options = faceShapeOptions,
+                        onOptionSelected = { selectedFaceShape = it },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                   /*
                     // [상하체 비만] 박스
                     ProfileModifyInfoBox(text = "상하체 비만", modifier = Modifier.fillMaxWidth())
 
                     // [얼굴형] 박스
                     ProfileModifyInfoBox(text = "얼굴형", modifier = Modifier.fillMaxWidth())
+                    */
                 }
             }
         }
     }
 }
 
+@Composable
+fun ProfileDropdownKeyBox(
+    label: String,                 // "키", "몸무게" 같은 분류 라벨
+    selectedValue: String,         // 현재 선택되어 상자에 띄워줄 값
+    options: List<String>,         // 눌렀을 때 아래로 뜰 리스트 목록
+    onOptionSelected: (String) -> Unit, // 사용자가 항목을 클릭했을 때 작동할 치트키
+    modifier: Modifier = Modifier
+) {
+    // 이 박스의 드롭다운 메뉴가 열려있는지 닫혀있는지 제어하는 상태 변수
+    var isExpanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        // 클릭 가능한 메인 상자
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, Color(0xFFCCCCCC), RoundedCornerShape(8.dp))
+                .clickable { isExpanded = !isExpanded } // 누르면 열림/닫힘 토글 🔄
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 선택된 값이 없으면(기본문구면) 원래 라벨을 띄우고, 선택됐으면 선택된 값을 보여줍니다.
+            Text(
+                text = if (selectedValue.contains("선택")) "$label: $selectedValue" else selectedValue,
+                fontSize = 16.sp,
+                color = if (selectedValue.contains("선택")) Color.Gray else Color.Black
+            )
+            // 아래 방향 화살표 아이콘 🔽
+            Icon(
+                painter = painterResource(id = android.R.drawable.arrow_down_float),
+                contentDescription = "드롭다운 화살표",
+                modifier = Modifier.size(12.dp),
+                tint = Color.Gray
+            )
+        }
+
+        // 실제로 아래로 펼쳐지는 리스트 박스
+        DropdownMenu(
+            expanded = isExpanded,
+            onDismissRequest = { isExpanded = false }, // 바깥쪽 누르면 닫히게 설정
+            modifier = Modifier.background(Color.White)
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(text = option, fontSize = 16.sp, color = Color.Black) },
+                    onClick = {
+                        onOptionSelected(option) // 내가 고른 녀석으로 글자 교체!
+                        isExpanded = false       // 고르고 나면 메뉴 닫기
+                    }
+                )
+            }
+        }
+    }
+}
+
+/*
 
 @Composable
 fun ProfileModifyInfoBox(text: String, modifier: Modifier) {
@@ -176,8 +287,10 @@ fun ProfileModifyInfoBox(text: String, modifier: Modifier) {
         )
     }
 }
+ */
 
 
+/*
 @Composable
 fun MyProfileModifyTopBar() {
     Box(
@@ -198,6 +311,7 @@ fun MyProfileModifyTopBar() {
     ) {
     }
 }
+ */
 
 
 

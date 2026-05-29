@@ -6,6 +6,145 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import com.fitflow.clover.R
+
+// 💡 회원가입 시 입력했던 정보를 담아두는 데이터 바구니 (Data Class)
+data class UserData(
+    val name: String,
+    val nickname: String,
+    val email: String
+)
+
+@Composable
+fun MyPageAccountProfile(
+    navController: NavHostController,
+    userData: UserData? = null // 💡 회원가입 시 입력된 데이터를 외부(서버/뷰모델)에서 받아옵니다.
+) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // 1. 상단 타이틀 영역 (기존 화면과 디자인 통일)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.kakaotalk_20260514_111630855),
+                    contentDescription = "뒤로가기 아이콘",
+                    modifier = Modifier
+                        .size(28.dp)
+                        .align(Alignment.CenterStart)
+                        .clickable {
+                            navController.popBackStack()
+                        }
+                )
+
+                Text(
+                    text = "계정 정보",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            // 2. 계정 정보 리스트 배치 영역
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp) // 각 항목 간의 간격
+            ) {
+                InfoRowItem(label = "이름", value = userData?.name ?: "-")
+                InfoRowItem(label = "닉네임", value = userData?.nickname ?: "-")
+                InfoRowItem(label = "이메일", value = userData?.email ?: "-")
+            }
+        }
+    }
+}
+
+// 📌 이름, 닉네임, 이메일을 각각 한 줄씩 이쁘게 그려줄 재사용 컴포넌트
+@Composable
+fun InfoRowItem(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = Color.White, // 살짝 연한 회색 배경으로 고급스러운 느낌 추가
+                shape = RoundedCornerShape(8.dp) // 테두리 라운딩 통일
+            )
+            .border(
+                width = 1.dp,        // 테두리 두께 1dp
+                color = Color.Black, // 테두리 색상 검은색 (비밀번호 창과 동일)
+                shape = RoundedCornerShape(8.dp) // 테두리도 똑같이 둥글게 처리
+            )
+            .padding(horizontal = 16.dp, vertical = 18.dp), // 내부 여백
+        horizontalArrangement = Arrangement.SpaceBetween, // 라벨은 왼쪽, 데이터는 오른쪽에 배치
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // 항목 이름 (이름, 닉네임, 이메일 타이틀)
+        Text(
+            text = label,
+            fontSize = 16.sp,
+            color = Color.Gray,
+            fontWeight = FontWeight.Medium
+        )
+
+        // 실제 유저 데이터 값
+        Text(
+            text = value,
+            fontSize = 16.sp,
+            color = Color.Black,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+// 🔍 미리보기용 데이터 세팅
+@Preview(showBackground = true, device = "spec:width=393dp,height=852dp")
+@Composable
+fun MyPageAccountProfilePreview() {
+
+    MyPageAccountProfile(
+        navController = rememberNavController(),
+        userData = null
+    )
+}
+/*
+package com.fitflow.clover.mypage.setup
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -48,7 +187,7 @@ fun MyPageAccountProfile(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally // 가운데 정렬
         ) {
 
-            ProfileTopBar()
+            //ProfileTopBar()
 
             // 위에서 아래로 요소를 배치 (Groovy의 LinearLayout vertical 느낌)
             Column(
@@ -105,7 +244,7 @@ fun AccountProfileButton(label : String, value : String) {
     // 그 안에서 내용물을 왼쪽 가운데(CenterStart)로 정렬합니다.
     Box(
         modifier = Modifier
-            .size(width = 309.dp, height = 40.dp)
+            .size(width = 309.dp, height = 50.dp)
             .background(Color.White, RoundedCornerShape(8.dp))
             .border(1.dp, Color(0xFF000000), RoundedCornerShape(8.dp))
             .padding(horizontal = 16.dp), // 글자가 테두리에 너무 붙지 않게 안쪽 여백 살짝 주기
@@ -136,6 +275,7 @@ fun AccountProfileButton(label : String, value : String) {
 }
 
 
+/*
 
 //상단바 상세 설정
 @Composable
@@ -159,9 +299,12 @@ fun ProfileTopBar() {
     }
 }
 
+ */
+
 //미리보기 도화지 설정창
 @Preview(showBackground = true, device = "spec:width=393dp,height=852dp")
 @Composable
 fun MyPageAccountProfilePriview() {
     MyPageAccountProfile(navController = rememberNavController())
 }
+ */
