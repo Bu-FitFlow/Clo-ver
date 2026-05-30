@@ -1,5 +1,9 @@
 package com.fitflow.clover.presentation.community
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -7,35 +11,30 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PersonOff
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.fitflow.clover.R
-import com.fitflow.clover.domain.modal.CommunityCategory
-import com.fitflow.clover.domain.modal.CommunityComment
-import com.fitflow.clover.domain.modal.CommunityContentBlock
-import com.fitflow.clover.domain.modal.CommunityPost
-import com.fitflow.clover.domain.modal.CommunityPostSummary
-import com.fitflow.clover.domain.modal.CommunityReply
+import com.fitflow.clover.domain.modal.*
 
 private val CloverGreen = Color(0xFF99DE81)
 
@@ -51,8 +50,17 @@ fun CommunityListScreen(
     onCategorySelect: (CommunityCategory) -> Unit = {},
     onSearchQueryChange: (String) -> Unit = {},
     onMenuClick: (Long) -> Unit = {},
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
+    onChatClick: () -> Unit = {},
+    onProductListClick: () -> Unit = {},
+    onCommunityClick: () -> Unit = {},
+    onMyPageClick: () -> Unit = {},
+    onSellClick: () -> Unit = {}
 ) {
+    // 1. 메뉴 상태 관리 변수 추가
+    var isMenuExpanded by remember { mutableStateOf(false) }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color.White
@@ -61,57 +69,24 @@ fun CommunityListScreen(
             containerColor = Color.White,
             topBar = {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp)
-                            .padding(horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.back_icon),
-                            contentDescription = "뒤로가기",
-                            tint = Color.Unspecified,
-                            modifier = Modifier
-                                .padding(12.dp)
-                                .size(24.dp)
-                                .clickable(
-                                    indication = null,
-                                    interactionSource = remember { MutableInteractionSource() }
-                                ) { onBackClick() }
-                        )
-                        Box(
-                            modifier = Modifier.weight(1f),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "커뮤니티",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black
-                            )
-                        }
-                        Spacer(modifier = Modifier.size(48.dp))
-                    }
+                    CommunityCloverTopBar(onBackClick = onBackClick)
 
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
+                            .padding(top = 8.dp)
                     ) {
                         OutlinedTextField(
                             value = uiState.searchQuery,
                             onValueChange = onSearchQueryChange,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(52.dp),
-                            placeholder = { Text("검색어를 입력하세요", fontSize = 14.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            placeholder = { Text("검색어를 입력하세요", fontSize = 13.sp) },
                             trailingIcon = {
-                                Icon(Icons.Default.Search, contentDescription = null)
+                                Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp))
                             },
                             shape = RoundedCornerShape(8.dp),
                             colors = OutlinedTextFieldDefaults.colors(
@@ -119,14 +94,15 @@ fun CommunityListScreen(
                                 focusedBorderColor = CloverGreen,
                                 unfocusedContainerColor = Color.White,
                                 focusedContainerColor = Color.White
-                            )
+                            ),
+                            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp)
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(36.dp)
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             CommunityCategory.entries.forEach { category ->
                                 CategoryChip(
@@ -142,65 +118,146 @@ fun CommunityListScreen(
 
                     HorizontalDivider(color = Color.Black, thickness = 1.dp)
                 }
-            },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = onWriteClick,
-                    containerColor = CloverGreen,
-                    shape = CircleShape
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "글쓰기",
-                        tint = Color.White
-                    )
-                }
             }
         ) { paddingValues ->
-            when {
-                uiState.isLoading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = CloverGreen)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                // 게시글 리스트 영역
+                when {
+                    uiState.isLoading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = CloverGreen)
+                        }
                     }
-                }
-                uiState.errorMessage != null -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = uiState.errorMessage,
-                            color = Color.Gray,
-                            fontSize = 14.sp
-                        )
+                    uiState.errorMessage != null -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(text = uiState.errorMessage, color = Color.Gray, fontSize = 14.sp)
+                        }
                     }
-                }
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues)
-                    ) {
-                        items(uiState.posts) { post ->
-                            PostItem(
-                                post = post,
-                                onPostClick = onPostClick,
-                                onMenuClick = onMenuClick
-                            )
+                    else -> {
+                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                            items(uiState.posts) { post ->
+                                PostItem(post = post, onPostClick = onPostClick, onMenuClick = onMenuClick)
+                            }
                         }
                     }
                 }
+
+                // 2. 드롭다운 메뉴 레이아웃 (열려있을 때만 표시)
+                if (isMenuExpanded) {
+                    // 배경 클릭 시 닫히도록 하는 투명 레이어
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) { isMenuExpanded = false }
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(end = 16.dp, bottom = 64.dp), // 버튼 위쪽에 위치하도록 bottom 여백 조절
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // 상단 메뉴 박스
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White,
+                            shadowElevation = 4.dp,
+                            modifier = Modifier.width(140.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                                MenuItem("알림") {
+                                    isMenuExpanded = false
+                                    onNotificationClick()
+                                }
+                                MenuItem("채팅방") {
+                                    isMenuExpanded = false
+                                    onChatClick()
+                                }
+                                MenuItem("판매글") {
+                                    isMenuExpanded = false
+                                    onProductListClick()
+                                }
+                                MenuItem("커뮤니티") {
+                                    isMenuExpanded = false
+                                    onCommunityClick()
+                                }
+                                MenuItem("마이페이지") {
+                                    isMenuExpanded = false
+                                    onMyPageClick()
+                                }
+                            }
+                        }
+
+                        // 하단 메뉴 박스
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White,
+                            shadowElevation = 4.dp,
+                            modifier = Modifier.width(140.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                                MenuItem("판매") {
+                                    isMenuExpanded = false
+                                    onSellClick()
+                                }
+                                MenuItem("글쓰기") {
+                                    isMenuExpanded = false
+                                    onWriteClick()
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 3. 하단 오른쪽 버튼
+                Image(
+                    painter = painterResource(id = R.drawable.listbar),
+                    contentDescription = "메뉴 열기",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 16.dp)
+                        .size(56.dp)
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {
+                            isMenuExpanded = !isMenuExpanded // 클릭 시 메뉴 토글
+                        }
+                )
             }
         }
     }
 }
+
+// 메뉴 아이템 디자인을 위한 보조 컴포저블
+@Composable
+fun MenuItem(text: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 10.dp, horizontal = 16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color.Black
+        )
+    }
+}
+
+
 
 // ─────────────────────────────────────────────────────────
 // 2. 게시글 상세 화면
@@ -213,6 +270,8 @@ fun CommunityDetailScreen(
     onCommentInputChange: (String) -> Unit = {},
     onCommentSubmit: () -> Unit = {},
     onReplyClick: (Long) -> Unit = {},
+    onReplyInputChange: (String) -> Unit = {},
+    onReplySubmit: () -> Unit = {},
     onCommentDeleteClick: (Long) -> Unit = {},
     onMenuClick: () -> Unit = {},
     onEditClick: () -> Unit = {},
@@ -262,7 +321,6 @@ fun CommunityDetailScreen(
                                     Text(
                                         text = post.title,
                                         fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold,
                                         color = Color.Black,
                                         modifier = Modifier.padding(
                                             start = 16.dp,
@@ -288,12 +346,12 @@ fun CommunityDetailScreen(
 
                                         Text(
                                             text = post.authorNickname,
-                                            fontSize = 13.sp,
+                                            fontSize = 10.sp,
                                             color = Color.DarkGray
                                         )
                                         Text(
                                             text = "  ${post.createdAt}",
-                                            fontSize = 12.sp,
+                                            fontSize = 10.sp,
                                             color = Color.Gray
                                         )
 
@@ -301,7 +359,7 @@ fun CommunityDetailScreen(
 
                                         Text(
                                             text = post.category.displayName,
-                                            fontSize = 12.sp,
+                                            fontSize = 10.sp,
                                             color = Color.Gray
                                         )
                                     }
@@ -392,6 +450,33 @@ fun CommunityDetailScreen(
                                             onReplyClick = onReplyClick,
                                             onDeleteClick = onCommentDeleteClick
                                         )
+                                        // 대댓글 입력창: 해당 댓글의 "답글" 버튼을 눌렀을 때만 표시
+                                        if (uiState.replyTargetCommentId == comment.commentId) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(start = 28.dp, end = 8.dp, bottom = 8.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                OutlinedTextField(
+                                                    value = uiState.replyInput,
+                                                    onValueChange = onReplyInputChange,
+                                                    modifier = Modifier.weight(1f),
+                                                    placeholder = { Text("대댓글 입력...", fontSize = 11.sp) },
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    colors = OutlinedTextFieldDefaults.colors(
+                                                        unfocusedBorderColor = Color.LightGray,
+                                                        focusedBorderColor = CloverGreen,
+                                                        unfocusedContainerColor = Color.White,
+                                                        focusedContainerColor = Color.White
+                                                    )
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                TextButton(onClick = onReplySubmit) {
+                                                    Text("등록", color = CloverGreen, fontSize = 11.sp)
+                                                }
+                                            }
+                                        }
                                     }
 
                                     Row(
@@ -431,8 +516,9 @@ fun CommunityDetailScreen(
 }
 
 // ─────────────────────────────────────────────────────────
-// 3. 게시글 작성 화면
+// 3. 게시글 작성 화면 (파라미터 이름: onCompleteClick)
 // ─────────────────────────────────────────────────────────
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommunityWriteScreen(
     uiState: CommunityWriteUiState = CommunityWriteUiState(),
@@ -440,64 +526,94 @@ fun CommunityWriteScreen(
     onTitleChange: (String) -> Unit = {},
     onCategorySelect: (CommunityCategory) -> Unit = {},
     onCategoryDropdownToggle: (Boolean) -> Unit = {},
-    onImagePickClick: () -> Unit = {},
-    onSubmitClick: () -> Unit = {}
+    onContentBlocksChange: (List<CommunityContentBlock>) -> Unit = {},
+    onCompleteClick: (Uri?) -> Unit = {} // 이름 통일: onCompleteClick
 ) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color.White
-    ) {
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    val context = LocalContext.current
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri -> if (uri != null) selectedImageUri = uri }
+    )
+
+    var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success) pendingCameraUri?.let { selectedImageUri = it }
+            pendingCameraUri = null
+        }
+    )
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            if (granted) {
+                val values = android.content.ContentValues().apply {
+                    put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, "community_${System.currentTimeMillis()}.jpg")
+                    put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                }
+                val uri = context.contentResolver.insert(
+                    android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values
+                )
+                if (uri != null) {
+                    pendingCameraUri = uri
+                    cameraLauncher.launch(uri)
+                }
+            }
+        }
+    )
+
+    var showImageSourceDialog by remember { mutableStateOf(false) }
+
+    if (showImageSourceDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showImageSourceDialog = false },
+            title = { Text("이미지 추가") },
+            text = { Text("이미지를 어떻게 추가할까요?") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    showImageSourceDialog = false
+                    cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                }) { Text("카메라로 찍기") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    showImageSourceDialog = false
+                    photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }) { Text("갤러리에서 선택") }
+            }
+        )
+    }
+
+    Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
         Scaffold(
             containerColor = Color.White,
             topBar = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                ) {
+                Column(modifier = Modifier.fillMaxWidth().statusBarsPadding()) {
                     CommunityCloverTopBar(onBackClick = onBackClick)
-
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = "제목:",
-                                fontSize = 15.sp,
-                                color = Color.Black,
-                                fontWeight = FontWeight.Medium
-                            )
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Text(text = "제목:", fontSize = 15.sp, color = Color.Black, fontWeight = FontWeight.Medium)
                             Spacer(modifier = Modifier.width(8.dp))
-                            BasicTitleInput(
-                                value = uiState.title,
-                                onValueChange = onTitleChange
-                            )
+                            BasicTitleInput(value = uiState.title, onValueChange = onTitleChange)
                         }
                         TextButton(
-                            onClick = onSubmitClick,
+                            onClick = { onCompleteClick(selectedImageUri) },
                             enabled = !uiState.isSubmitting
                         ) {
-                            Text(
-                                text = "등록",
-                                color = if (uiState.isSubmitting) Color.Gray else CloverGreen,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Text(text = "완료", color = if (uiState.isSubmitting) Color.Gray else CloverGreen, fontWeight = FontWeight.Bold)
                         }
                     }
-
                     HorizontalDivider(color = Color.LightGray)
-
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -507,38 +623,85 @@ fun CommunityWriteScreen(
                             onExpandChange = onCategoryDropdownToggle,
                             onCategorySelect = onCategorySelect
                         )
-
-                        IconButton(onClick = onImagePickClick) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.image),
-                                contentDescription = "이미지 추가",
-                                tint = Color.Black,
-                                modifier = Modifier.size(28.dp)
-                            )
+                        IconButton(onClick = { showImageSourceDialog = true }) {
+                            Icon(painter = painterResource(id = R.drawable.image), contentDescription = "이미지 추가", modifier = Modifier.size(28.dp))
                         }
                     }
-
                     HorizontalDivider(color = Color.LightGray)
                 }
             }
         ) { paddingValues ->
-            LazyColumn(
+            val scrollState = rememberScrollState()
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(scrollState)
             ) {
-                items(uiState.contentBlocks) { block ->
+                // 이미지 미리보기
+                selectedImageUri?.let { uri ->
+                    Box(modifier = Modifier.padding(vertical = 12.dp)) {
+                        AsyncImage(
+                            model = uri,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 300.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                        IconButton(
+                            onClick = { selectedImageUri = null },
+                            modifier = Modifier.align(Alignment.TopEnd)
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "삭제", tint = Color.White)
+                        }
+                    }
+                }
+
+                // ── 본문 입력창 ──
+                val textValue = uiState.contentBlocks
+                    .filterIsInstance<CommunityContentBlock.TextBlock>()
+                    .joinToString("\n") { it.text }
+                BasicTextField(
+                    value = textValue,
+                    onValueChange = { newText ->
+                        val imageBlocks = uiState.contentBlocks.filterIsInstance<CommunityContentBlock.ImageBlock>()
+                        val newBlocks = buildList {
+                            if (newText.isNotEmpty()) add(CommunityContentBlock.TextBlock(newText))
+                            addAll(imageBlocks)
+                        }
+                        onContentBlocksChange(newBlocks)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 300.dp)
+                        .padding(vertical = 8.dp),
+                    textStyle = TextStyle(fontSize = 14.sp, color = Color.Black, lineHeight = 22.sp),
+                    decorationBox = { innerTextField ->
+                        Box {
+                            if (textValue.isEmpty()) {
+                                Text("내용을 입력하세요", fontSize = 14.sp, color = Color.LightGray)
+                            }
+                            innerTextField()
+                        }
+                    }
+                )
+
+                // 이미지 블록 렌더링
+                uiState.contentBlocks.filterIsInstance<CommunityContentBlock.ImageBlock>().forEach { block ->
                     ContentBlockItem(block = block)
                 }
-                item { Spacer(modifier = Modifier.height(200.dp)) }
+
+                Spacer(modifier = Modifier.height(200.dp))
             }
         }
     }
 }
 
-// ─────────────────────────────────────────────────────────
-// 4. 게시글 수정 화면
-// ─────────────────────────────────────────────────────────
+//4.게시글 수정 화면
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommunityEditScreen(
     uiState: CommunityEditUiState = CommunityEditUiState(),
@@ -546,9 +709,68 @@ fun CommunityEditScreen(
     onTitleChange: (String) -> Unit = {},
     onCategorySelect: (CommunityCategory) -> Unit = {},
     onCategoryDropdownToggle: (Boolean) -> Unit = {},
-    onImagePickClick: () -> Unit = {},
-    onSubmitClick: () -> Unit = {}
+    onContentBlocksChange: (List<CommunityContentBlock>) -> Unit = {},
+    onSubmitClick: (Uri?) -> Unit = {} // 수정 완료 시 Uri를 전달하도록 설정
 ) {
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    val context = LocalContext.current
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri -> if (uri != null) selectedImageUri = uri }
+    )
+
+    var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success) pendingCameraUri?.let { selectedImageUri = it }
+            pendingCameraUri = null
+        }
+    )
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            if (granted) {
+                val values = android.content.ContentValues().apply {
+                    put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, "community_${System.currentTimeMillis()}.jpg")
+                    put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                }
+                val uri = context.contentResolver.insert(
+                    android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values
+                )
+                if (uri != null) {
+                    pendingCameraUri = uri
+                    cameraLauncher.launch(uri)
+                }
+            }
+        }
+    )
+
+    var showImageSourceDialog by remember { mutableStateOf(false) }
+
+    if (showImageSourceDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showImageSourceDialog = false },
+            title = { Text("이미지 추가") },
+            text = { Text("이미지를 어떻게 추가할까요?") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    showImageSourceDialog = false
+                    cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                }) { Text("카메라로 찍기") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    showImageSourceDialog = false
+                    photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }) { Text("갤러리에서 선택") }
+            }
+        )
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color.White
@@ -561,8 +783,10 @@ fun CommunityEditScreen(
                         .fillMaxWidth()
                         .statusBarsPadding()
                 ) {
+                    // 공통 상단바 (로고 등)
                     CommunityCloverTopBar(onBackClick = onBackClick)
 
+                    // 제목 입력 및 수정 버튼 영역
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -586,9 +810,11 @@ fun CommunityEditScreen(
                                 onValueChange = onTitleChange
                             )
                         }
+
+                        // 3. 수정(완료) 버튼: 클릭 시 선택된 이미지 URI를 넘겨줌
                         TextButton(
-                            onClick = onSubmitClick,
-                            enabled = !uiState.isSubmitting
+                            onClick = { onSubmitClick(selectedImageUri) },
+                            enabled = !uiState.isSubmitting && uiState.title.isNotEmpty()
                         ) {
                             Text(
                                 text = "수정",
@@ -600,6 +826,7 @@ fun CommunityEditScreen(
 
                     HorizontalDivider(color = Color.LightGray)
 
+                    // 카테고리 선택 및 이미지 첨부 버튼 영역
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -614,7 +841,8 @@ fun CommunityEditScreen(
                             onCategorySelect = onCategorySelect
                         )
 
-                        IconButton(onClick = onImagePickClick) {
+                        // 4. 이미지 추가 아이콘 버튼
+                        IconButton(onClick = { showImageSourceDialog = true }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.image),
                                 contentDescription = "이미지 추가",
@@ -628,64 +856,148 @@ fun CommunityEditScreen(
                 }
             }
         ) { paddingValues ->
-            LazyColumn(
+            val scrollState = rememberScrollState()
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(scrollState)
             ) {
-                items(uiState.contentBlocks) { block ->
+                // 새로 선택된 이미지 미리보기
+                selectedImageUri?.let { uri ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 12.dp)
+                    ) {
+                        AsyncImage(
+                            model = uri,
+                            contentDescription = "수정 첨부 이미지",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 300.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                        Surface(
+                            onClick = { selectedImageUri = null },
+                            color = Color.Black.copy(alpha = 0.6f),
+                            shape = CircleShape,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                                .size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "삭제",
+                                tint = Color.White,
+                                modifier = Modifier.padding(4.dp)
+                            )
+                        }
+                    }
+                }
+
+                // ── 본문 입력창 ──
+                val textValue = uiState.contentBlocks
+                    .filterIsInstance<CommunityContentBlock.TextBlock>()
+                    .joinToString("\n") { it.text }
+                BasicTextField(
+                    value = textValue,
+                    onValueChange = { newText ->
+                        val imageBlocks = uiState.contentBlocks.filterIsInstance<CommunityContentBlock.ImageBlock>()
+                        val newBlocks = buildList {
+                            if (newText.isNotEmpty()) add(CommunityContentBlock.TextBlock(newText))
+                            addAll(imageBlocks)
+                        }
+                        onContentBlocksChange(newBlocks)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 300.dp)
+                        .padding(vertical = 8.dp),
+                    textStyle = TextStyle(fontSize = 14.sp, color = Color.Black, lineHeight = 22.sp),
+                    decorationBox = { innerTextField ->
+                        Box {
+                            if (textValue.isEmpty()) {
+                                Text("내용을 입력하세요", fontSize = 14.sp, color = Color.LightGray)
+                            }
+                            innerTextField()
+                        }
+                    }
+                )
+
+                // 이미지 블록 렌더링
+                uiState.contentBlocks.filterIsInstance<CommunityContentBlock.ImageBlock>().forEach { block ->
                     ContentBlockItem(block = block)
                 }
-                item { Spacer(modifier = Modifier.height(200.dp)) }
+
+                Spacer(modifier = Modifier.height(200.dp))
             }
         }
     }
 }
 
-// ─────────────────────────────────────────────────────────
-// 공통 - 로고 상단바
+// 공통 - 로고 상단바 (피그마 기준 W393, H62 수정)
 // ─────────────────────────────────────────────────────────
 @Composable
 fun CommunityCloverTopBar(
     onBackClick: () -> Unit = {}
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFE8F8E0))
-            .statusBarsPadding()
-            .height(56.dp)
-            .padding(horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            painter = painterResource(id = R.drawable.back_icon),
-            contentDescription = "뒤로가기",
-            tint = Color.Unspecified,
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // 상태바 영역 - 흰색
+        Spacer(
             modifier = Modifier
-                .padding(12.dp)
-                .size(24.dp)
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ) { onBackClick() }
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .background(Color.White)
         )
-        Box(
-            modifier = Modifier.weight(1f),
-            contentAlignment = Alignment.Center
+        // 상단바 - 녹색, 고정 높이 57dp
+        Surface(
+            color = Color(0xFFE8F8E0),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(57.dp)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = "Clo-ver 로고",
+            Row(
                 modifier = Modifier
-                    .width(58.dp)
-                    .height(45.dp),
-                contentScale = ContentScale.Fit
-            )
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.back_icon),
+                    contentDescription = "뒤로가기",
+                    tint = Color.Unspecified,
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .size(24.dp)
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) { onBackClick() }
+                )
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo),
+                        contentDescription = "Clo-ver 로고",
+                        modifier = Modifier
+                            .width(80.dp)
+                            .height(62.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+                Spacer(modifier = Modifier.size(48.dp))
+            }
         }
-        Spacer(modifier = Modifier.size(48.dp))
     }
 }
+
+
 
 // ─────────────────────────────────────────────────────────
 // 공통 - 제목 입력 필드
@@ -842,14 +1154,14 @@ private val dummyPost = CommunityPost(
 )
 
 // ─────────────────────────────────────────────────────────
-// Preview 화면 상태
+// Preview 화면 상태 관리 (중복 제거됨)
 // ─────────────────────────────────────────────────────────
 enum class CommunityPreviewScreen {
-    LIST, DETAIL, WRITE
+    LIST, DETAIL, WRITE, EDIT
 }
 
 // ─────────────────────────────────────────────────────────
-// Preview - 목록/상세/작성 화면 전환 가능
+// Preview - 목록/상세/작성/수정 화면 전환 통합 테스트
 // ─────────────────────────────────────────────────────────
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
@@ -858,6 +1170,7 @@ fun CommunityListPreview() {
     var listUiState by remember { mutableStateOf(CommunityListUiState(posts = dummyPosts)) }
     var detailUiState by remember { mutableStateOf(CommunityDetailUiState(post = dummyPost)) }
     var writeUiState by remember { mutableStateOf(CommunityWriteUiState()) }
+    var editUiState by remember { mutableStateOf(CommunityEditUiState()) }
 
     when (currentScreen) {
         CommunityPreviewScreen.LIST -> {
@@ -886,6 +1199,7 @@ fun CommunityListPreview() {
             CommunityDetailScreen(
                 uiState = detailUiState,
                 onBackClick = { currentScreen = CommunityPreviewScreen.LIST },
+                onEditClick = { currentScreen = CommunityPreviewScreen.EDIT },
                 onLikeClick = {
                     val current = detailUiState.post ?: return@CommunityDetailScreen
                     detailUiState = detailUiState.copy(
@@ -918,9 +1232,33 @@ fun CommunityListPreview() {
                         commentInput = ""
                     )
                 },
-                onMenuClick = {
+                onReplyClick = { commentId ->
+                    val nextId = if (detailUiState.replyTargetCommentId == commentId) null else commentId
+                    detailUiState = detailUiState.copy(replyTargetCommentId = nextId, replyInput = "")
+                },
+                onReplyInputChange = { input ->
+                    detailUiState = detailUiState.copy(replyInput = input)
+                },
+                onReplySubmit = {
+                    val input = detailUiState.replyInput.trim()
+                    val targetId = detailUiState.replyTargetCommentId ?: return@CommunityDetailScreen
+                    val current = detailUiState.post ?: return@CommunityDetailScreen
+                    if (input.isEmpty()) return@CommunityDetailScreen
+                    val newReply = CommunityReply(
+                        replyId = System.currentTimeMillis(),
+                        authorNickname = "나",
+                        content = input,
+                        createdAt = "방금 전",
+                        isMyReply = true
+                    )
                     detailUiState = detailUiState.copy(
-                        isMenuExpanded = !detailUiState.isMenuExpanded
+                        post = current.copy(
+                            comments = current.comments.map { c ->
+                                if (c.commentId == targetId) c.copy(replies = c.replies + newReply) else c
+                            }
+                        ),
+                        replyInput = "",
+                        replyTargetCommentId = null
                     )
                 }
             )
@@ -940,12 +1278,43 @@ fun CommunityListPreview() {
                 onCategoryDropdownToggle = { isExpanded ->
                     writeUiState = writeUiState.copy(isCategoryDropdownExpanded = isExpanded)
                 },
-                onSubmitClick = { currentScreen = CommunityPreviewScreen.LIST }
+                onCompleteClick = { _ -> // Uri 파라미터 대응
+                    currentScreen = CommunityPreviewScreen.LIST
+                },
+                onContentBlocksChange = { blocks ->
+                    writeUiState = writeUiState.copy(contentBlocks = blocks)
+                }
+            )
+        }
+
+        CommunityPreviewScreen.EDIT -> {
+            CommunityEditScreen(
+                uiState = editUiState,
+                onBackClick = { currentScreen = CommunityPreviewScreen.DETAIL },
+                onTitleChange = { editUiState = editUiState.copy(title = it) },
+                onCategorySelect = { category ->
+                    editUiState = editUiState.copy(
+                        selectedCategory = category,
+                        isCategoryDropdownExpanded = false
+                    )
+                },
+                onCategoryDropdownToggle = { isExpanded ->
+                    editUiState = editUiState.copy(isCategoryDropdownExpanded = isExpanded)
+                },
+                onSubmitClick = { _ -> // Uri 파라미터 대응
+                    currentScreen = CommunityPreviewScreen.DETAIL
+                },
+                onContentBlocksChange = { blocks ->
+                    editUiState = editUiState.copy(contentBlocks = blocks)
+                }
             )
         }
     }
 }
 
+// ─────────────────────────────────────────────────────────
+// 개별 화면 Preview (함수명 중복 해결)
+// ─────────────────────────────────────────────────────────
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun CommunityDetailPreview() {
@@ -963,16 +1332,15 @@ fun CommunityWritePreview() {
     var uiState by remember { mutableStateOf(CommunityWriteUiState()) }
     CommunityWriteScreen(
         uiState = uiState,
+        onTitleChange = { uiState = uiState.copy(title = it) },
         onCategorySelect = { category ->
-            uiState = uiState.copy(
-                selectedCategory = category,
-                isCategoryDropdownExpanded = false
-            )
+            uiState = uiState.copy(selectedCategory = category, isCategoryDropdownExpanded = false)
         },
         onCategoryDropdownToggle = { isExpanded ->
             uiState = uiState.copy(isCategoryDropdownExpanded = isExpanded)
         },
-        onTitleChange = { uiState = uiState.copy(title = it) }
+        onContentBlocksChange = { blocks -> uiState = uiState.copy(contentBlocks = blocks) },
+        onCompleteClick = { _ -> } // 필수 파라미터 추가
     )
 }
 
@@ -982,15 +1350,14 @@ fun CommunityEditPreview() {
     var uiState by remember { mutableStateOf(CommunityEditUiState()) }
     CommunityEditScreen(
         uiState = uiState,
+        onTitleChange = { uiState = uiState.copy(title = it) },
         onCategorySelect = { category ->
-            uiState = uiState.copy(
-                selectedCategory = category,
-                isCategoryDropdownExpanded = false
-            )
+            uiState = uiState.copy(selectedCategory = category, isCategoryDropdownExpanded = false)
         },
         onCategoryDropdownToggle = { isExpanded ->
             uiState = uiState.copy(isCategoryDropdownExpanded = isExpanded)
         },
-        onTitleChange = { uiState = uiState.copy(title = it) }
+        onContentBlocksChange = { blocks -> uiState = uiState.copy(contentBlocks = blocks) },
+        onSubmitClick = { _ -> } // 필수 파라미터 추가
     )
 }

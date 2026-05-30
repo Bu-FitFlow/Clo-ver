@@ -12,6 +12,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -46,8 +48,14 @@ fun ProductListScreen(
     onSubCategoryExpandChange: (Boolean) -> Unit = {},
     onFilterClick: () -> Unit = {},
     onSearchClick: () -> Unit = {},
-    onWriteClick: () -> Unit = {},
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
+    onChatClick: () -> Unit = {},
+    onProductListClick: () -> Unit = {},
+    onCommunityClick: () -> Unit = {},
+    onMyPageClick: () -> Unit = {},
+    onSellClick: () -> Unit = {},
+    onCommunityWriteClick: () -> Unit = {}
 ) {
     var isFabMenuExpanded by remember { mutableStateOf(false) }
 
@@ -59,9 +67,7 @@ fun ProductListScreen(
             containerColor = Color.White,
             topBar = {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     ProductTopBar(onBackClick = onBackClick)
 
@@ -117,121 +123,297 @@ fun ProductListScreen(
 
                     HorizontalDivider(color = Color.LightGray, thickness = 0.5.dp)
                 }
-            },
-            floatingActionButton = {
-                Box {
-                    Image(
-                        painter = painterResource(id = R.drawable.listbar),
-                        contentDescription = "메뉴",
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clickable(
-                                indication = null,
-                                interactionSource = remember { MutableInteractionSource() }
-                            ) { isFabMenuExpanded = !isFabMenuExpanded }
-                    )
-
-                    DropdownMenu(
-                        expanded = isFabMenuExpanded,
-                        onDismissRequest = { isFabMenuExpanded = false },
-                        containerColor = Color.White
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("알림", fontSize = 15.sp, color = Color.Black) },
-                            onClick = { isFabMenuExpanded = false }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("채팅방", fontSize = 15.sp, color = Color.Black) },
-                            onClick = { isFabMenuExpanded = false }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("판매글", fontSize = 15.sp, color = Color.Black) },
-                            onClick = { isFabMenuExpanded = false }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("커뮤니티", fontSize = 15.sp, color = Color.Black) },
-                            onClick = { isFabMenuExpanded = false }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("마이 페이지", fontSize = 15.sp, color = Color.Black) },
-                            onClick = { isFabMenuExpanded = false }
-                        )
-
-                        HorizontalDivider(color = Color.LightGray, thickness = 0.5.dp)
-
-                        DropdownMenuItem(
-                            text = { Text("판매", fontSize = 15.sp, color = Color.Black) },
-                            onClick = { isFabMenuExpanded = false }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("글쓰기", fontSize = 15.sp, color = Color.Black) },
-                            onClick = {
-                                isFabMenuExpanded = false
-                                onWriteClick()
-                            }
-                        )
-                    }
-                }
             }
         ) { paddingValues ->
-            when {
-                uiState.isLoading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = CloverGreen)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                when {
+                    uiState.isLoading -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = CloverGreen)
+                        }
                     }
-                }
-                uiState.errorMessage != null -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = uiState.errorMessage,
-                            color = Color.Gray,
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-                uiState.products.isEmpty() -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "등록된 상품이 없어요",
-                            color = Color.Gray,
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-                else -> {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
-                        contentPadding = PaddingValues(12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(uiState.products) { product ->
-                            ProductGridCard(
-                                product = product,
-                                onProductClick = onProductClick
+                    uiState.errorMessage != null -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = uiState.errorMessage,
+                                color = Color.Gray,
+                                fontSize = 14.sp
                             )
                         }
                     }
+                    uiState.products.isEmpty() -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "등록된 상품이 없어요",
+                                color = Color.Gray,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                    else -> {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            contentPadding = PaddingValues(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(uiState.products) { product ->
+                                ProductGridCard(
+                                    product = product,
+                                    onProductClick = onProductClick
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (isFabMenuExpanded) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) { isFabMenuExpanded = false }
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(end = 16.dp, bottom = 80.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White,
+                            shadowElevation = 4.dp,
+                            modifier = Modifier.width(140.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                                ProductMenuItem("알림") {
+                                    isFabMenuExpanded = false
+                                    onNotificationClick()
+                                }
+                                ProductMenuItem("채팅방") {
+                                    isFabMenuExpanded = false
+                                    onChatClick()
+                                }
+                                ProductMenuItem("판매글") {
+                                    isFabMenuExpanded = false
+                                    onProductListClick()
+                                }
+                                ProductMenuItem("커뮤니티") {
+                                    isFabMenuExpanded = false
+                                    onCommunityClick()
+                                }
+                                ProductMenuItem("마이페이지") {
+                                    isFabMenuExpanded = false
+                                    onMyPageClick()
+                                }
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White,
+                            shadowElevation = 4.dp,
+                            modifier = Modifier.width(120.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                                ProductMenuItem("판매") {
+                                    isFabMenuExpanded = false
+                                    onSellClick()
+                                }
+                                ProductMenuItem("글쓰기") {
+                                    isFabMenuExpanded = false
+                                    onCommunityWriteClick()
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Image(
+                    painter = painterResource(id = R.drawable.listbar),
+                    contentDescription = "메뉴 열기",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 16.dp)
+                        .size(56.dp)
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) { isFabMenuExpanded = !isFabMenuExpanded }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProductMenuItem(text: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 10.dp, horizontal = 16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color.Black
+        )
+    }
+}
+
+
+// ─────────────────────────────────────────────────────────
+// 카테고리 드롭다운
+// ─────────────────────────────────────────────────────────
+@Composable
+private fun MainCategoryDropdown(
+    selectedCategory: ProductMainCategory,
+    isExpanded: Boolean,
+    onExpandChange: (Boolean) -> Unit,
+    onCategorySelect: (ProductMainCategory) -> Unit
+) {
+    Box {
+        CategoryChip(
+            text = selectedCategory.displayName,
+            isExpanded = isExpanded,
+            onClick = { onExpandChange(!isExpanded) }
+        )
+
+        DropdownMenu(
+            expanded = isExpanded,
+            onDismissRequest = { onExpandChange(false) },
+            containerColor = Color.White
+        ) {
+            ProductMainCategory.values().forEach { category ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = category.displayName,
+                            fontSize = 14.sp,
+                            color = Color.Black
+                        )
+                    },
+                    onClick = {
+                        onCategorySelect(category)
+                        onExpandChange(false)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SubCategoryDropdown(
+    selectedSubCategory: ProductSubCategory?,
+    subCategoryList: List<ProductSubCategory>,
+    isExpanded: Boolean,
+    isEnabled: Boolean,
+    onExpandChange: (Boolean) -> Unit,
+    onSubCategorySelect: (ProductSubCategory) -> Unit
+) {
+    val enabled = isEnabled && subCategoryList.isNotEmpty()
+
+    Box {
+        CategoryChip(
+            text = selectedSubCategory?.displayName ?: "스타일",
+            isExpanded = isExpanded,
+            enabled = enabled,
+            onClick = {
+                if (enabled) {
+                    onExpandChange(!isExpanded)
                 }
             }
+        )
+
+        DropdownMenu(
+            expanded = isExpanded && enabled,
+            onDismissRequest = { onExpandChange(false) },
+            containerColor = Color.White
+        ) {
+            subCategoryList.forEach { subCategory ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = subCategory.displayName,
+                            fontSize = 14.sp,
+                            color = Color.Black
+                        )
+                    },
+                    onClick = {
+                        onSubCategorySelect(subCategory)
+                        onExpandChange(false)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryChip(
+    text: String,
+    isExpanded: Boolean,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = if (enabled) Color(0xFFF7F7F7) else Color(0xFFEDEDED),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        modifier = Modifier
+            .height(36.dp)
+            .clickable(
+                enabled = enabled,
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) { onClick() }
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = text,
+                fontSize = 13.sp,
+                color = if (enabled) Color.Black else Color.Gray,
+                fontWeight = FontWeight.Medium
+            )
+            Icon(
+                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+                tint = if (enabled) Color.Black else Color.Gray,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }
@@ -253,6 +435,7 @@ fun ProductGridCard(
                 interactionSource = remember { MutableInteractionSource() }
             ) { onProductClick(product.productId) }
     ) {
+        // 이미지
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -268,7 +451,6 @@ fun ProductGridCard(
                     contentScale = ContentScale.Crop
                 )
             }
-
             if (product.isSold) {
                 Box(
                     modifier = Modifier
@@ -288,50 +470,59 @@ fun ProductGridCard(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        Text(
-            text = product.title,
-            fontSize = 13.sp,
-            color = Color.Black,
-            maxLines = 2,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-        )
-
-        Spacer(modifier = Modifier.height(2.dp))
-
-        Text(
-            text = formatPrice(product.price),
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black
-        )
-
-        Spacer(modifier = Modifier.height(2.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        // 텍스트 영역: 제목(2줄 고정) + 가격 + 날짜/하트
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // 제목: 항상 2줄 높이 고정
             Text(
-                text = product.createdAt,
-                fontSize = 11.sp,
-                color = Color.Gray
+                text = product.title,
+                fontSize = 13.sp,
+                color = Color.Black,
+                maxLines = 2,
+                minLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            Text(
+                text = formatPrice(product.price),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            // 날짜 + 하트: 항상 같은 줄
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    imageVector = Icons.Default.Favorite,
-                    contentDescription = null,
-                    tint = Color.Red,
-                    modifier = Modifier.size(11.dp)
-                )
                 Text(
-                    text = "${product.likeCount}",
+                    text = product.createdAt,
                     fontSize = 11.sp,
-                    color = Color.Gray
+                    color = Color.Gray,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = null,
+                        tint = Color.Red,
+                        modifier = Modifier.size(11.dp)
+                    )
+                    Text(
+                        text = "${product.likeCount}",
+                        fontSize = 11.sp,
+                        color = Color.Gray
+                    )
+                }
             }
         }
     }
@@ -344,40 +535,53 @@ fun ProductGridCard(
 fun ProductTopBar(
     onBackClick: () -> Unit = {}
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFE8F8E0))
-            .height(56.dp)
-            .padding(horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            painter = painterResource(id = R.drawable.back_icon),
-            contentDescription = "뒤로가기",
-            tint = Color.Unspecified,
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Spacer(
             modifier = Modifier
-                .padding(12.dp)
-                .size(24.dp)
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ) { onBackClick() }
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .background(Color.White)
         )
-        Box(
-            modifier = Modifier.weight(1f),
-            contentAlignment = Alignment.Center
+        Surface(
+            color = Color(0xFFE8F8E0),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(57.dp)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = "Clo-ver 로고",
+            Row(
                 modifier = Modifier
-                    .width(58.dp)
-                    .height(45.dp),
-                contentScale = ContentScale.Fit
-            )
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.back_icon),
+                    contentDescription = "뒤로가기",
+                    tint = Color.Unspecified,
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .size(24.dp)
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) { onBackClick() }
+                )
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo),
+                        contentDescription = "Clo-ver 로고",
+                        modifier = Modifier
+                            .width(80.dp)
+                            .height(62.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+                Spacer(modifier = Modifier.size(48.dp))
+            }
         }
-        Spacer(modifier = Modifier.size(48.dp))
     }
 }
 
@@ -387,7 +591,7 @@ fun ProductTopBar(
 private val dummyProducts = listOf(
     ProductSummary(
         productId = 1L,
-        title = "나이키 후드 (거의 새것)",
+        title = "나이키 후드",
         price = 38900,
         thumbnailImageUrl = null,
         mainCategory = ProductMainCategory.TOP,
@@ -420,7 +624,7 @@ private val dummyProducts = listOf(
     ),
     ProductSummary(
         productId = 4L,
-        title = "진청 반바지 (미착용)",
+        title = "진청 반바지",
         price = 15000,
         thumbnailImageUrl = null,
         mainCategory = ProductMainCategory.PANTS,
@@ -442,7 +646,7 @@ private val dummyProducts = listOf(
     ),
     ProductSummary(
         productId = 6L,
-        title = "진청 반바지 (미착용)",
+        title = "진청 반바지",
         price = 15000,
         thumbnailImageUrl = null,
         mainCategory = ProductMainCategory.PANTS,
@@ -471,7 +675,7 @@ fun ProductListPreview() {
 
     ProductListScreen(
         uiState = uiState,
-        onWriteClick = { showEdit = true },
+        onCommunityWriteClick = { showEdit = true },
         onMainCategorySelect = { category ->
             uiState = uiState.copy(
                 selectedMainCategory = category,

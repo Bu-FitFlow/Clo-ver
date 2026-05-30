@@ -40,6 +40,7 @@ android {
 }
 
 dependencies {
+    implementation("io.coil-kt:coil-compose:2.4.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -55,7 +56,11 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    // 기본 아이콘 외에 더 많은 아이콘을 쓰게 해주는 라이브러리입니다
+
+    // 아이콘 확장
     implementation("androidx.compose.material:material-icons-extended")
+    // 이미지 로딩
     implementation("io.coil-kt:coil-compose:2.6.0")
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.7.7")
 }

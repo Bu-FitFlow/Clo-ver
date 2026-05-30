@@ -61,16 +61,16 @@ fun PostItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "[${post.category.displayName}]",
-                    fontSize = 12.sp,
+                    fontSize = 10.sp,
                     color = CloverGreen,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = post.title,
-                    fontSize = 15.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.Black,
                     maxLines = 1,
@@ -81,7 +81,7 @@ fun PostItem(
 
                 Text(
                     text = post.contentPreview,
-                    fontSize = 13.sp,
+                    fontSize = 11.sp,
                     color = Color.Gray,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -93,8 +93,8 @@ fun PostItem(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(post.createdAt, fontSize = 12.sp, color = Color.LightGray)
-                    Text("💬 ${post.commentCount}", fontSize = 12.sp, color = Color.Gray)
+                    Text(post.createdAt, fontSize = 10.sp, color = Color.LightGray)
+                    Text("💬 ${post.commentCount}", fontSize = 10.sp, color = Color.Gray)
                 }
             }
 
@@ -127,7 +127,9 @@ fun CategoryChip(
 ) {
     Surface(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier
+            .width(70.dp)
+            .height(35.dp),
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(
             width = 1.dp,
@@ -135,12 +137,13 @@ fun CategoryChip(
         ),
         color = if (isSelected) CloverGreen else Color.White
     ) {
-        Text(
-            text = category.displayName,
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp),
-            fontSize = 14.sp,
-            color = Color.Black
-        )
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = category.displayName,
+                fontSize = 13.sp,
+                color = Color.Black
+            )
+        }
     }
 }
 
@@ -156,10 +159,10 @@ fun ContentBlockItem(
         is CommunityContentBlock.TextBlock -> {
             Text(
                 text = block.text,
-                fontSize = 14.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Light,
                 color = Color.Black,
-                lineHeight = 22.sp,
+                lineHeight = 18.sp,
                 modifier = modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 6.dp)
@@ -186,7 +189,7 @@ fun ContentBlockItem(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = block.description ?: "-설명 없을 때-",
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     color = Color.Gray,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
@@ -217,20 +220,20 @@ fun CommentItem(
         ) {
             Text(
                 text = "${comment.authorNickname} 님",
-                fontSize = 13.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.Black
             )
             TextButton(onClick = { onReplyClick(comment.commentId) }) {
-                Text("답글", fontSize = 12.sp, color = Color.Gray)
+                Text("답글", fontSize = 11.sp, color = Color.Gray)
             }
         }
 
         Text(
             text = comment.content,
-            fontSize = 13.sp,
+            fontSize = 11.sp,
             color = Color.DarkGray,
-            lineHeight = 20.sp
+            lineHeight = 17.sp
         )
 
         comment.replies.forEach { reply ->
@@ -264,7 +267,7 @@ fun ReplyItem(
     ) {
         Text(
             text = "ㄴ",
-            fontSize = 13.sp,
+            fontSize = 11.sp,
             color = Color.Gray,
             modifier = Modifier.padding(end = 6.dp, top = 2.dp)
         )
@@ -272,15 +275,15 @@ fun ReplyItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "답변: ${reply.authorNickname} 님",
-                fontSize = 12.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.Gray
             )
             Text(
                 text = reply.content,
-                fontSize = 13.sp,
+                fontSize = 11.sp,
                 color = Color.DarkGray,
-                lineHeight = 20.sp
+                lineHeight = 17.sp
             )
         }
     }
