@@ -86,7 +86,7 @@ fun CommunityListScreen(
                             singleLine = true,
                             placeholder = { Text("검색어를 입력하세요", fontSize = 13.sp) },
                             trailingIcon = {
-                                Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(24.dp))
                             },
                             shape = RoundedCornerShape(8.dp),
                             colors = OutlinedTextFieldDefaults.colors(

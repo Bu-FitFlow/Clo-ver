@@ -236,7 +236,7 @@ fun ProductListScreen(
                             shape = RoundedCornerShape(12.dp),
                             color = Color.White,
                             shadowElevation = 4.dp,
-                            modifier = Modifier.width(120.dp)
+                            modifier = Modifier.width(140.dp)
                         ) {
                             Column(modifier = Modifier.padding(vertical = 8.dp)) {
                                 ProductMenuItem("판매") {
