@@ -32,7 +32,8 @@ import androidx.compose.ui.unit.sp
 import com.fitflow.clover.R
 
 @Composable
-fun MyPageScreen(onSettingsClick: () -> Unit) {
+fun MyPageScreen(onSettingsClick: () -> Unit,
+                 onMyWritingClick: () -> Unit) {
     // 전체 화면을 감싸는 도화지
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -190,7 +191,8 @@ fun MyPageScreen(onSettingsClick: () -> Unit) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 31.dp),
+                    .padding(horizontal = 31.dp)
+                    .clickable { onMyWritingClick() },
                 horizontalArrangement = Arrangement.SpaceBetween, // 양 끝으로 배치
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -277,5 +279,6 @@ fun MyPageScreenTopBar() {
 @Composable
 fun MyPageScreenPreview() {
 
-    MyPageScreen(onSettingsClick = {})
+    MyPageScreen(onSettingsClick = {},
+        onMyWritingClick = {})
 }

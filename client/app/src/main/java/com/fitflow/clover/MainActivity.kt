@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import com.fitflow.clover.mypage.mainscreen.MyWriting
 import com.fitflow.clover.mypage.mainscreen.UserPageScreen
 import com.fitflow.clover.mypage.setup.MyPageNavHost
 import com.fitflow.clover.ui.theme.CloverTheme
@@ -28,8 +29,9 @@ class MainActivity : ComponentActivity() {
                             .padding(innerPadding)
                     ) {
                         // 🎯 MyPageAccountProfile() 대신 네비게이션 호스트를 넣어줍니다!
-                        //MyPageNavHost()
-                        UserPageScreen()
+                        MyPageNavHost()
+                        //UserPageScreen()
+
                     }
                 }
             }

@@ -43,11 +43,13 @@ import androidx.navigation.compose.composable // 🎯 composable 인식을 위�
 import androidx.navigation.compose.rememberNavController
 import com.fitflow.clover.R
 import com.fitflow.clover.mypage.mainscreen.MyPageScreen
+import com.fitflow.clover.mypage.mainscreen.MyWriting
 
 
 // 💡 화면들의 이동 주소 정의
 object MyPageDestinations {
     const val MYPAGE_SCREEN = "mypage_screen"
+    const val MY_WRITING = "my_writing"
     const val SETUP = "setup"
     const val ACCOUNT_PROFILE = "account_profile"
     const val ACCOUNT_PASSWORD = "account_password"
@@ -70,8 +72,17 @@ fun MyPageNavHost() {
                 onSettingsClick = {
                     // 아이콘을 누르면 SETUP(설정창)으로 이동합니다.
                     navController.navigate(MyPageDestinations.SETUP)
+                },
+                onMyWritingClick = {
+                    // 🎯 내 글 보기 행을 누르면 MYWRITING 화면으로 이동합니다.
+                    navController.navigate(MyPageDestinations.MY_WRITING)
                 }
+
             )
+        }
+
+        composable(MyPageDestinations.MY_WRITING) {
+            MyWriting(navController = navController)
         }
         composable(MyPageDestinations.SETUP) {
             MyPageSetup(navController = navController)
