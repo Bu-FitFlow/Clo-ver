@@ -39,8 +39,24 @@ fun FindIdPw(navController: NavController) {
     var showPwReset by remember { mutableStateOf(false) }
 
     val cloverGreen = Color(0xFF99DE81)
+    val disabledGray = Color(0xFFCCCCCC) // 버튼 비활성화용 색상
 
-    // 불필요한 BoxWithConstraints 대신 일반 Box로 깔끔하게 래핑
+    // 🌟 [실시간 검증] 1단계: 아이디 찾기 확인 버튼 활성화 여부
+    val isIdFindEnabled = nameInput.isNotBlank() &&
+            emailInput.isNotBlank() &&
+            authCodeInput.isNotBlank() &&
+            isIdAuthSent // 인증받기 버튼을 누른 상태여야 함
+
+    // 🌟 [실시간 검증] 2단계: 비밀번호 찾기 확인 버튼 활성화 여부
+    val isPwFindEnabled = idInput.isNotBlank() &&
+            nameInput.isNotBlank() &&
+            emailInput.isNotBlank() &&
+            authCodeInput.isNotBlank() &&
+            isPwAuthSent // 인증받기 버튼을 누른 상태여야 함
+
+    // 3단계: 새 비밀번호 일치 여부
+    val isPasswordMatching = newPwInput.isNotEmpty() && newPwConfirmInput.isNotEmpty() && (newPwInput == newPwConfirmInput)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -85,7 +101,10 @@ fun FindIdPw(navController: NavController) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Button(
-                    onClick = { tabIndex = 0 },
+                    onClick = {
+                        tabIndex = 0
+                        authCodeInput = "" // 탭 전환 시 인증번호 초기화
+                    },
                     modifier = Modifier.width(150.dp).height(40.dp),
                     shape = RoundedCornerShape(5.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -99,7 +118,10 @@ fun FindIdPw(navController: NavController) {
                 }
 
                 Button(
-                    onClick = { tabIndex = 1 },
+                    onClick = {
+                        tabIndex = 1
+                        authCodeInput = "" // 탭 전환 시 인증번호 초기화
+                    },
                     modifier = Modifier.width(150.dp).height(40.dp),
                     shape = RoundedCornerShape(5.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -144,15 +166,24 @@ fun FindIdPw(navController: NavController) {
                     )
                 }
 
-                // 하단 확인 버튼 (Y: 540.19)
+                // 하단 확인 버튼 (Y: 540.19) - 🌟 검증 연동 완료
                 Button(
-                    onClick = { showIdResult = true },
+                    onClick = { if (isIdFindEnabled) showIdResult = true },
+                    enabled = isIdFindEnabled,
                     modifier = Modifier.offset(x = 24.dp, y = 540.19.dp).width(345.dp).height(62.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = cloverGreen),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = cloverGreen,
+                        disabledContainerColor = disabledGray
+                    ),
                     shape = RoundedCornerShape(5.dp),
                     elevation = null
                 ) {
-                    Text("확인", color = Color.Black, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                    Text(
+                        text = "확인",
+                        color = if (isIdFindEnabled) Color.Black else Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
 
             } else {
@@ -189,21 +220,30 @@ fun FindIdPw(navController: NavController) {
                     )
                 }
 
-                // 하단 확인 버튼 (Y: 575)
+                // 하단 확인 버튼 (Y: 575) - 🌟 검증 연동 완료
                 Button(
-                    onClick = { showPwReset = true },
+                    onClick = { if (isPwFindEnabled) showPwReset = true },
+                    enabled = isPwFindEnabled,
                     modifier = Modifier.offset(x = 24.dp, y = 575.dp).width(345.dp).height(62.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = cloverGreen),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = cloverGreen,
+                        disabledContainerColor = disabledGray
+                    ),
                     shape = RoundedCornerShape(5.dp),
                     elevation = null
                 ) {
-                    Text("확인", color = Color.Black, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                    Text(
+                        text = "확인",
+                        color = if (isPwFindEnabled) Color.Black else Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }
 
         // -----------------------------------------------------------------------------------------
-        // 🎯 [화면 2] 아이디 찾기 완료 결과 화면 (조건 분리 수정완료)
+        // 🎯 [화면 2] 아이디 찾기 완료 결과 화면
         // -----------------------------------------------------------------------------------------
         if (showIdResult && !showPwReset) {
             Text(
@@ -231,7 +271,11 @@ fun FindIdPw(navController: NavController) {
                 fontSize = 15.sp,
                 modifier = Modifier
                     .offset(x = 112.dp, y = 404.dp)
-                    .clickable { showIdResult = false; tabIndex = 1 }
+                    .clickable {
+                        showIdResult = false
+                        tabIndex = 1
+                        authCodeInput = "" // 다른 탭으로 넘어갈 때 입력 클리어
+                    }
             )
 
             // 로그인으로 버튼 (Y: 491)
@@ -247,7 +291,7 @@ fun FindIdPw(navController: NavController) {
         }
 
         // -----------------------------------------------------------------------------------------
-        // 🎯 [화면 3] 비밀번호 찾기 완료 -> 새 비밀번호 입력 화면 (조건 분리 수정완료)
+        // 🎯 [화면 3] 비밀번호 찾기 완료 -> 새 비밀번호 입력 화면
         // -----------------------------------------------------------------------------------------
         if (showPwReset && !showIdResult) {
             Box(modifier = Modifier.offset(x = 43.dp, y = 322.dp).width(309.dp).height(40.dp)) {
@@ -258,28 +302,59 @@ fun FindIdPw(navController: NavController) {
                 CloverTextField(value = newPwConfirmInput, onValueChange = { newPwConfirmInput = it }, label = "새 password 재입력", modifier = Modifier.fillMaxSize())
             }
 
+            // 🎯 실시간 비밀번호 검증 텍스트 영역 (Y: 442)
+            if (newPwInput.isNotEmpty() && newPwConfirmInput.isNotEmpty()) {
+                Text(
+                    text = if (isPasswordMatching) "비밀번호가 일치합니다." else "비밀번호가 일치하지 않습니다.",
+                    color = if (isPasswordMatching) Color(0xFF4CAF50) else Color.Red,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.offset(x = 45.dp, y = 442.dp)
+                )
+            }
+
+            // 아이디를 잊으셨나요? 링크 (Y 마진을 살짝 내려 468dp에 안전하게 배치)
             Text(
                 text = "아이디를 잊으셨나요?",
                 color = Color.Red,
                 fontSize = 15.sp,
                 modifier = Modifier
-                    .offset(x = 129.dp, y = 444.dp)
+                    .offset(x = 129.dp, y = 468.dp)
                     .clickable {
                         showPwReset = false
                         tabIndex = 0
                         isIdAuthSent = false
+                        isPwAuthSent = false
+                        authCodeInput = ""
+                        newPwInput = ""
+                        newPwConfirmInput = ""
                     }
             )
 
-            // 🛠️ 아이디 결과창의 버튼 위치와 100% 동일하게 일치시킨 로그인 버튼 (X:22, Y:491)
+            // 🛠️ 두 비밀번호가 '일치할 때만 활성화'되는 로그인 완료 버튼
             Button(
-                onClick = { navController.navigate("login") },
-                modifier = Modifier.offset(x = 22.dp, y = 491.dp).width(345.dp).height(62.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = cloverGreen),
+                onClick = {
+                    if (isPasswordMatching) {
+                        navController.navigate("login") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    }
+                },
+                enabled = isPasswordMatching,
+                modifier = Modifier.offset(x = 22.dp, y = 515.dp).width(345.dp).height(62.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = cloverGreen,
+                    disabledContainerColor = disabledGray
+                ),
                 shape = RoundedCornerShape(5.dp),
                 elevation = null
             ) {
-                Text("로그인으로", color = Color.Black, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                Text(
+                    text = "로그인으로",
+                    color = if (isPasswordMatching) Color.Black else Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }

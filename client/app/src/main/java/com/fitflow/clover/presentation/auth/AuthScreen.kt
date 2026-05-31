@@ -23,8 +23,15 @@ import com.fitflow.clover.R
 import com.fitflow.clover.core.theme.CloverGreen
 import com.fitflow.clover.core.component.CloverTextField
 import com.fitflow.clover.core.component.CustomCheckBoxRow
+import androidx.compose.foundation.border
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 
-// 🎯 1. 로그인 화면 (아이폰 16 비율 스나이핑 + 피그마 실측 디자인 반영)
+val CloverGreen = Color(0xFF99DE81)
+
 @Composable
 fun LoginMain(navController: NavController) {
     var id by remember { mutableStateOf("") }
@@ -32,108 +39,151 @@ fun LoginMain(navController: NavController) {
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color.White // 피그마와 일치하는 깨끗한 화이트 배경
+        color = Color.White
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp) // 피그마 가로폭 345 맞춤 (393 - 24*2 = 345)
+                .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 🎯 [비율 여백 1] 상단에서 로고 시작점까지의 황금 비율 여백 (Y: 139)
+            // 🎯 [비율 여백 1] 상단 여백
             Spacer(modifier = Modifier.weight(13.9f))
 
-            // 🎯 피그마 실측 로고 크기 반영 (287 * 287)
-            // 컴포넌트 내부에 글자가 잘리지 않게 가로세로 비율을 완벽 고정합니다.
+            // 🎯 Clover 메인 로고
             Image(
                 painter = painterResource(id = R.drawable.frame_31),
                 contentDescription = "Clover Main Logo",
                 modifier = Modifier.size(287.dp)
             )
 
-            // 🎯 [비율 여백 2] 로고 하단에서 ID 라벨까지의 여백
+            // 🎯 [비율 여백 2] 로고 하단 여백
             Spacer(modifier = Modifier.weight(3.9f))
 
-            // ID 라벨 및 입력란 (모서리 5, 높이 42)
+            // ID 입력란 영역
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = "ID",
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal, // Regular
-                    color = Color.Black, // 요구사항 반영: 글씨 색상 검은색
+                    fontWeight = FontWeight.Normal,
+                    color = Color.Black,
                     modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
                 )
-                OutlinedTextField(
+
+                // 🛠️ contentPadding 에러 원천 차단: 높이 고정에 최적화된 Custom 텍스트 필드 구조
+                var isIdFocused by remember { mutableStateOf(false) }
+                BasicTextField(
                     value = id,
                     onValueChange = { id = it },
+                    textStyle = TextStyle(
+                        color = Color.Black,
+                        fontSize = 14.sp,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    ),
+                    singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(42.dp), // 피그마 높이 42 규격
-                    shape = RoundedCornerShape(5.dp), // 피그마 곡률 5 규격
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.Black,
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    )
+                        .height(42.dp)
+                        .border(
+                            border = BorderStroke(
+                                width = 1.dp,
+                                color = if (isIdFocused) Color.Black else Color.LightGray
+                            ),
+                            shape = RoundedCornerShape(5.dp)
+                        ),
+                    decorationBox = { innerTextField ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 12.dp),
+                            contentAlignment = Alignment.CenterStart // 수직 정중앙 정렬로 글자 잘림 해결!
+                        ) {
+                            innerTextField()
+                        }
+                    }
                 )
             }
 
-            // 🎯 [비율 여백 3] ID 입력창과 Password 입력창 사이의 여백
+            // 🎯 [비율 여백 3] 입력창 간격
             Spacer(modifier = Modifier.weight(1.8f))
 
-            // Password 라벨 및 입력란 (모서리 5, 높이 42)
+            // Password 입력란 영역
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = "Password",
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal, // Regular
-                    color = Color.Black, // 요구사항 반영: 글씨 색상 검은색
+                    fontWeight = FontWeight.Normal,
+                    color = Color.Black,
                     modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
                 )
-                OutlinedTextField(
+
+                // 🛠️ contentPadding 에러 원천 차단: 높이 고정에 최적화된 Custom 텍스트 필드 구조
+                var isPwFocused by remember { mutableStateOf(false) }
+                BasicTextField(
                     value = pw,
                     onValueChange = { pw = it },
                     visualTransformation = PasswordVisualTransformation(),
+                    textStyle = TextStyle(
+                        color = Color.Black,
+                        fontSize = 14.sp,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    ),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(42.dp), // 피그마 높이 42 규격
-                    shape = RoundedCornerShape(5.dp), // 피그마 곡률 5 규격
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.Black,
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    )
+                        .height(42.dp)
+                        .border(
+                            border = BorderStroke(
+                                width = 1.dp,
+                                color = if (isPwFocused) Color.Black else Color.LightGray
+                            ),
+                            shape = RoundedCornerShape(5.dp)
+                        ),
+                    decorationBox = { innerTextField ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 12.dp),
+                            contentAlignment = Alignment.CenterStart // 패스워드 마스킹 수직 정중앙 정렬
+                        ) {
+                            innerTextField()
+                        }
+                    }
                 )
             }
 
-            // 🎯 [비율 여백 4] 비밀번호 영역과 로그인 버튼 사이의 여백
+            // 🎯 [비율 여백 4] 로그인 버튼 상단 여백
             Spacer(modifier = Modifier.weight(4.3f))
 
-            // 로그인 버튼 (외곽선 X, 모서리 5, 크기 345*52, 텍스트 Medium 24sp)
+            // 로그인 버튼 (조건 미충족 시 클릭 방어, 색상은 초록색 고정유지)
             Button(
-                onClick = { },
+                onClick = {
+                    if (id.isNotBlank() && pw.isNotBlank()) {
+                        // 로그인 성공 로직 진입점
+                    }
+                },
+                enabled = true, // 회색 변조 방지
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp), // 피그마 규격 높이 52 적용
+                    .height(52.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = CloverGreen),
                 shape = RoundedCornerShape(5.dp),
-                elevation = null // 피그마와 동일하게 테두리 외각선 및 그림자 플랫화
+                elevation = null
             ) {
                 Text(
                     text = "로그인",
-                    color = Color.Black, // 요구사항 반영: 로그인 글씨 검은색으로 변경!
-                    fontSize = 24.sp, // 피그마 크기 24 적용
-                    fontWeight = FontWeight.Medium // Medium 적용
+                    color = Color.Black,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Medium
                 )
             }
 
-            // 🎯 [비율 여백 5] 로그인 버튼에서 하단 가이드 문구까지의 여백
+            // 🎯 [비율 여백 5]
             Spacer(modifier = Modifier.weight(2.2f))
 
-            // 하단 링크 메시지 버튼 영역 (SpaceBetween으로 화면 가로 비율에 맞게 양끝 정렬)
+            // 하단 링크 영역
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -158,14 +208,15 @@ fun LoginMain(navController: NavController) {
                 )
             }
 
-            // 🎯 최하단 컴포넌트 안착을 위한 바닥 가중치 밸런싱 여백 (Y: 624 이하 영역 제어)
+            // 🎯 최하단 바닥 밸런싱 여백
             Spacer(modifier = Modifier.weight(22.8f))
 
-            // 키보드 대응 마진 안전장치
+            // 키보드 대응 여백
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JoinDetail(navController: NavController) {
@@ -180,6 +231,20 @@ fun JoinDetail(navController: NavController) {
     var isIdAvailable by remember { mutableStateOf(false) }
     var isEmailDuplicate by remember { mutableStateOf(false) }
 
+    val cloverGreen = Color(0xFF99DE81)
+    val disabledGray = Color(0xFFCCCCCC) // 버튼 비활성화용 배경색
+
+    // 🎯 [실시간 회원가입 활성화 여부 검증 파이프라인]
+    val isJoinEnabled = name.isNotBlank() &&
+            id.isNotBlank() &&
+            isIdChecked && isIdAvailable && // ID 중복확인 완료 필수
+            pw.isNotBlank() &&
+            pwConfirm.isNotBlank() &&
+            (pw == pwConfirm) &&            // 비밀번호 재입력 일치 필수
+            email.isNotBlank() &&
+            !isEmailDuplicate &&            // 이메일 중복 없을 것 필수
+            nickname.isNotBlank()
+
     Scaffold(
         containerColor = Color.White
     ) { paddingValues ->
@@ -187,7 +252,7 @@ fun JoinDetail(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 24.dp) // 🎯 [핵심 1] 약관 동의 화면과 동일한 좌우 패딩 24.dp 부여!
+                .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -196,7 +261,7 @@ fun JoinDetail(navController: NavController) {
             Image(
                 painter = painterResource(id = R.drawable.frame_31),
                 contentDescription = null,
-                modifier = Modifier.size(200.dp) // 크기 200*200
+                modifier = Modifier.size(200.dp)
             )
 
             // 이름 입력칸 시작점 (Y:290) 보정 마진
@@ -215,7 +280,7 @@ fun JoinDetail(navController: NavController) {
                     modifier = Modifier.height(40.dp)
                 )
 
-                Spacer(modifier = Modifier.height(15.dp)) // 간격 15 고정
+                Spacer(modifier = Modifier.height(15.dp))
 
                 // ID 라인 행 구성
                 Row(
@@ -231,11 +296,11 @@ fun JoinDetail(navController: NavController) {
                         },
                         label = "ID",
                         modifier = Modifier
-                            .weight(1f) // 가로 242.dp 균형 안착
+                            .weight(1f)
                             .height(40.dp)
                     )
 
-                    Spacer(modifier = Modifier.width(7.dp)) // 버튼과의 정밀 간격
+                    Spacer(modifier = Modifier.width(7.dp))
 
                     if (isIdChecked && isIdAvailable) {
                         Image(
@@ -244,14 +309,13 @@ fun JoinDetail(navController: NavController) {
                             modifier = Modifier.size(28.dp)
                         )
                     } else {
-                        // 중복확인 버튼: 크기(60*40), 글씨(Medium, 크기 12), 모서리(5), 외곽선(X)
                         Button(
                             onClick = {
                                 isIdChecked = true
                                 isIdAvailable = id.isNotBlank() && id != "test"
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isIdChecked && !isIdAvailable) Color(0xFFFF6B6B) else Color(0xFF99DE81)
+                                containerColor = if (isIdChecked && !isIdAvailable) Color(0xFFFF6B6B) else cloverGreen
                             ),
                             shape = RoundedCornerShape(5.dp),
                             elevation = null,
@@ -289,6 +353,18 @@ fun JoinDetail(navController: NavController) {
                 // password 재입력: 크기(309*40)
                 CloverTextField(value = pwConfirm, onValueChange = { pwConfirm = it }, label = "password 재입력", modifier = Modifier.height(40.dp))
 
+                // 🎯 비밀번호 실시간 검증 안내 문구 추가
+                if (pw.isNotEmpty() && pwConfirm.isNotEmpty()) {
+                    Text(
+                        text = if (pw == pwConfirm) "비밀번호가 일치합니다." else "비밀번호가 일치하지 않습니다.",
+                        color = if (pw == pwConfirm) Color(0xFF4CAF50) else Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 4.dp, top = 4.dp)
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(15.dp))
 
                 // 이메일 입력칸: 크기(309*40)
@@ -318,7 +394,7 @@ fun JoinDetail(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(45.dp))
 
-                // 이미 계정이 있으신가요? (검은색, 폰트 regular, 크기 16)
+                // 이미 계정이 있으신가요?
                 Text(
                     text = "이미 계정이 있으신가요?",
                     fontSize = 16.sp,
@@ -330,29 +406,35 @@ fun JoinDetail(navController: NavController) {
                 )
             }
 
-            // 🎯 [핵심 2] 약관 동의 화면의 마진 메커니즘 일치화
             Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 🎯 하단 완료 버튼: 약관동의 화면의 다음 버튼과 완벽히 동일한 위치 및 크기 메커니즘
+            // 🎯 모든 조건 만족 시에만 활성화되는 완료 버튼 적용
             Button(
-                onClick = { navController.navigate("login") },
+                onClick = {
+                    if (isJoinEnabled) {
+                        navController.navigate("login")
+                    }
+                },
+                enabled = isJoinEnabled, // 🌟 유효성 검사 결과에 따라 켜고 꺼짐
                 modifier = Modifier
-                    .fillMaxWidth() // 💡 상단에서 지정한 24.dp 패딩과 맞물려 완벽하게 345.dp 크기 및 정렬 만족!
-                    .height(63.dp), // 높이 63 똑같이 세팅
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF99DE81)),
+                    .fillMaxWidth()
+                    .height(63.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = cloverGreen,
+                    disabledContainerColor = disabledGray // 꺼졌을 때 배경 회색 처리
+                ),
                 shape = RoundedCornerShape(5.dp),
                 elevation = null
             ) {
                 Text(
                     text = "완료",
-                    color = Color.Black,
+                    color = if (isJoinEnabled) Color.Black else Color.White, // 꺼졌을 때 글씨 흰색 처리
                     fontWeight = FontWeight.Medium,
                     fontSize = 24.sp
                 )
             }
 
-            // 🎯 약관 동의 화면의 최하단 여백과 동일하게 일치화
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
