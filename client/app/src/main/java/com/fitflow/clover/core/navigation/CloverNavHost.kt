@@ -85,6 +85,9 @@ fun CloverNavHost() {
         ScreenRoute.PersonalColorQuestion -> {
             PersonalColorScreen(
                 viewModel = diagnosisViewModel,
+                onBack = {
+                    currentScreen.value = ScreenRoute.BodyAnalysis
+                },
                 onMoveToResult = {
                     currentScreen.value = ScreenRoute.PersonalColorResult
                 },

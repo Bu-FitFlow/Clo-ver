@@ -3,20 +3,6 @@ package com.fitflow.clover.presentation.diagnosis
 import android.graphics.Bitmap
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorResultUiModel
 
-enum class DiagnosisGender(
-    val label: String
-) {
-    MALE("남자"),
-    FEMALE("여자")
-}
-
-data class BodyAnalysisResult(
-    val bodyType: String,
-    val title: String,
-    val description: String,
-    val recommendMessage: String
-)
-
 data class DiagnosisUiState(
     val userDisplayName: String = "사용자",
 
@@ -35,19 +21,37 @@ data class DiagnosisUiState(
     val personalColorAnalysisErrorMessage: String? = null
 ) {
     val isInfoCompleted: Boolean
-        get() = selectedGender != null &&
-                selectedHeightCm != null &&
-                selectedWeightKg != null
+        get() {
+            return selectedGender != null &&
+                    selectedHeightCm != null &&
+                    selectedWeightKg != null
+        }
 
     val isBodyResultReady: Boolean
-        get() = bodyPhotoBitmap != null &&
-                bodyResult != null &&
-                !isBodyAnalyzing &&
-                bodyAnalysisErrorMessage == null
+        get() {
+            return bodyResult != null
+        }
 
     val isPersonalColorResultReady: Boolean
-        get() = personalColorPhotoBitmap != null &&
-                personalColorResult != null &&
-                !isPersonalColorAnalyzing &&
-                personalColorAnalysisErrorMessage == null
+        get() {
+            return personalColorResult != null
+        }
 }
+
+enum class DiagnosisGender(
+    val label: String
+) {
+    MALE(
+        label = "남자"
+    ),
+    FEMALE(
+        label = "여자"
+    )
+}
+
+data class BodyAnalysisResult(
+    val bodyType: String,
+    val title: String,
+    val description: String,
+    val recommendMessage: String
+)

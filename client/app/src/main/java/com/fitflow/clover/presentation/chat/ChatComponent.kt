@@ -2,6 +2,7 @@ package com.fitflow.clover.presentation.chat
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,12 +44,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fitflow.clover.R
 
 private val CloverGreen = Color(0xFF99DE81)
 private val CloverDeepGreen = Color(0xFF79AC78)
@@ -453,58 +457,14 @@ private fun ChatBackChevron() {
 
 @Composable
 private fun ChatCloverLogo() {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Canvas(
-            modifier = Modifier.size(31.dp)
-        ) {
-            val leafColor = Color(0xFF8DD36F)
-            val strokeColor = Color(0xFF5FAA43)
-            val center = Offset(size.width / 2f, size.height / 2f)
-
-            drawCircle(
-                color = leafColor,
-                radius = 7.dp.toPx(),
-                center = Offset(center.x, center.y - 7.dp.toPx())
-            )
-
-            drawCircle(
-                color = leafColor,
-                radius = 7.dp.toPx(),
-                center = Offset(center.x - 7.dp.toPx(), center.y)
-            )
-
-            drawCircle(
-                color = leafColor,
-                radius = 7.dp.toPx(),
-                center = Offset(center.x + 7.dp.toPx(), center.y)
-            )
-
-            drawCircle(
-                color = leafColor,
-                radius = 7.dp.toPx(),
-                center = Offset(center.x, center.y + 7.dp.toPx())
-            )
-
-            drawLine(
-                color = strokeColor,
-                start = center,
-                end = Offset(center.x + 9.dp.toPx(), center.y + 13.dp.toPx()),
-                strokeWidth = 1.6.dp.toPx(),
-                cap = StrokeCap.Round
-            )
-        }
-
-        Text(
-            text = "Clo-ver",
-            color = Color(0xFF67B74C),
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            lineHeight = 14.sp
-        )
-    }
+    Image(
+        painter = painterResource(id = R.drawable.main_clover_logo),
+        contentDescription = "Clo-ver 메인 로고",
+        modifier = Modifier
+            .width(94.dp)
+            .height(57.dp),
+        contentScale = ContentScale.Fit
+    )
 }
 
 @Composable

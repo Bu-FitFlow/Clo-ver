@@ -9,20 +9,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +38,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun PersonalColorScreen(
     viewModel: DiagnosisViewModel,
+    onBack: () -> Unit,
     onMoveToResult: () -> Unit,
     onMoveToRetry: () -> Unit,
     onMoveToMain: () -> Unit
@@ -68,35 +65,36 @@ fun PersonalColorScreen(
         }
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(horizontal = 26.dp)
+            .systemBarsPadding() // 핸드폰 상단 배터리/시계 영역 침범 방지 (핵심!)
     ) {
-        PersonalColorTopBar(
-            title = "퍼스널 컬러 진단",
-            onBack = onMoveToMain,
+        PersonalColorHeader(
+            onBack = onBack,
             onSkip = onMoveToMain
         )
 
-        Spacer(modifier = Modifier.height(112.dp))
-
+        // offset 대신 상단 중앙을 기준으로 여백(padding)을 주어 반응형으로 배치
         Text(
-            text = "정면으로 보고 사진을 찍어주세요.\n얼굴이 잘 보이게 촬영해주세요.",
-            modifier = Modifier.fillMaxWidth(),
-            color = Color(0xFFFF3B30),
-            fontSize = 14.sp,
+            text = "전면으로 보고 사진을 찍어주세요.\n아닐 시 정확하지 않을 수 있습니다.",
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 160.dp),
+            color = Color(0xFFF23636),
+            fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center,
             lineHeight = 22.sp
         )
 
-        Spacer(modifier = Modifier.height(34.dp))
-
         PersonalColorPhotoCaptureBox(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 260.dp)
+                .fillMaxWidth(0.6f) // 너비는 화면의 60% 사용
+                .aspectRatio(228f / 325f), // 원본 디자인 비율 유지
             bitmap = uiState.personalColorPhotoBitmap,
             isLoading = uiState.isPersonalColorAnalyzing,
             onClick = {
@@ -104,99 +102,112 @@ fun PersonalColorScreen(
             }
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        when {
-            uiState.isPersonalColorAnalyzing -> {
-                Text(
-                    text = "퍼스널 컬러 데이터를 분석하고 있어요.",
-                    modifier = Modifier.fillMaxWidth(),
-                    color = Color.Black,
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            uiState.personalColorAnalysisErrorMessage != null -> {
-                Text(
-                    text = uiState.personalColorAnalysisErrorMessage.orEmpty(),
-                    modifier = Modifier.fillMaxWidth(),
-                    color = Color(0xFFFF3B30),
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 20.sp
-                )
-            }
+        if (uiState.isPersonalColorAnalyzing) {
+            Text(
+                text = "퍼스널 컬러 데이터를 분석하고 있어요.",
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 620.dp),
+                color = Color.Black,
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center
+            )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        if (uiState.personalColorAnalysisErrorMessage != null) {
+            Text(
+                text = uiState.personalColorAnalysisErrorMessage.orEmpty(),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 620.dp),
+                color = Color(0xFFF23636),
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp
+            )
+        }
     }
 }
 
 @Composable
-private fun PersonalColorTopBar(
-    title: String,
+private fun PersonalColorHeader(
     onBack: () -> Unit,
     onSkip: () -> Unit
 ) {
-    androidx.compose.foundation.layout.Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .height(100.dp)
+            .padding(horizontal = 16.dp)
     ) {
-        TextButton(
-            onClick = onBack,
-            contentPadding = PaddingValues(0.dp)
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .size(40.dp)
+                .clickable(onClick = onBack),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "‹",
-                color = Color.Black,
-                fontSize = 36.sp,
-                fontWeight = FontWeight.Light
-            )
+            ChevronLeftIcon()
         }
-
-        Spacer(modifier = Modifier.weight(1f))
 
         Text(
-            text = title,
+            text = "퍼스널 컬러",
+            modifier = Modifier.align(Alignment.Center),
             color = Color.Black,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = "건너뛰기",
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .clickable(onClick = onSkip),
+            color = Color.Black,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
+        )
+    }
+}
 
-        TextButton(
-            onClick = onSkip,
-            contentPadding = PaddingValues(0.dp)
-        ) {
-            Text(
-                text = "건너뛰기",
-                color = Color.Black,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
+@Composable
+private fun ChevronLeftIcon() {
+    Canvas(
+        modifier = Modifier.size(24.dp)
+    ) {
+        val strokeWidth = 2.dp.toPx()
+        drawLine(
+            color = Color.Black,
+            start = Offset(x = size.width * 0.7f, y = size.height * 0.1f),
+            end = Offset(x = size.width * 0.3f, y = size.height * 0.5f),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+
+        drawLine(
+            color = Color.Black,
+            start = Offset(x = size.width * 0.3f, y = size.height * 0.5f),
+            end = Offset(x = size.width * 0.7f, y = size.height * 0.9f),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
     }
 }
 
 @Composable
 private fun PersonalColorPhotoCaptureBox(
+    modifier: Modifier,
     bitmap: Bitmap?,
     isLoading: Boolean,
     onClick: () -> Unit
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 54.dp)
-            .height(272.dp)
+        modifier = modifier
             .border(
                 width = 1.dp,
-                color = Color.Black,
-                shape = RoundedCornerShape(0.dp)
+                color = Color.Black
             )
             .clickable(
                 enabled = !isLoading,
@@ -207,7 +218,7 @@ private fun PersonalColorPhotoCaptureBox(
         when {
             isLoading -> {
                 CircularProgressIndicator(
-                    color = Color(0xFF98DB82)
+                    color = Color(0xFF99DE81)
                 )
             }
 
@@ -221,29 +232,31 @@ private fun PersonalColorPhotoCaptureBox(
             }
 
             else -> {
-                PersonalColorPlusIcon()
+                PlusIcon()
             }
         }
     }
 }
 
 @Composable
-private fun PersonalColorPlusIcon() {
+private fun PlusIcon() {
     Canvas(
-        modifier = Modifier.size(74.dp)
+        modifier = Modifier.size(40.dp)
     ) {
         drawLine(
             color = Color.Black,
             start = Offset(size.width / 2f, 0f),
             end = Offset(size.width / 2f, size.height),
-            strokeWidth = 1.2.dp.toPx()
+            strokeWidth = 2.dp.toPx(),
+            cap = StrokeCap.Round
         )
 
         drawLine(
             color = Color.Black,
             start = Offset(0f, size.height / 2f),
             end = Offset(size.width, size.height / 2f),
-            strokeWidth = 1.2.dp.toPx()
+            strokeWidth = 2.dp.toPx(),
+            cap = StrokeCap.Round
         )
     }
 }

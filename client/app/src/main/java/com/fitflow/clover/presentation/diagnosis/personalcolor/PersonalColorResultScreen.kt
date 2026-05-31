@@ -5,13 +5,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -36,7 +36,7 @@ fun PersonalColorResultScreen(
     onMoveToMain: () -> Unit
 ) {
     val progress = remember {
-        mutableStateOf(0.05f)
+        mutableStateOf(0.53f)
     }
 
     val safeUserName = userDisplayName
@@ -47,7 +47,7 @@ fun PersonalColorResultScreen(
     LaunchedEffect(result.personalColor) {
         while (progress.value < 1f) {
             delay(35)
-            progress.value = (progress.value + 0.03f).coerceAtMost(1f)
+            progress.value = (progress.value + 0.025f).coerceAtMost(1f)
         }
 
         delay(450)
@@ -58,11 +58,11 @@ fun PersonalColorResultScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .navigationBarsPadding(),
-        contentAlignment = Alignment.Center
+            .systemBarsPadding() // 핸드폰 상태 표시줄과 안 겹치게 추가
     ) {
-        PersonalColorLoadingResultContent(
-            result = result,
+        PersonalColorResultContent(
+            modifier = Modifier.align(Alignment.Center), // 요소들을 전체적으로 화면 정중앙에 배치
+            personalColorCode = result.personalColor,
             userDisplayName = safeUserName,
             progress = progress.value
         )
@@ -70,61 +70,69 @@ fun PersonalColorResultScreen(
 }
 
 @Composable
-private fun PersonalColorLoadingResultContent(
-    result: PersonalColorResultUiModel,
+private fun PersonalColorResultContent(
+    modifier: Modifier = Modifier,
+    personalColorCode: String,
     userDisplayName: String,
     progress: Float
 ) {
-    val seasonLabel = result.personalColor.toPersonalColorSeasonLabel()
+    val seasonLabel = personalColorCode.toPersonalColorSeasonLabel()
 
+    // 텍스트들이 겹치지 않고 자연스럽게 이어지도록 Column과 Row 활용
     Column(
-        modifier = Modifier.padding(horizontal = 28.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Row(
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "${userDisplayName}님",
+                color = Color.Black,
+                fontSize = 40.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = "은",
+                modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
+                color = Color.Black,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Text(
-            text = result.resultTitle.ifBlank {
-                "${userDisplayName}님은\n${seasonLabel.koreanName} 계열이\n잘 어울리는 타입이에요!"
-            },
+            text = "${seasonLabel.koreanTone} 계열이\n잘 어울리는 타입이에요!",
             color = Color.Black,
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center,
-            lineHeight = 42.sp
+            lineHeight = 28.sp
         )
 
-        Spacer(modifier = Modifier.height(22.dp))
+        Spacer(modifier = Modifier.height(80.dp))
 
-        Text(
-            text = seasonLabel.fullName,
-            color = Color(0xFF5FAE4F),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        Text(
-            text = result.resultRecommend,
-            color = Color(0xFF555555),
-            fontSize = 14.sp,
-            textAlign = TextAlign.Center,
-            lineHeight = 22.sp
-        )
-
-        Spacer(modifier = Modifier.height(70.dp))
-
-        CloverPersonalColorProgressBar(
-            progress = progress
+        PersonalColorProgressBar(
+            progress = progress,
+            modifier = Modifier
+                .width(224.dp)
+                .height(15.dp)
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
             text = "이제 ${userDisplayName}님과 가장 잘 어울리는 옷을 찾으러 갈까요?",
+            modifier = Modifier.padding(horizontal = 24.dp),
             color = Color.Black,
-            fontSize = 16.sp,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center,
             lineHeight = 22.sp
         )
@@ -132,35 +140,39 @@ private fun PersonalColorLoadingResultContent(
 }
 
 @Composable
-private fun CloverPersonalColorProgressBar(
-    progress: Float
+private fun PersonalColorProgressBar(
+    progress: Float,
+    modifier: Modifier
 ) {
     val safeProgress = progress.coerceIn(0f, 1f)
 
     Box(
-        modifier = Modifier
-            .width(230.dp)
-            .height(16.dp)
-            .clip(RoundedCornerShape(999.dp))
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
             .background(Color.White)
             .border(
                 width = 1.dp,
                 color = Color.Black,
-                shape = RoundedCornerShape(999.dp)
+                shape = RoundedCornerShape(10.dp)
             )
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth(safeProgress)
-                .fillMaxHeight()
-                .clip(RoundedCornerShape(999.dp))
-                .background(Color(0xFF98DB82))
+                .height(15.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0xFF99DE81))
+                .border(
+                    width = 1.dp,
+                    color = Color.Black,
+                    shape = RoundedCornerShape(10.dp)
+                )
         )
     }
 }
 
 private data class PersonalColorSeasonLabel(
-    val koreanName: String,
+    val koreanTone: String,
     val fullName: String
 )
 
@@ -168,35 +180,35 @@ private fun String.toPersonalColorSeasonLabel(): PersonalColorSeasonLabel {
     return when (trim().uppercase()) {
         "SPRING_WARM" -> {
             PersonalColorSeasonLabel(
-                koreanName = "봄 웜톤",
+                koreanTone = "봄 [웜톤]",
                 fullName = "봄 웜톤 (Spring Warm)"
             )
         }
 
         "SUMMER_COOL" -> {
             PersonalColorSeasonLabel(
-                koreanName = "여름 쿨톤",
+                koreanTone = "여름 [쿨톤]",
                 fullName = "여름 쿨톤 (Summer Cool)"
             )
         }
 
         "AUTUMN_WARM" -> {
             PersonalColorSeasonLabel(
-                koreanName = "가을 웜톤",
+                koreanTone = "가을 [웜톤]",
                 fullName = "가을 웜톤 (Autumn Warm)"
             )
         }
 
         "WINTER_COOL" -> {
             PersonalColorSeasonLabel(
-                koreanName = "겨울 쿨톤",
+                koreanTone = "겨울 [쿨톤]",
                 fullName = "겨울 쿨톤 (Winter Cool)"
             )
         }
 
         else -> {
             PersonalColorSeasonLabel(
-                koreanName = "겨울 쿨톤",
+                koreanTone = "겨울 [쿨톤]",
                 fullName = "겨울 쿨톤 (Winter Cool)"
             )
         }
