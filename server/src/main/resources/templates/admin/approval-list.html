@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Clo-ver Admin - 관리자 계정 관리</title>
+    <link href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAMAAAHgaCuzAAAABgdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExURQAAAKd6PsgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAARSURBVAjXY2sgCMAgkiA6SgAALgB/a7onpQAAAABJRU5ErkJggg=="
+          rel="icon">
+    <link rel="stylesheet" th:href="@{/css/style.css}" type="text/css">
+    <link rel="stylesheet" th:href="@{/css/home.css}" type="text/css">
+</head>
+<body class="dashboard-layout">
+
+<div th:replace="~{fragments/sidebar :: sidebar('approval')}"></div>
+
+<div class="main-content">
+    <div th:replace="~{fragments/topbar :: topbar}"></div>
+
+    <div class="content-body">
+        <h2>관리자 계정 관리</h2>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>로그인 ID</th>
+                    <th>이름</th>
+                    <th>이메일</th>
+                    <th>상태</th>
+                    <th>관리자 작업</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="admin : ${approvals}">
+                    <td th:text="${admin.id}"></td>
+                    <td th:text="${admin.loginId}"></td>
+                    <td th:text="${admin.name}"></td>
+                    <td th:text="${admin.email}"></td>
+                    <td>
+                        <span class="badge badge-warning">대기 중</span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <form method="post" style="margin: 0;"
+                                  th:action="@{/approvals/{id}/approve(id=${admin.id})}">
+                                <button class="btn btn-success"
+                                        style="padding: 6px 12px; margin-top: 0; font-size: 12px; width: auto;"
+                                        type="submit">승인
+                                </button>
+                            </form>
+                            <form method="post" style="margin: 0;"
+                                  th:action="@{/approvals/{id}/reject(id=${admin.id})}">
+                                <button class="btn"
+                                        onclick="return confirm('이 가입 요청을 반려(삭제)하시겠습니까?');"
+                                        style="padding: 6px 12px; margin-top: 0; background-color: #dc3545; font-size: 12px; width: auto;"
+                                        type="submit">반려
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(approvals)}">
+                    <td colspan="6" style="text-align: center;">대기 중인 승인 요청이 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

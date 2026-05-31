@@ -83,17 +83,17 @@ CREATE TABLE category
 -- 5. 커뮤니티 (community) 테이블
 CREATE TABLE community
 (
-    community_id  BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '게시글 고유 식별자',
-    board_type    VARCHAR(20)  NOT NULL COMMENT '게시글 분류',
-    member_id     BIGINT       NOT NULL COMMENT 'FK: 작성자 회원 번호',
-    title         VARCHAR(255) NOT NULL COMMENT '게시글 제목',
-    content       TEXT         NOT NULL COMMENT '게시글 내용',
-    view_count    INT          NOT NULL DEFAULT 0 COMMENT '조회수',
-    comment_count INT          NOT NULL DEFAULT 0 COMMENT '댓글 수',
-    post_status   VARCHAR(20) COMMENT '게시글 상태(ACTIVE, HIDDEN, DELETED)',
-    wishlist_count INT NOT NULL DEFAULT 0 COMMENT '좋아요 수',
-    created_at    DATETIME(6) COMMENT '작성일시',
-    updated_at    DATETIME(6) COMMENT '수정일시'
+    community_id   BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '게시글 고유 식별자',
+    board_type     VARCHAR(20)  NOT NULL COMMENT '게시글 분류',
+    member_id      BIGINT       NOT NULL COMMENT 'FK: 작성자 회원 번호',
+    title          VARCHAR(255) NOT NULL COMMENT '게시글 제목',
+    content        TEXT         NOT NULL COMMENT '게시글 내용',
+    view_count     INT          NOT NULL DEFAULT 0 COMMENT '조회수',
+    comment_count  INT          NOT NULL DEFAULT 0 COMMENT '댓글 수',
+    post_status    VARCHAR(20) COMMENT '게시글 상태(ACTIVE, HIDDEN, DELETED)',
+    wishlist_count INT          NOT NULL DEFAULT 0 COMMENT '좋아요 수',
+    created_at     DATETIME(6) COMMENT '작성일시',
+    updated_at     DATETIME(6) COMMENT '수정일시'
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -271,12 +271,13 @@ CREATE TABLE image
 -- 18. 관리자 정보 (admin) 테이블
 CREATE TABLE admin
 (
-    id       BIGINT AUTO_INCREMENT PRIMARY KEY,
-    login_id VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    email    VARCHAR(255) NOT NULL,
-    name     VARCHAR(255) NOT NULL,
-    role     VARCHAR(255) NOT NULL DEFAULT 'ROLE_ADMIN'
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    login_id    VARCHAR(255) NOT NULL UNIQUE,
+    password    VARCHAR(255) NOT NULL,
+    email       VARCHAR(255) NOT NULL,
+    name        VARCHAR(255) NOT NULL,
+    is_approved BOOLEAN      NOT NULL DEFAULT FALSE,
+    role        VARCHAR(255) NOT NULL DEFAULT 'ROLE_ADMIN'
 );
 
 -- 1. 대분류 (Root Category) 추가: parent_id는 NULL, depth_level은 1

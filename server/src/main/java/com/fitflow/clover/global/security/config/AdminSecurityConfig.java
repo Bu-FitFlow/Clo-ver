@@ -31,6 +31,7 @@ public class AdminSecurityConfig {
                         "/login", "/signup", "/logout", "/login-process", "/",
                         "/reports", "/reports/**",
                         "/communities", "/communities/**",
+                        "/approvals", "/approvals/**",
                         "/css/**", "/js/**", "/images/**", "/favicon.ico"
                 ))
                 .csrf(AbstractHttpConfigurer::disable)
@@ -38,7 +39,7 @@ public class AdminSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                         .requestMatchers("/login", "/signup").permitAll()
-                        .requestMatchers("/reports", "/reports/**", "/communities", "/communities/**").hasRole("ADMIN")
+                        .requestMatchers("/reports", "/reports/**", "/communities", "/communities/**", "/approvals", "/approvals/**").hasRole("ADMIN")
                         .anyRequest().hasRole("ADMIN")
                 )
                 .formLogin(form -> form

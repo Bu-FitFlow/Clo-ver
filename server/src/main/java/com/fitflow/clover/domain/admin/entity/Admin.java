@@ -29,6 +29,9 @@ public class Admin {
     @Column(nullable = false)
     private String role = "ROLE_ADMIN";
 
+    @Column(nullable = false)
+    private boolean isApproved = false;
+
     // 추후 TOTP 연동 시 주석 해제하여 사용
     // private String totpSecret;
     // private boolean isTotpEnabled = false;
@@ -42,5 +45,9 @@ public class Admin {
         if (role != null) {
             this.role = role;
         }
+    }
+
+    public void approve() {
+        this.isApproved = true;
     }
 }
