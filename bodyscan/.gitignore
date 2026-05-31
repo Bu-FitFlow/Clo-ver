@@ -333,3 +333,6 @@ yolov8n-pose.pt
 yolov8n-seg.pt
 
 # End of https://www.toptal.com/developers/gitignore/api/python,macos,windows,intellij+all,opencv
+
+__pycache__/
+*.pyc   
