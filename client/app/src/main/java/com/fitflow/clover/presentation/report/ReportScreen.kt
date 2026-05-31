@@ -111,7 +111,7 @@ fun ReportReasonItem(reason: String, onClick: () -> Unit) {
 fun ReportScreen(
     navController: NavController,
     viewModel: ReportViewModel = viewModel(),
-    targetUserName: String = "김태현"
+    targetUserName: String = "신고대상"
 ) {
     val context = LocalContext.current
 
@@ -125,6 +125,9 @@ fun ReportScreen(
     val disabledGray = Color(0xFFCCCCCC)  // 버튼 비활성화 배경색
 
     var tempSelectedReason by remember { mutableStateOf("") }
+
+    // 🎯 모달창 내 '다음' 버튼 활성화 여부 판별 (공백이 아닐 때만 true)
+    val isNextEnabled = tempSelectedReason.isNotBlank()
 
     val reasonList = listOf(
         "사기 피해를 입었어요.",
@@ -208,14 +211,13 @@ fun ReportScreen(
                         fontWeight = FontWeight.Medium
                     )
 
-                    // 🎯 드로어블에 등록된 chevron_left를 회전시켜 아래쪽 화살표(V)로 매칭
                     Icon(
                         painter = painterResource(id = R.drawable.chevron_left),
                         contentDescription = "드롭다운 화살표",
                         tint = Color.Black,
                         modifier = Modifier
                             .size(20.dp)
-                            .rotate(-90f) // 왼쪽 방향을 정방향 아래 아래 화살표로 조정
+                            .rotate(-90f)
                     )
                 }
 
@@ -249,7 +251,7 @@ fun ReportScreen(
                         decorationBox = { innerTextField ->
                             if (reportContent.isEmpty()) {
                                 Text(
-                                    text = "신고 유형을 선택해주세요.",
+                                    text = "신고 내용을 입력해주세요.",
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = Color.Black.copy(alpha = 0.4f)
@@ -299,7 +301,6 @@ fun ReportScreen(
                     .background(Color.Black.copy(alpha = 0.3f))
                     .clickable { viewModel.setShowBottomSheet(false) }
             ) {
-                // 바텀 팝업 컨테이너 본체: 크기(393*332), 위치(X:2, Y:521)
                 Column(
                     modifier = Modifier
                         .offset(x = 2.dp, y = 521.dp)
@@ -316,7 +317,6 @@ fun ReportScreen(
                         .clickable(enabled = false) { }
                 ) {
                     Box(modifier = Modifier.fillMaxWidth().height(65.dp)) {
-                        // 모달 타이틀 메세지: 위치(X:22, Y:30 -> 상단 내부 정렬 매칭)
                         Text(
                             text = "신고 유형을 선택해주세요.",
                             fontSize = 20.sp,
@@ -325,7 +325,6 @@ fun ReportScreen(
                             modifier = Modifier.offset(x = 22.dp, y = 30.dp)
                         )
 
-                        // 🎯 프로젝트 내 등록되어 있는 R.drawable.x 리소스로 교체 마감 완료
                         IconButton(
                             onClick = { viewModel.setShowBottomSheet(false) },
                             modifier = Modifier
@@ -380,19 +379,23 @@ fun ReportScreen(
                         }
                     }
 
-                    // 하단 다음 승인 확인 버튼: 크기(345*62), 내부 배치 패딩 마감
+                    // 🛠️ 조건부 활성화 적용 완료: 선택했을 때만 색상이 활성화되고 클릭이 가능해집니다.
                     Button(
                         onClick = {
-                            // 🛠️ Unresolved Reference 방지용:
-                            // 프로젝트 내 뷰모델의 유형 변경 메서드 이름(예: setSelectedReason 또는 별도 맵핑 함수)을 확인하신 후 아래에 대입해 주시면 무조건 통과됩니다!
-                            // 예: viewModel.setSelectedReason(tempSelectedReason)
-                            viewModel.setShowBottomSheet(false)
+                            if (isNextEnabled) {
+                                //viewModel.setSelectedReason(tempSelectedReason)
+                                viewModel.setShowBottomSheet(false)
+                            }
                         },
+                        enabled = isNextEnabled,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
                             .padding(top = 22.dp)
                             .size(width = 345.dp, height = 62.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = cloverGreen),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = cloverGreen,
+                            disabledContainerColor = disabledGray
+                        ),
                         shape = RoundedCornerShape(5.dp),
                         elevation = null
                     ) {
@@ -400,7 +403,7 @@ fun ReportScreen(
                             text = "다음",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color.Black
+                            color = if (isNextEnabled) Color.Black else Color.White
                         )
                     }
                 }
