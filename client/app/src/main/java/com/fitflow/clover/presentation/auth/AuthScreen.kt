@@ -31,7 +31,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 
 val CloverGreen = Color(0xFF99DE81)
-
 @Composable
 fun LoginMain(navController: NavController) {
     var id by remember { mutableStateOf("") }
@@ -232,7 +231,6 @@ fun JoinDetail(navController: NavController) {
     var isEmailDuplicate by remember { mutableStateOf(false) }
 
     val cloverGreen = Color(0xFF99DE81)
-    val disabledGray = Color(0xFFCCCCCC) // 버튼 비활성화용 배경색
 
     // 🎯 [실시간 회원가입 활성화 여부 검증 파이프라인]
     val isJoinEnabled = name.isNotBlank() &&
@@ -422,14 +420,14 @@ fun JoinDetail(navController: NavController) {
                     .height(63.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = cloverGreen,
-                    disabledContainerColor = disabledGray // 꺼졌을 때 배경 회색 처리
+                    disabledContainerColor = Color(0xFFC8E6C9) // 꺼졌을 때 배경 회색 처리
                 ),
                 shape = RoundedCornerShape(5.dp),
                 elevation = null
             ) {
                 Text(
                     text = "완료",
-                    color = if (isJoinEnabled) Color.Black else Color.White, // 꺼졌을 때 글씨 흰색 처리
+                    color = Color.Black, // 꺼졌을 때 글씨 흰색 처리
                     fontWeight = FontWeight.Medium,
                     fontSize = 24.sp
                 )
@@ -550,4 +548,24 @@ fun JoinTerms(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
+}
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, widthDp = 393, heightDp = 852, name = "1. 로그인 메인")
+@Composable
+fun LoginMainPreview() {
+    val mockNavController = androidx.navigation.compose.rememberNavController()
+    LoginMain(navController = mockNavController)
+}
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, widthDp = 393, heightDp = 852, name = "2. 약관 동의")
+@Composable
+fun JoinTermsPreview() {
+    val mockNavController = androidx.navigation.compose.rememberNavController()
+    JoinTerms(navController = mockNavController)
+}
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, widthDp = 393, heightDp = 852, name = "3. 회원가입 상세")
+@Composable
+fun JoinDetailPreview() {
+    val mockNavController = androidx.navigation.compose.rememberNavController()
+    JoinDetail(navController = mockNavController)
 }

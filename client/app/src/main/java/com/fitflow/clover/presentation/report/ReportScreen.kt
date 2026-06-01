@@ -6,8 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,82 +28,7 @@ import androidx.navigation.NavController
 import com.fitflow.clover.R
 
 // -----------------------------------------------------------------
-// 1. 조원의 이전 페이지 연동용 예비 화면 (기존 구조 유지)
-// -----------------------------------------------------------------
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ReportReasonScreen(navController: NavController) {
-    val reasons = listOf(
-        "사기 피해를 입었어요.",
-        "욕설, 비방, 혐오적인 표현을 해요.",
-        "물품 하자, 구매 미확정이 발생했어요.",
-        "기타"
-    )
-
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("신고", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.back),
-                            contentDescription = "뒤로가기",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
-            )
-        },
-        containerColor = Color.White
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 24.dp)
-        ) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = "신고하는 이유를 선택해주세요",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-            Spacer(modifier = Modifier.height(30.dp))
-            LazyColumn {
-                items(reasons) { reason ->
-                    ReportReasonItem(reason = reason) { }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ReportReasonItem(reason: String, onClick: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = reason, fontSize = 16.sp, color = Color.Black)
-        }
-        HorizontalDivider(thickness = 1.dp, color = Color(0xFFEEEEEE))
-    }
-}
-
-
-// -----------------------------------------------------------------
-// 2. 메인 신고하기 화면 (ReportScreen) - 피그마 픽셀 매칭 가이드 버젼
+// 🎯 메인 신고하기 화면 (ReportScreen) - 피그마 픽셀 매칭 가이드 버젼
 // -----------------------------------------------------------------
 @Composable
 fun ReportScreen(
@@ -122,7 +45,6 @@ fun ReportScreen(
     val isSubmitEnabled = viewModel.checkSubmitEnabled(selectedReason, reportContent)
 
     val cloverGreen = Color(0xFF99DE81)   // 피그마 테마 초록색
-    val disabledGray = Color(0xFFCCCCCC)  // 버튼 비활성화 배경색
 
     var tempSelectedReason by remember { mutableStateOf("") }
 
@@ -277,14 +199,14 @@ fun ReportScreen(
                     .size(width = 393.dp, height = 67.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = cloverGreen,
-                    disabledContainerColor = disabledGray
+                    disabledContainerColor = Color(0xFFC8E6C9)
                 ),
                 shape = RoundedCornerShape(0.dp),
                 elevation = null
             ) {
                 Text(
                     text = "제출하기",
-                    color = if (isSubmitEnabled) Color.Black else Color.White,
+                    color = Color.Black,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -292,7 +214,7 @@ fun ReportScreen(
         }
 
         // -----------------------------------------------------------------------------------------
-        // 🎯 [3] 하단 유형 선택 팝업 레이아웃 모달창 영역
+        // 🎯 하단 유형 선택 팝업 레이아웃 모달창 영역
         // -----------------------------------------------------------------------------------------
         if (showBottomSheet) {
             Box(
@@ -394,7 +316,7 @@ fun ReportScreen(
                             .size(width = 345.dp, height = 62.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = cloverGreen,
-                            disabledContainerColor = disabledGray
+                            disabledContainerColor = Color(0xFFC8E6C9)
                         ),
                         shape = RoundedCornerShape(5.dp),
                         elevation = null
@@ -403,11 +325,28 @@ fun ReportScreen(
                             text = "다음",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Medium,
-                            color = if (isNextEnabled) Color.Black else Color.White
+                            color = Color.Black
                         )
                     }
                 }
             }
         }
     }
+}
+
+// -----------------------------------------------------------------
+// 🎨 안드로이드 스튜디오 우측 Preview 탭에서 메인 화면만 보기 위한 코드
+// -----------------------------------------------------------------
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, widthDp = 393, heightDp = 852, name = "메인 신고하기 화면")
+@Composable
+fun ReportScreenPreview() {
+    val mockNavController = androidx.navigation.compose.rememberNavController()
+    val mockViewModel = androidx.lifecycle.viewmodel.compose.viewModel<ReportViewModel>()
+
+    ReportScreen(
+        navController = mockNavController,
+        viewModel = mockViewModel,
+        targetUserName = "김클로버 (clover_123)"
+    )
 }
