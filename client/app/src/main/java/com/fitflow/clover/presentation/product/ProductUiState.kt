@@ -1,15 +1,15 @@
 package com.fitflow.clover.presentation.product
 
+import com.fitflow.clover.domain.modal.ProductDetailModel
 import com.fitflow.clover.domain.modal.ProductMainCategory
 import com.fitflow.clover.domain.modal.ProductSubCategory
 import com.fitflow.clover.domain.modal.ProductSummary
+import com.fitflow.clover.domain.modal.ProductSummaryModel
 
-// ─────────────────────────────────────────────────────────
-// 1. 판매글 목록 화면 상태
-// ─────────────────────────────────────────────────────────
 data class ProductListUiState(
     val isLoading: Boolean = false,
     val products: List<ProductSummary> = emptyList(),
+    val productModels: List<ProductSummaryModel> = emptyList(),
     val selectedMainCategory: ProductMainCategory = ProductMainCategory.ALL,
     val isMainCategoryExpanded: Boolean = false,
     val selectedSubCategory: ProductSubCategory? = null,
@@ -20,9 +20,6 @@ data class ProductListUiState(
     val errorMessage: String? = null
 )
 
-// ─────────────────────────────────────────────────────────
-// 2. 판매관리 화면 상태
-// ─────────────────────────────────────────────────────────
 data class TradeUiState(
     val isLoading: Boolean = false,
     val sellingProducts: List<ProductSummary> = emptyList(),
@@ -31,25 +28,22 @@ data class TradeUiState(
     val errorMessage: String? = null
 )
 
-// ─────────────────────────────────────────────────────────
-// 3. 상품 등록/수정 화면 상태
-// ─────────────────────────────────────────────────────────
 data class ProductEditUiState(
     val isLoading: Boolean = false,
-    val isEditMode: Boolean = false,           // false = 등록, true = 수정
-    val productId: Long? = null,               // 수정 시 기존 상품 ID
-    val title: String = "",                    // 상품명
-    val price: String = "",                    // 판매 가격. 화면에서는 String, 저장 시 Int 변환
-    val description: String = "",              // 상품 정보
-    val tradeLocation: String = "",            // 거래 지역
-    val size: String = "",                     // 사이즈
-    val fit: String = "",                      // 핏 선택 사항
+    val isEditMode: Boolean = false,
+    val productId: Long? = null,
+    val title: String = "",
+    val price: String = "",
+    val description: String = "",
+    val tradeLocation: String = "",
+    val size: String = "",
+    val fit: String = "",
     val selectedMainCategory: ProductMainCategory? = null,
     val isMainCategoryExpanded: Boolean = false,
     val selectedSubCategory: ProductSubCategory? = null,
     val isSubCategoryExpanded: Boolean = false,
     val subCategoryList: List<ProductSubCategory> = emptyList(),
-    val imageUris: List<String> = emptyList(),  // 선택한 이미지 URI 문자열 목록. 최대 5장
+    val imageUris: List<String> = emptyList(),
     val isSubmitting: Boolean = false,
     val isSubmitSuccess: Boolean = false,
     val errorMessage: String? = null
@@ -61,3 +55,27 @@ data class ProductEditUiState(
         const val MAX_IMAGE_COUNT: Int = 5
     }
 }
+
+data class ProductDetailUiState(
+    val isLoading: Boolean = false,
+    val product: ProductDetailModel? = null,
+    val errorMessage: String? = null
+)
+
+data class WishlistUiState(
+    val isProcessing: Boolean = false,
+    val errorMessage: String? = null
+)
+
+data class ProductEditFormState(
+    val name: String = "",
+    val price: String = "",
+    val content: String = "",
+    val size: String = "",
+    val grade: String = "",
+    val tradingArea: String = "",
+    val recommendedType: String = "",
+    val postStatus: String = "ACTIVE",
+    val categoryId: String = "",
+    val colorId: String = ""
+)

@@ -1,35 +1,45 @@
 package com.fitflow.clover.presentation.product
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.fitflow.clover.data.remote.api.ProductApi
+import com.fitflow.clover.data.repository.ProductRepositoryImpl
+import com.fitflow.clover.di.NetworkModule
+import com.fitflow.clover.domain.modal.ProductDetailModel
+import com.fitflow.clover.domain.modal.ProductImageModel
 import com.fitflow.clover.domain.modal.ProductMainCategory
 import com.fitflow.clover.domain.modal.ProductSubCategory
 import com.fitflow.clover.domain.modal.ProductSummary
-import com.fitflow.clover.presentation.trade.TradeUiState
+import com.fitflow.clover.domain.modal.ProductSummaryModel
+import com.fitflow.clover.domain.usecase.ProductUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class ProductViewModel : ViewModel() {
+class ProductViewModel(
+    private val productUseCase: ProductUseCase = ProductUseCase(
+        productRepository = ProductRepositoryImpl(
+            productApi = NetworkModule.createApi<ProductApi>()
+        )
+    )
+) : ViewModel() {
 
     companion object {
         private const val MAX_IMAGE_COUNT = 5
     }
 
-    // 등록/수정 결과가 목록에 바로 반영되도록 기준 데이터는 ViewModel 내부에서 관리합니다.
     private var allProducts: List<ProductSummary> = dummyProducts
 
-    // ─────────────────────────────────────────────────────────
-    // 판매글 목록 상태
-    // ─────────────────────────────────────────────────────────
     private val _listUiState = MutableStateFlow(
-        ProductListUiState(products = dummyProducts)
+        ProductListUiState(
+            products = dummyProducts,
+            productModels = dummyProductModels
+        )
     )
     val listUiState: StateFlow<ProductListUiState> = _listUiState.asStateFlow()
 
-    // ─────────────────────────────────────────────────────────
-    // 판매관리 상태
-    // ─────────────────────────────────────────────────────────
     private val _tradeUiState = MutableStateFlow(
         TradeUiState(
             isSellingTabSelected = true,
@@ -39,15 +49,210 @@ class ProductViewModel : ViewModel() {
     )
     val tradeUiState: StateFlow<TradeUiState> = _tradeUiState.asStateFlow()
 
-    // ─────────────────────────────────────────────────────────
-    // 상품 등록/수정 상태
-    // ─────────────────────────────────────────────────────────
     private val _editUiState = MutableStateFlow(ProductEditUiState())
     val editUiState: StateFlow<ProductEditUiState> = _editUiState.asStateFlow()
 
-    // ─────────────────────────────────────────────────────────
-    // 판매글 목록 이벤트
-    // ─────────────────────────────────────────────────────────
+    private val _detailUiState = MutableStateFlow(ProductDetailUiState())
+    val detailUiState: StateFlow<ProductDetailUiState> = _detailUiState.asStateFlow()
+
+    private val _wishlistUiState = MutableStateFlow(WishlistUiState())
+    val wishlistUiState: StateFlow<WishlistUiState> = _wishlistUiState.asStateFlow()
+
+    private val _editFormState = MutableStateFlow(ProductEditFormState())
+    val editFormState: StateFlow<ProductEditFormState> = _editFormState.asStateFlow()
+
+    fun loadRecentProducts(size: Int = 9) {
+        if (_listUiState.value.isLoading) return
+
+        viewModelScope.launch {
+            _listUiState.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = null
+                )
+            }
+
+            runCatching {
+                productUseCase.getRecentProducts(size = size)
+            }.onSuccess { products ->
+                val summaryProducts = products.map { product ->
+                    product.toProductSummary()
+                }
+
+                allProducts = summaryProducts
+
+                _listUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        products = applyCurrentFilter(
+                            source = summaryProducts,
+                            state = it
+                        ),
+                        productModels = products,
+                        errorMessage = null
+                    )
+                }
+            }.onFailure { throwable ->
+                _listUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        products = filterProducts(
+                            main = it.selectedMainCategory,
+                            sub = it.selectedSubCategory,
+                            latestOrder = it.isLatestOrder
+                        ),
+                        errorMessage = throwable.message
+                    )
+                }
+            }
+        }
+    }
+
+    fun loadBodyRecommendedProducts(
+        recommendedType: String,
+        size: Int = 9
+    ) {
+        if (_listUiState.value.isLoading) return
+
+        viewModelScope.launch {
+            _listUiState.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = null
+                )
+            }
+
+            runCatching {
+                productUseCase.getBodyRecommendedProducts(
+                    recommendedType = recommendedType,
+                    size = size
+                )
+            }.onSuccess { products ->
+                val summaryProducts = products.map { product ->
+                    product.toProductSummary()
+                }
+
+                allProducts = summaryProducts
+
+                _listUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        products = applyCurrentFilter(
+                            source = summaryProducts,
+                            state = it
+                        ),
+                        productModels = products,
+                        errorMessage = null
+                    )
+                }
+            }.onFailure { throwable ->
+                _listUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        products = filterProducts(
+                            main = it.selectedMainCategory,
+                            sub = it.selectedSubCategory,
+                            latestOrder = it.isLatestOrder
+                        ),
+                        errorMessage = throwable.message
+                    )
+                }
+            }
+        }
+    }
+
+    fun loadProductDetail(productId: Long) {
+        if (_detailUiState.value.isLoading) return
+
+        viewModelScope.launch {
+            _detailUiState.value = ProductDetailUiState(
+                isLoading = true,
+                product = null,
+                errorMessage = null
+            )
+
+            runCatching {
+                productUseCase.getProductDetail(productId = productId)
+            }.onSuccess { product ->
+                _detailUiState.value = ProductDetailUiState(
+                    isLoading = false,
+                    product = product,
+                    errorMessage = null
+                )
+            }.onFailure { throwable ->
+                val fallbackProduct = allProducts
+                    .find { product -> product.productId == productId }
+                    ?.toProductDetailModel()
+
+                _detailUiState.value = ProductDetailUiState(
+                    isLoading = false,
+                    product = fallbackProduct,
+                    errorMessage = throwable.message
+                )
+            }
+        }
+    }
+
+    fun toggleWishlist() {
+        val currentProduct = _detailUiState.value.product ?: return
+
+        if (_wishlistUiState.value.isProcessing) return
+
+        viewModelScope.launch {
+            _wishlistUiState.value = WishlistUiState(
+                isProcessing = true,
+                errorMessage = null
+            )
+
+            runCatching {
+                if (currentProduct.isWishlisted) {
+                    productUseCase.removeWishlist(
+                        productId = currentProduct.productId
+                    )
+                } else {
+                    productUseCase.addWishlist(
+                        productId = currentProduct.productId
+                    )
+                }
+            }.onSuccess { isWishlisted ->
+                _detailUiState.update {
+                    it.copy(
+                        product = currentProduct.copy(
+                            isWishlisted = isWishlisted
+                        )
+                    )
+                }
+
+                _wishlistUiState.value = WishlistUiState(
+                    isProcessing = false,
+                    errorMessage = null
+                )
+            }.onFailure { throwable ->
+                _wishlistUiState.value = WishlistUiState(
+                    isProcessing = false,
+                    errorMessage = throwable.message
+                )
+            }
+        }
+    }
+
+    fun clearListError() {
+        _listUiState.update {
+            it.copy(errorMessage = null)
+        }
+    }
+
+    fun clearDetailError() {
+        _detailUiState.update {
+            it.copy(errorMessage = null)
+        }
+    }
+
+    fun clearWishlistError() {
+        _wishlistUiState.update {
+            it.copy(errorMessage = null)
+        }
+    }
 
     fun onMainCategorySelect(category: ProductMainCategory) {
         val subList = if (category == ProductMainCategory.ALL) {
@@ -103,6 +308,7 @@ class ProductViewModel : ViewModel() {
     fun onFilterClick() {
         _listUiState.update { current ->
             val nextLatestOrder = !current.isLatestOrder
+
             current.copy(
                 isLatestOrder = nextLatestOrder,
                 products = filterProducts(
@@ -113,40 +319,6 @@ class ProductViewModel : ViewModel() {
             )
         }
     }
-
-    private fun refreshProductList() {
-        _listUiState.update { current ->
-            current.copy(
-                products = filterProducts(
-                    main = current.selectedMainCategory,
-                    sub = current.selectedSubCategory,
-                    latestOrder = current.isLatestOrder
-                )
-            )
-        }
-    }
-
-    private fun filterProducts(
-        main: ProductMainCategory,
-        sub: ProductSubCategory?,
-        latestOrder: Boolean
-    ): List<ProductSummary> {
-        val filtered = allProducts.filter { product ->
-            val mainMatch = main == ProductMainCategory.ALL || product.mainCategory == main
-            val subMatch = sub == null || product.subCategory == sub
-            mainMatch && subMatch
-        }
-
-        return if (latestOrder) {
-            filtered.sortedByDescending { it.productId }
-        } else {
-            filtered.sortedBy { it.productId }
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────
-    // 판매관리 이벤트
-    // ─────────────────────────────────────────────────────────
 
     fun onSellingTabClick() {
         _tradeUiState.update {
@@ -164,8 +336,12 @@ class ProductViewModel : ViewModel() {
         val selling = _tradeUiState.value.sellingProducts.toMutableList()
         val sold = _tradeUiState.value.soldProducts.toMutableList()
 
-        val sellingProduct = selling.find { it.productId == productId }
-        val soldProduct = sold.find { it.productId == productId }
+        val sellingProduct = selling.find { product ->
+            product.productId == productId
+        }
+        val soldProduct = sold.find { product ->
+            product.productId == productId
+        }
 
         when {
             sellingProduct != null -> {
@@ -192,28 +368,31 @@ class ProductViewModel : ViewModel() {
     }
 
     fun onProductDelete(productId: Long) {
-        allProducts = allProducts.filter { it.productId != productId }
+        allProducts = allProducts.filter { product ->
+            product.productId != productId
+        }
 
         _tradeUiState.update {
             it.copy(
-                sellingProducts = it.sellingProducts.filter { product -> product.productId != productId },
-                soldProducts = it.soldProducts.filter { product -> product.productId != productId }
+                sellingProducts = it.sellingProducts.filter { product ->
+                    product.productId != productId
+                },
+                soldProducts = it.soldProducts.filter { product ->
+                    product.productId != productId
+                }
+            )
+        }
+
+        _listUiState.update {
+            it.copy(
+                productModels = it.productModels.filter { product ->
+                    product.productId != productId
+                }
             )
         }
 
         refreshProductList()
     }
-
-    private fun updateProductInList(product: ProductSummary) {
-        allProducts = allProducts.map {
-            if (it.productId == product.productId) product else it
-        }
-        refreshProductList()
-    }
-
-    // ─────────────────────────────────────────────────────────
-    // 상품 등록/수정 화면 준비
-    // ─────────────────────────────────────────────────────────
 
     fun prepareRegister() {
         _editUiState.value = ProductEditUiState(
@@ -223,10 +402,14 @@ class ProductViewModel : ViewModel() {
             isSubmitSuccess = false,
             errorMessage = null
         )
+
+        _editFormState.value = ProductEditFormState()
     }
 
     fun prepareEdit(productId: Long) {
-        val product = allProducts.find { it.productId == productId }
+        val product = allProducts.find { item ->
+            item.productId == productId
+        }
 
         if (product == null) {
             _editUiState.value = ProductEditUiState(
@@ -253,46 +436,106 @@ class ProductViewModel : ViewModel() {
             isSubmitSuccess = false,
             errorMessage = null
         )
-    }
 
-    // ─────────────────────────────────────────────────────────
-    // 상품 등록/수정 입력 이벤트
-    // ─────────────────────────────────────────────────────────
+        _editFormState.value = ProductEditFormState(
+            name = product.title,
+            price = product.price.toString(),
+            content = "",
+            size = "",
+            grade = "",
+            tradingArea = "",
+            recommendedType = "",
+            postStatus = if (product.isSold) "SOLD" else "ACTIVE",
+            categoryId = product.mainCategory.name,
+            colorId = ""
+        )
+    }
 
     fun onEditTitleChange(title: String) {
         _editUiState.update {
-            it.copy(title = title, errorMessage = null, isSubmitSuccess = false)
+            it.copy(
+                title = title,
+                errorMessage = null,
+                isSubmitSuccess = false
+            )
+        }
+
+        _editFormState.update {
+            it.copy(name = title)
         }
     }
 
     fun onEditPriceChange(price: String) {
-        val onlyDigits = price.filter { it.isDigit() }
+        val onlyDigits = price.filter { char ->
+            char.isDigit()
+        }
+
         _editUiState.update {
-            it.copy(price = onlyDigits, errorMessage = null, isSubmitSuccess = false)
+            it.copy(
+                price = onlyDigits,
+                errorMessage = null,
+                isSubmitSuccess = false
+            )
+        }
+
+        _editFormState.update {
+            it.copy(price = onlyDigits)
         }
     }
 
     fun onEditDescriptionChange(description: String) {
         _editUiState.update {
-            it.copy(description = description, errorMessage = null, isSubmitSuccess = false)
+            it.copy(
+                description = description,
+                errorMessage = null,
+                isSubmitSuccess = false
+            )
+        }
+
+        _editFormState.update {
+            it.copy(content = description)
         }
     }
 
     fun onEditTradeLocationChange(location: String) {
         _editUiState.update {
-            it.copy(tradeLocation = location, errorMessage = null, isSubmitSuccess = false)
+            it.copy(
+                tradeLocation = location,
+                errorMessage = null,
+                isSubmitSuccess = false
+            )
+        }
+
+        _editFormState.update {
+            it.copy(tradingArea = location)
         }
     }
 
     fun onEditSizeChange(size: String) {
         _editUiState.update {
-            it.copy(size = size, errorMessage = null, isSubmitSuccess = false)
+            it.copy(
+                size = size,
+                errorMessage = null,
+                isSubmitSuccess = false
+            )
+        }
+
+        _editFormState.update {
+            it.copy(size = size)
         }
     }
 
     fun onEditFitChange(fit: String) {
         _editUiState.update {
-            it.copy(fit = fit, errorMessage = null, isSubmitSuccess = false)
+            it.copy(
+                fit = fit,
+                errorMessage = null,
+                isSubmitSuccess = false
+            )
+        }
+
+        _editFormState.update {
+            it.copy(grade = fit)
         }
     }
 
@@ -313,6 +556,10 @@ class ProductViewModel : ViewModel() {
                 errorMessage = null,
                 isSubmitSuccess = false
             )
+        }
+
+        _editFormState.update {
+            it.copy(categoryId = category.name)
         }
     }
 
@@ -352,14 +599,15 @@ class ProductViewModel : ViewModel() {
     fun onEditImageRemove(imageUri: String) {
         _editUiState.update {
             it.copy(
-                imageUris = it.imageUris.filter { uri -> uri != imageUri },
+                imageUris = it.imageUris.filter { uri ->
+                    uri != imageUri
+                },
                 errorMessage = null,
                 isSubmitSuccess = false
             )
         }
     }
 
-    // 기존 ProductEditScreen 또는 NavHost가 예전 함수명을 쓰고 있어도 깨지지 않도록 별칭을 둡니다.
     fun onTitleChange(title: String) = onEditTitleChange(title)
 
     fun onPriceChange(price: String) = onEditPriceChange(price)
@@ -373,10 +621,6 @@ class ProductViewModel : ViewModel() {
     fun onFitChange(fit: String) = onEditFitChange(fit)
 
     fun onImageUrisChange(imageUris: List<String>) = onEditImageUrisChange(imageUris)
-
-    // ─────────────────────────────────────────────────────────
-    // 상품 등록/수정 완료
-    // ─────────────────────────────────────────────────────────
 
     fun submitProduct(onSuccess: () -> Unit = {}) {
         val state = _editUiState.value
@@ -455,6 +699,7 @@ class ProductViewModel : ViewModel() {
         onSuccess: () -> Unit
     ) {
         val newProductId = generateNextProductId()
+
         val newProduct = ProductSummary(
             productId = newProductId,
             title = title,
@@ -467,11 +712,24 @@ class ProductViewModel : ViewModel() {
             isSold = false
         )
 
+        val newProductModel = newProduct.toProductSummaryModel(
+            content = state.description,
+            size = state.size,
+            grade = state.fit,
+            tradingArea = state.tradeLocation
+        )
+
         allProducts = listOf(newProduct) + allProducts
 
         _tradeUiState.update {
             it.copy(
                 sellingProducts = listOf(newProduct) + it.sellingProducts
+            )
+        }
+
+        _listUiState.update {
+            it.copy(
+                productModels = listOf(newProductModel) + it.productModels
             )
         }
 
@@ -509,7 +767,9 @@ class ProductViewModel : ViewModel() {
             return
         }
 
-        val originProduct = allProducts.find { it.productId == productId }
+        val originProduct = allProducts.find { product ->
+            product.productId == productId
+        }
 
         if (originProduct == null) {
             _editUiState.update {
@@ -530,8 +790,15 @@ class ProductViewModel : ViewModel() {
             subCategory = subCategory
         )
 
-        allProducts = allProducts.map {
-            if (it.productId == productId) editedProduct else it
+        val editedProductModel = editedProduct.toProductSummaryModel(
+            content = state.description,
+            size = state.size,
+            grade = state.fit,
+            tradingArea = state.tradeLocation
+        )
+
+        allProducts = allProducts.map { product ->
+            if (product.productId == productId) editedProduct else product
         }
 
         _tradeUiState.update {
@@ -541,6 +808,14 @@ class ProductViewModel : ViewModel() {
                 },
                 soldProducts = it.soldProducts.map { product ->
                     if (product.productId == productId) editedProduct.copy(isSold = true) else product
+                }
+            )
+        }
+
+        _listUiState.update {
+            it.copy(
+                productModels = it.productModels.map { product ->
+                    if (product.productId == productId) editedProductModel else product
                 }
             )
         }
@@ -567,15 +842,183 @@ class ProductViewModel : ViewModel() {
         }
     }
 
+    private fun refreshProductList() {
+        _listUiState.update { current ->
+            current.copy(
+                products = filterProducts(
+                    main = current.selectedMainCategory,
+                    sub = current.selectedSubCategory,
+                    latestOrder = current.isLatestOrder
+                )
+            )
+        }
+    }
+
+    private fun applyCurrentFilter(
+        source: List<ProductSummary>,
+        state: ProductListUiState
+    ): List<ProductSummary> {
+        val filtered = source.filter { product ->
+            val mainMatch = state.selectedMainCategory == ProductMainCategory.ALL ||
+                    product.mainCategory == state.selectedMainCategory
+            val subMatch = state.selectedSubCategory == null ||
+                    product.subCategory == state.selectedSubCategory
+
+            mainMatch && subMatch
+        }
+
+        return if (state.isLatestOrder) {
+            filtered.sortedByDescending { product ->
+                product.productId
+            }
+        } else {
+            filtered.sortedBy { product ->
+                product.productId
+            }
+        }
+    }
+
+    private fun filterProducts(
+        main: ProductMainCategory,
+        sub: ProductSubCategory?,
+        latestOrder: Boolean
+    ): List<ProductSummary> {
+        val filtered = allProducts.filter { product ->
+            val mainMatch = main == ProductMainCategory.ALL || product.mainCategory == main
+            val subMatch = sub == null || product.subCategory == sub
+
+            mainMatch && subMatch
+        }
+
+        return if (latestOrder) {
+            filtered.sortedByDescending { product ->
+                product.productId
+            }
+        } else {
+            filtered.sortedBy { product ->
+                product.productId
+            }
+        }
+    }
+
+    private fun updateProductInList(product: ProductSummary) {
+        allProducts = allProducts.map { item ->
+            if (item.productId == product.productId) product else item
+        }
+
+        refreshProductList()
+    }
+
     private fun generateNextProductId(): Long {
-        return ((allProducts + _tradeUiState.value.sellingProducts + _tradeUiState.value.soldProducts)
-            .maxOfOrNull { it.productId } ?: 0L) + 1L
+        return (
+                allProducts +
+                        _tradeUiState.value.sellingProducts +
+                        _tradeUiState.value.soldProducts
+                ).maxOfOrNull { product ->
+                product.productId
+            }?.plus(1L) ?: 1L
     }
 }
 
-// ─────────────────────────────────────────────────────────
-// 더미 데이터
-// ─────────────────────────────────────────────────────────
+private fun ProductSummaryModel.toProductSummary(): ProductSummary {
+    val mainCategory = categoryId.toProductMainCategory()
+    val subCategory = ProductSubCategory.getByMainCategory(mainCategory).firstOrNull()
+        ?: ProductSubCategory.LONG_SLEEVE
+
+    return ProductSummary(
+        productId = productId,
+        title = name,
+        price = price,
+        thumbnailImageUrl = thumbnailImageUrl,
+        mainCategory = mainCategory,
+        subCategory = subCategory,
+        likeCount = wishlistCount,
+        createdAt = createdAt,
+        isSold = postStatus.equals("SOLD", ignoreCase = true)
+    )
+}
+
+private fun ProductSummary.toProductSummaryModel(
+    content: String = "",
+    size: String = "",
+    grade: String = "",
+    tradingArea: String = ""
+): ProductSummaryModel {
+    return ProductSummaryModel(
+        productId = productId,
+        sellerId = 0L,
+        categoryId = mainCategory.toCategoryId(),
+        colorId = null,
+        name = title,
+        price = price,
+        content = content,
+        size = size,
+        grade = grade,
+        tradingArea = tradingArea,
+        recommendedType = null,
+        postStatus = if (isSold) "SOLD" else "ACTIVE",
+        viewCount = 0,
+        wishlistCount = likeCount,
+        createdAt = createdAt,
+        updatedAt = createdAt,
+        thumbnailImageUrl = thumbnailImageUrl
+    )
+}
+
+private fun ProductSummary.toProductDetailModel(): ProductDetailModel {
+    return ProductDetailModel(
+        productId = productId,
+        sellerId = 0L,
+        categoryId = mainCategory.toCategoryId(),
+        colorId = null,
+        name = title,
+        price = price,
+        content = "",
+        size = "",
+        grade = "",
+        tradingArea = "",
+        recommendedType = null,
+        postStatus = if (isSold) "SOLD" else "ACTIVE",
+        viewCount = 0,
+        wishlistCount = likeCount,
+        createdAt = createdAt,
+        updatedAt = createdAt,
+        images = listOfNotNull(
+            thumbnailImageUrl?.let { imageUrl ->
+                ProductImageModel(
+                    imageId = productId,
+                    imageUrl = imageUrl,
+                    referenceType = "PRODUCT",
+                    referenceId = productId,
+                    sortOrder = 0,
+                    createdAt = createdAt
+                )
+            }
+        ),
+        isWishlisted = false
+    )
+}
+
+private fun Long.toProductMainCategory(): ProductMainCategory {
+    return when (this) {
+        1L -> ProductMainCategory.TOP
+        2L -> ProductMainCategory.PANTS
+        3L -> ProductMainCategory.OUTER
+        4L -> ProductMainCategory.DRESS_SKIRT
+        else -> ProductMainCategory.TOP
+    }
+}
+
+private fun ProductMainCategory.toCategoryId(): Long {
+    return when (this) {
+        ProductMainCategory.ALL -> 0L
+        ProductMainCategory.TOP -> 1L
+        ProductMainCategory.PANTS -> 2L
+        ProductMainCategory.OUTER -> 3L
+        ProductMainCategory.DRESS_SKIRT -> 4L
+    }
+}
+
 private val dummyProducts = listOf(
     ProductSummary(
         productId = 1L,
@@ -705,3 +1148,7 @@ private val dummySoldProducts = listOf(
         isSold = true
     )
 )
+
+private val dummyProductModels = dummyProducts.map { product ->
+    product.toProductSummaryModel()
+}

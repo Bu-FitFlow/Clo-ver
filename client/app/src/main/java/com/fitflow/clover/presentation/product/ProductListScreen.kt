@@ -4,19 +4,49 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,19 +54,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitflow.clover.R
 import com.fitflow.clover.domain.modal.ProductMainCategory
 import com.fitflow.clover.domain.modal.ProductSubCategory
 import com.fitflow.clover.domain.modal.ProductSummary
+import com.fitflow.clover.domain.modal.ProductSummaryModel
 
 private val CloverGreen = Color(0xFF99DE81)
 
-// ─────────────────────────────────────────────────────────
-// 판매글 목록 화면
-// ─────────────────────────────────────────────────────────
 @Composable
 fun ProductListScreen(
     uiState: ProductListUiState = ProductListUiState(),
@@ -133,17 +163,16 @@ fun ProductListScreen(
                 when {
                     uiState.isLoading -> {
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize(),
+                            modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(color = CloverGreen)
                         }
                     }
+
                     uiState.errorMessage != null -> {
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize(),
+                            modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -153,10 +182,10 @@ fun ProductListScreen(
                             )
                         }
                     }
+
                     uiState.products.isEmpty() -> {
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize(),
+                            modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -166,11 +195,11 @@ fun ProductListScreen(
                             )
                         }
                     }
+
                     else -> {
                         LazyVerticalGrid(
                             columns = GridCells.Fixed(2),
-                            modifier = Modifier
-                                .fillMaxSize(),
+                            modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(12.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -192,7 +221,9 @@ fun ProductListScreen(
                             .clickable(
                                 indication = null,
                                 interactionSource = remember { MutableInteractionSource() }
-                            ) { isFabMenuExpanded = false }
+                            ) {
+                                isFabMenuExpanded = false
+                            }
                     )
 
                     Column(
@@ -263,7 +294,9 @@ fun ProductListScreen(
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
-                        ) { isFabMenuExpanded = !isFabMenuExpanded }
+                        ) {
+                            isFabMenuExpanded = !isFabMenuExpanded
+                        }
                 )
             }
         }
@@ -271,11 +304,124 @@ fun ProductListScreen(
 }
 
 @Composable
-private fun ProductMenuItem(text: String, onClick: () -> Unit) {
+fun ProductListScreen(
+    recommendedType: String? = null,
+    onBack: () -> Unit,
+    onClickProduct: (Long) -> Unit
+) {
+    val productViewModel: ProductViewModel = viewModel()
+    val listUiState by productViewModel.listUiState.collectAsState()
+
+    LaunchedEffect(recommendedType) {
+        if (recommendedType.isNullOrBlank()) {
+            productViewModel.loadRecentProducts()
+        } else {
+            productViewModel.loadBodyRecommendedProducts(
+                recommendedType = recommendedType
+            )
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        ProductRecommendedTopBar(
+            title = if (recommendedType.isNullOrBlank()) {
+                "최근 등록 상품"
+            } else {
+                "체형 추천 상품"
+            },
+            onBack = onBack
+        )
+
+        when {
+            listUiState.isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = CloverGreen)
+                }
+            }
+
+            listUiState.errorMessage != null && listUiState.productModels.isEmpty() -> {
+                ProductListErrorContent(
+                    message = listUiState.errorMessage ?: "상품을 불러오지 못했어요.",
+                    onRetry = {
+                        if (recommendedType.isNullOrBlank()) {
+                            productViewModel.loadRecentProducts()
+                        } else {
+                            productViewModel.loadBodyRecommendedProducts(
+                                recommendedType = recommendedType
+                            )
+                        }
+                    }
+                )
+            }
+
+            listUiState.productModels.isNotEmpty() -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
+                ) {
+                    items(listUiState.productModels) { product ->
+                        ProductSummaryModelCard(
+                            product = product,
+                            onClick = {
+                                onClickProduct(product.productId)
+                            }
+                        )
+                    }
+                }
+            }
+
+            listUiState.products.isNotEmpty() -> {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(listUiState.products) { product ->
+                        ProductGridCard(
+                            product = product,
+                            onProductClick = onClickProduct
+                        )
+                    }
+                }
+            }
+
+            else -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "등록된 상품이 없어요",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProductMenuItem(
+    text: String,
+    onClick: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable {
+                onClick()
+            }
             .padding(vertical = 10.dp, horizontal = 16.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -288,10 +434,6 @@ private fun ProductMenuItem(text: String, onClick: () -> Unit) {
     }
 }
 
-
-// ─────────────────────────────────────────────────────────
-// 카테고리 드롭다운
-// ─────────────────────────────────────────────────────────
 @Composable
 private fun MainCategoryDropdown(
     selectedCategory: ProductMainCategory,
@@ -303,12 +445,16 @@ private fun MainCategoryDropdown(
         CategoryChip(
             text = selectedCategory.displayName,
             isExpanded = isExpanded,
-            onClick = { onExpandChange(!isExpanded) }
+            onClick = {
+                onExpandChange(!isExpanded)
+            }
         )
 
         DropdownMenu(
             expanded = isExpanded,
-            onDismissRequest = { onExpandChange(false) },
+            onDismissRequest = {
+                onExpandChange(false)
+            },
             containerColor = Color.White
         ) {
             ProductMainCategory.values().forEach { category ->
@@ -355,7 +501,9 @@ private fun SubCategoryDropdown(
 
         DropdownMenu(
             expanded = isExpanded && enabled,
-            onDismissRequest = { onExpandChange(false) },
+            onDismissRequest = {
+                onExpandChange(false)
+            },
             containerColor = Color.White
         ) {
             subCategoryList.forEach { subCategory ->
@@ -395,7 +543,9 @@ private fun CategoryChip(
                 enabled = enabled,
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
-            ) { onClick() }
+            ) {
+                onClick()
+            }
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp),
@@ -409,7 +559,11 @@ private fun CategoryChip(
                 fontWeight = FontWeight.Medium
             )
             Icon(
-                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                imageVector = if (isExpanded) {
+                    Icons.Default.KeyboardArrowUp
+                } else {
+                    Icons.Default.KeyboardArrowDown
+                },
                 contentDescription = null,
                 tint = if (enabled) Color.Black else Color.Gray,
                 modifier = Modifier.size(18.dp)
@@ -418,9 +572,6 @@ private fun CategoryChip(
     }
 }
 
-// ─────────────────────────────────────────────────────────
-// 2열 그리드용 상품 카드
-// ─────────────────────────────────────────────────────────
 @Composable
 fun ProductGridCard(
     product: ProductSummary,
@@ -433,9 +584,10 @@ fun ProductGridCard(
             .clickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
-            ) { onProductClick(product.productId) }
+            ) {
+                onProductClick(product.productId)
+            }
     ) {
-        // 이미지
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -451,6 +603,7 @@ fun ProductGridCard(
                     contentScale = ContentScale.Crop
                 )
             }
+
             if (product.isSold) {
                 Box(
                     modifier = Modifier
@@ -470,16 +623,14 @@ fun ProductGridCard(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        // 텍스트 영역: 제목(2줄 고정) + 가격 + 날짜/하트
         Column(modifier = Modifier.fillMaxWidth()) {
-            // 제목: 항상 2줄 높이 고정
             Text(
                 text = product.title,
                 fontSize = 13.sp,
                 color = Color.Black,
                 maxLines = 2,
                 minLines = 2,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis
             )
 
             Spacer(modifier = Modifier.height(2.dp))
@@ -493,7 +644,6 @@ fun ProductGridCard(
 
             Spacer(modifier = Modifier.height(2.dp))
 
-            // 날짜 + 하트: 항상 같은 줄
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -505,8 +655,9 @@ fun ProductGridCard(
                     color = Color.Gray,
                     modifier = Modifier.weight(1f),
                     maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis
                 )
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -528,9 +679,98 @@ fun ProductGridCard(
     }
 }
 
-// ─────────────────────────────────────────────────────────
-// 공통 - 로고 상단바
-// ─────────────────────────────────────────────────────────
+@Composable
+private fun ProductSummaryModelCard(
+    product: ProductSummaryModel,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                onClick()
+            },
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xFFF7F7F7),
+        shadowElevation = 1.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(76.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFFE5E5E5)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (product.thumbnailImageUrl != null) {
+                    coil.compose.AsyncImage(
+                        model = product.thumbnailImageUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        text = "Clo-ver",
+                        fontSize = 11.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = product.name,
+                    color = Color.Black,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = formatPrice(product.price),
+                    color = Color.Black,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = product.tradingArea.ifBlank { product.createdAt },
+                    color = Color.Gray,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                if (!product.recommendedType.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "추천 타입: ${product.recommendedType}",
+                        color = Color(0xFF4C9A2A),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun ProductTopBar(
     onBackClick: () -> Unit = {}
@@ -542,6 +782,7 @@ fun ProductTopBar(
                 .statusBarsPadding()
                 .background(Color.White)
         )
+
         Surface(
             color = Color(0xFFE8F8E0),
             modifier = Modifier
@@ -564,8 +805,11 @@ fun ProductTopBar(
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
-                        ) { onBackClick() }
+                        ) {
+                            onBackClick()
+                        }
                 )
+
                 Box(
                     modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.Center
@@ -579,16 +823,75 @@ fun ProductTopBar(
                         contentScale = ContentScale.Fit
                     )
                 }
+
                 Spacer(modifier = Modifier.size(48.dp))
             }
         }
     }
 }
 
-// ─────────────────────────────────────────────────────────
-// Preview 더미 데이터
-// ─────────────────────────────────────────────────────────
-private val dummyProducts = listOf(
+@Composable
+private fun ProductRecommendedTopBar(
+    title: String,
+    onBack: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Button(
+            onClick = onBack
+        ) {
+            Text(text = "이전")
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+    }
+}
+
+@Composable
+private fun ProductListErrorContent(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFF777777)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = onRetry
+        ) {
+            Text(text = "다시 불러오기")
+        }
+    }
+}
+
+private fun formatPrice(price: Int): String {
+    return "%,d원".format(price)
+}
+
+private val previewProducts = listOf(
     ProductSummary(
         productId = 1L,
         title = "나이키 후드",
@@ -632,77 +935,15 @@ private val dummyProducts = listOf(
         likeCount = 15,
         createdAt = "15분전",
         isSold = true
-    ),
-    ProductSummary(
-        productId = 5L,
-        title = "폴로 니트",
-        price = 40000,
-        thumbnailImageUrl = null,
-        mainCategory = ProductMainCategory.TOP,
-        subCategory = ProductSubCategory.KNIT_SWEATER,
-        likeCount = 15,
-        createdAt = "10분전",
-        isSold = false
-    ),
-    ProductSummary(
-        productId = 6L,
-        title = "진청 반바지",
-        price = 15000,
-        thumbnailImageUrl = null,
-        mainCategory = ProductMainCategory.PANTS,
-        subCategory = ProductSubCategory.SHORT_PANTS,
-        likeCount = 15,
-        createdAt = "15분전",
-        isSold = false
     )
 )
 
-// ─────────────────────────────────────────────────────────
-// Preview
-// ─────────────────────────────────────────────────────────
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ProductListPreview() {
-    var showEdit by remember { mutableStateOf(false) }
-    var uiState by remember {
-        mutableStateOf(ProductListUiState(products = dummyProducts))
-    }
-
-    if (showEdit) {
-        ProductEditScreen(onBackClick = { showEdit = false })
-        return@ProductListPreview
-    }
-
     ProductListScreen(
-        uiState = uiState,
-        onCommunityWriteClick = { showEdit = true },
-        onMainCategorySelect = { category ->
-            uiState = uiState.copy(
-                selectedMainCategory = category,
-                isMainCategoryExpanded = false,
-                subCategoryList = if (category == ProductMainCategory.ALL) {
-                    emptyList()
-                } else {
-                    ProductSubCategory.getByMainCategory(category)
-                },
-                selectedSubCategory = null,
-                isSubCategoryExpanded = false
-            )
-        },
-        onMainCategoryExpandChange = { isExpanded ->
-            uiState = uiState.copy(isMainCategoryExpanded = isExpanded)
-        },
-        onSubCategorySelect = { subCategory ->
-            uiState = uiState.copy(
-                selectedSubCategory = subCategory,
-                isSubCategoryExpanded = false
-            )
-        },
-        onSubCategoryExpandChange = { isExpanded ->
-            uiState = uiState.copy(isSubCategoryExpanded = isExpanded)
-        },
-        onFilterClick = {
-            uiState = uiState.copy(isLatestOrder = !uiState.isLatestOrder)
-        }
+        uiState = ProductListUiState(
+            products = previewProducts
+        )
     )
 }

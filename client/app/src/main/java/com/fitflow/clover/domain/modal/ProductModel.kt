@@ -1,8 +1,5 @@
 package com.fitflow.clover.domain.modal
 
-// ─────────────────────────────────────────────────────────
-// 1. 대분류 카테고리
-// ─────────────────────────────────────────────────────────
 enum class ProductMainCategory(val displayName: String) {
     ALL("전체"),
     TOP("상의"),
@@ -11,14 +8,10 @@ enum class ProductMainCategory(val displayName: String) {
     DRESS_SKIRT("원피스/스커트")
 }
 
-// ─────────────────────────────────────────────────────────
-// 2. 세부 카테고리 (대분류에 연동)
-// ─────────────────────────────────────────────────────────
 enum class ProductSubCategory(
     val displayName: String,
     val mainCategory: ProductMainCategory
 ) {
-    // 상의
     LONG_SLEEVE("긴팔티셔츠", ProductMainCategory.TOP),
     SHORT_SLEEVE("반소매티셔츠", ProductMainCategory.TOP),
     SHIRT_BLOUSE("서츠/블라우스", ProductMainCategory.TOP),
@@ -28,7 +21,6 @@ enum class ProductSubCategory(
     SLEEVELESS("민소매티셔츠", ProductMainCategory.TOP),
     ETC_TOP("기타 상의", ProductMainCategory.TOP),
 
-    // 바지
     DENIM("데님팬츠", ProductMainCategory.PANTS),
     TRAINING_PANTS("트레이닝 팬츠", ProductMainCategory.PANTS),
     SHORT_PANTS("숏 팬츠", ProductMainCategory.PANTS),
@@ -36,7 +28,6 @@ enum class ProductSubCategory(
     SLACKS("슬랙스", ProductMainCategory.PANTS),
     ETC_PANTS("기타 하의", ProductMainCategory.PANTS),
 
-    // 아우터
     CARDIGAN("가디건", ProductMainCategory.OUTER),
     JACKET("자켓", ProductMainCategory.OUTER),
     ZIP_UP("집업/점퍼", ProductMainCategory.OUTER),
@@ -47,7 +38,6 @@ enum class ProductSubCategory(
     PADDING("패딩", ProductMainCategory.OUTER),
     ETC_OUTER("기타 아우터", ProductMainCategory.OUTER),
 
-    // 원피스/스커트
     MINI_DRESS("미니원피스", ProductMainCategory.DRESS_SKIRT),
     MIDI_DRESS("미디원피스", ProductMainCategory.DRESS_SKIRT),
     MAXI_DRESS("맥시원피스", ProductMainCategory.DRESS_SKIRT),
@@ -57,14 +47,13 @@ enum class ProductSubCategory(
 
     companion object {
         fun getByMainCategory(main: ProductMainCategory): List<ProductSubCategory> {
-            return entries.filter { it.mainCategory == main }
+            return entries.filter { subCategory ->
+                subCategory.mainCategory == main
+            }
         }
     }
 }
 
-// ─────────────────────────────────────────────────────────
-// 3. 상품 목록 아이템 (목록 화면용)
-// ─────────────────────────────────────────────────────────
 data class ProductSummary(
     val productId: Long,
     val title: String,
@@ -75,4 +64,61 @@ data class ProductSummary(
     val likeCount: Int,
     val createdAt: String,
     val isSold: Boolean
+)
+
+data class ProductSummaryModel(
+    val productId: Long,
+    val sellerId: Long,
+    val categoryId: Long,
+    val colorId: Long?,
+    val name: String,
+    val price: Int,
+    val content: String,
+    val size: String,
+    val grade: String,
+    val tradingArea: String,
+    val recommendedType: String?,
+    val postStatus: String,
+    val viewCount: Int,
+    val wishlistCount: Int,
+    val createdAt: String,
+    val updatedAt: String,
+    val thumbnailImageUrl: String?
+)
+
+data class ProductDetailModel(
+    val productId: Long,
+    val sellerId: Long,
+    val categoryId: Long,
+    val colorId: Long?,
+    val name: String,
+    val price: Int,
+    val content: String,
+    val size: String,
+    val grade: String,
+    val tradingArea: String,
+    val recommendedType: String?,
+    val postStatus: String,
+    val viewCount: Int,
+    val wishlistCount: Int,
+    val createdAt: String,
+    val updatedAt: String,
+    val images: List<ProductImageModel>,
+    val isWishlisted: Boolean
+)
+
+data class ProductImageModel(
+    val imageId: Long,
+    val imageUrl: String,
+    val referenceType: String,
+    val referenceId: Long,
+    val sortOrder: Int,
+    val createdAt: String
+)
+
+data class WishlistModel(
+    val wishlistId: Long,
+    val memberId: Long,
+    val productId: Long,
+    val createdAt: String
 )

@@ -1,5 +1,9 @@
 package com.fitflow.clover.presentation.product
 
+import android.Manifest
+import android.content.ContentValues
+import android.net.Uri
+import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,21 +30,25 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,8 +65,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,9 +76,6 @@ import com.fitflow.clover.domain.modal.ProductSubCategory
 private val CloverGreen = Color(0xFF99DE81)
 private const val MaxProductImageCount = 5
 
-// ─────────────────────────────────────────────────────────
-// 상품 등록/수정 화면
-// ─────────────────────────────────────────────────────────
 @Composable
 fun ProductEditScreen(
     uiState: ProductEditUiState = ProductEditUiState(),
@@ -95,22 +98,23 @@ fun ProductEditScreen(
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
 
-    // 갤러리 런처
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = MaxProductImageCount),
         onResult = { selectedUris ->
             if (selectedUris.isNotEmpty()) {
-                val selectedImageUris = selectedUris.map { it.toString() }
+                val selectedImageUris = selectedUris.map { uri -> uri.toString() }
                 val mergedUris = (uiState.imageUris + selectedImageUris)
                     .distinct()
                     .take(MaxProductImageCount)
+
                 onImageUrisChange(mergedUris)
             }
         }
     )
 
-    // 카메라 런처 - 임시 파일 없이 갤러리 앱의 카메라 기능 활용
-    var pendingCameraUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var pendingCameraUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
@@ -120,9 +124,11 @@ fun ProductEditScreen(
                     val mergedUris = (uiState.imageUris + uri.toString())
                         .distinct()
                         .take(MaxProductImageCount)
+
                     onImageUrisChange(mergedUris)
                 }
             }
+
             pendingCameraUri = null
         }
     )
@@ -131,13 +137,16 @@ fun ProductEditScreen(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted ->
             if (granted) {
-                val values = android.content.ContentValues().apply {
-                    put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, "product_${System.currentTimeMillis()}.jpg")
-                    put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                val values = ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, "product_${System.currentTimeMillis()}.jpg")
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
                 }
+
                 val uri = context.contentResolver.insert(
-                    android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    values
                 )
+
                 if (uri != null) {
                     pendingCameraUri = uri
                     cameraLauncher.launch(uri)
@@ -147,31 +156,46 @@ fun ProductEditScreen(
     )
 
     fun launchCamera() {
-        cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
-    // 이미지 소스 선택 다이얼로그 상태
-    var showImageSourceDialog by remember { mutableStateOf(false) }
+    var showImageSourceDialog by remember {
+        mutableStateOf(false)
+    }
 
     if (showImageSourceDialog) {
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { showImageSourceDialog = false },
-            title = { Text("이미지 추가") },
-            text = { Text("이미지를 어떻게 추가할까요?") },
+        AlertDialog(
+            onDismissRequest = {
+                showImageSourceDialog = false
+            },
+            title = {
+                Text(text = "이미지 추가")
+            },
+            text = {
+                Text(text = "이미지를 어떻게 추가할까요?")
+            },
             confirmButton = {
-                androidx.compose.material3.TextButton(onClick = {
-                    showImageSourceDialog = false
-                    launchCamera()
-                }) { Text("카메라로 찍기") }
+                TextButton(
+                    onClick = {
+                        showImageSourceDialog = false
+                        launchCamera()
+                    }
+                ) {
+                    Text(text = "카메라로 찍기")
+                }
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = {
-                    showImageSourceDialog = false
-                    onImagePickClick()
-                    imagePickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
-                }) { Text("갤러리에서 선택") }
+                TextButton(
+                    onClick = {
+                        showImageSourceDialog = false
+                        onImagePickClick()
+                        imagePickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
+                ) {
+                    Text(text = "갤러리에서 선택")
+                }
             }
         )
     }
@@ -226,22 +250,32 @@ fun ProductEditScreen(
                 ProductImagePickerSection(
                     imageUris = uiState.imageUris,
                     canAddImages = canAddImages,
-                    onAddImageClick = { showImageSourceDialog = true },
+                    onAddImageClick = {
+                        showImageSourceDialog = true
+                    },
                     onImageRemove = { removeUri ->
-                        onImageUrisChange(uiState.imageUris.filterNot { it == removeUri })
+                        onImageUrisChange(
+                            uiState.imageUris.filterNot { uri ->
+                                uri == removeUri
+                            }
+                        )
                     }
                 )
 
+                uiState.errorMessage?.let { message ->
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = message,
+                        color = Color(0xFFB3261E),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = "상품명 입력",
-                    fontSize = 14.sp,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
+                ProductEditLabel(text = "상품명 입력")
 
                 OutlinedTextField(
                     value = uiState.title,
@@ -275,14 +309,7 @@ fun ProductEditScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = "상품 정보",
-                    fontSize = 14.sp,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
+                ProductEditLabel(text = "상품 정보")
 
                 OutlinedTextField(
                     value = uiState.description,
@@ -296,14 +323,7 @@ fun ProductEditScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = "판매 가격",
-                    fontSize = 14.sp,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
+                ProductEditLabel(text = "판매 가격")
 
                 OutlinedTextField(
                     value = uiState.price,
@@ -311,7 +331,11 @@ fun ProductEditScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     placeholder = {
-                        Text("₩ 가격 입력", fontSize = 14.sp, color = Color.LightGray)
+                        Text(
+                            text = "₩ 가격 입력",
+                            fontSize = 14.sp,
+                            color = Color.LightGray
+                        )
                     },
                     shape = RoundedCornerShape(8.dp),
                     colors = productTextFieldColors(),
@@ -319,19 +343,16 @@ fun ProductEditScreen(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Done
                     ),
-                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                        }
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = "거래 지역",
-                    fontSize = 14.sp,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
+                ProductEditLabel(text = "거래 지역")
 
                 OutlinedTextField(
                     value = uiState.tradeLocation,
@@ -340,20 +361,19 @@ fun ProductEditScreen(
                     shape = RoundedCornerShape(8.dp),
                     colors = productTextFieldColors(),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                        }
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = "사이즈",
-                    fontSize = 14.sp,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
+                ProductEditLabel(text = "사이즈")
 
                 OutlinedTextField(
                     value = uiState.size,
@@ -362,20 +382,19 @@ fun ProductEditScreen(
                     shape = RoundedCornerShape(8.dp),
                     colors = productTextFieldColors(),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                        }
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = "핏 선택 사항",
-                    fontSize = 14.sp,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
+                ProductEditLabel(text = "핏 선택 사항")
 
                 OutlinedTextField(
                     value = uiState.fit,
@@ -384,8 +403,14 @@ fun ProductEditScreen(
                     shape = RoundedCornerShape(8.dp),
                     colors = productTextFieldColors(),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                        }
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -394,9 +419,185 @@ fun ProductEditScreen(
     }
 }
 
-// ─────────────────────────────────────────────────────────
-// 이미지 첨부 영역: 최대 5장 선택, 미리보기, 삭제
-// ─────────────────────────────────────────────────────────
+@Composable
+fun ProductEditScreen(
+    onBack: () -> Unit,
+    onSubmit: (ProductEditFormState) -> Unit
+) {
+    var formState by remember {
+        mutableStateOf(ProductEditFormState())
+    }
+
+    var validationMessage by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "상품 등록",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+
+        ProductTextField(
+            label = "상품명",
+            value = formState.name,
+            onValueChange = {
+                formState = formState.copy(name = it)
+            },
+            singleLine = true
+        )
+
+        ProductTextField(
+            label = "가격",
+            value = formState.price,
+            onValueChange = {
+                formState = formState.copy(
+                    price = it.filter { char ->
+                        char.isDigit()
+                    }
+                )
+            },
+            singleLine = true,
+            keyboardType = KeyboardType.Number
+        )
+
+        ProductTextField(
+            label = "상품 설명",
+            value = formState.content,
+            onValueChange = {
+                formState = formState.copy(content = it)
+            }
+        )
+
+        ProductTextField(
+            label = "사이즈",
+            value = formState.size,
+            onValueChange = {
+                formState = formState.copy(size = it)
+            },
+            singleLine = true
+        )
+
+        ProductTextField(
+            label = "상품 상태",
+            value = formState.grade,
+            onValueChange = {
+                formState = formState.copy(grade = it)
+            },
+            singleLine = true
+        )
+
+        ProductTextField(
+            label = "거래 지역",
+            value = formState.tradingArea,
+            onValueChange = {
+                formState = formState.copy(tradingArea = it)
+            },
+            singleLine = true
+        )
+
+        ProductTextField(
+            label = "추천 체형",
+            value = formState.recommendedType,
+            onValueChange = {
+                formState = formState.copy(recommendedType = it)
+            },
+            singleLine = true
+        )
+
+        ProductTextField(
+            label = "판매 상태",
+            value = formState.postStatus,
+            onValueChange = {
+                formState = formState.copy(postStatus = it.uppercase())
+            },
+            singleLine = true
+        )
+
+        ProductTextField(
+            label = "카테고리 ID",
+            value = formState.categoryId,
+            onValueChange = {
+                formState = formState.copy(
+                    categoryId = it.filter { char ->
+                        char.isDigit()
+                    }
+                )
+            },
+            singleLine = true,
+            keyboardType = KeyboardType.Number
+        )
+
+        ProductTextField(
+            label = "색상 ID",
+            value = formState.colorId,
+            onValueChange = {
+                formState = formState.copy(
+                    colorId = it.filter { char ->
+                        char.isDigit()
+                    }
+                )
+            },
+            singleLine = true,
+            keyboardType = KeyboardType.Number
+        )
+
+        validationMessage?.let { message ->
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFB3261E)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                val message = formState.validateProductForm()
+
+                if (message != null) {
+                    validationMessage = message
+                    return@Button
+                }
+
+                validationMessage = null
+                onSubmit(formState.normalized())
+            }
+        ) {
+            Text(text = "등록")
+        }
+
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onBack
+        ) {
+            Text(text = "이전")
+        }
+    }
+}
+
+@Composable
+private fun ProductEditLabel(text: String) {
+    Text(
+        text = text,
+        fontSize = 14.sp,
+        color = Color.Black,
+        fontWeight = FontWeight.Medium,
+        modifier = Modifier.padding(bottom = 6.dp)
+    )
+}
+
 @Composable
 private fun ProductImagePickerSection(
     imageUris: List<String>,
@@ -415,7 +616,9 @@ private fun ProductImagePickerSection(
                     enabled = canAddImages,
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
-                ) { onAddImageClick() },
+                ) {
+                    onAddImageClick()
+                },
             contentAlignment = Alignment.Center
         ) {
             if (imageUris.isNotEmpty()) {
@@ -443,9 +646,15 @@ private fun ProductImagePickerSection(
                     tint = if (canAddImages) Color.Gray else Color.LightGray,
                     modifier = Modifier.size(40.dp)
                 )
+
                 Spacer(modifier = Modifier.height(6.dp))
+
                 Text(
-                    text = if (canAddImages) "상품 이미지 추가" else "이미지는 최대 5장까지 가능",
+                    text = if (canAddImages) {
+                        "상품 이미지 추가"
+                    } else {
+                        "이미지는 최대 5장까지 가능"
+                    },
                     fontSize = 13.sp,
                     color = if (canAddImages) Color.Gray else Color.LightGray,
                     fontWeight = FontWeight.Medium
@@ -479,7 +688,9 @@ private fun ProductImagePickerSection(
                     ProductImageThumbnail(
                         uri = uri,
                         index = index,
-                        onRemoveClick = { onImageRemove(uri) }
+                        onRemoveClick = {
+                            onImageRemove(uri)
+                        }
                     )
                 }
             }
@@ -540,9 +751,6 @@ private fun ProductImageThumbnail(
     }
 }
 
-// ─────────────────────────────────────────────────────────
-// 카테고리 드롭다운
-// ─────────────────────────────────────────────────────────
 @Composable
 private fun ProductMainCategoryDropdown(
     modifier: Modifier = Modifier,
@@ -572,6 +780,7 @@ private fun ProductMainCategoryDropdown(
                     fontSize = 13.sp,
                     color = if (uiState.selectedMainCategory != null) Color.Black else Color.Gray
                 )
+
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = null,
@@ -583,11 +792,15 @@ private fun ProductMainCategoryDropdown(
 
         DropdownMenu(
             expanded = uiState.isMainCategoryExpanded,
-            onDismissRequest = { onMainCategoryExpandChange(false) },
+            onDismissRequest = {
+                onMainCategoryExpandChange(false)
+            },
             containerColor = Color.White
         ) {
             ProductMainCategory.entries
-                .filter { it != ProductMainCategory.ALL }
+                .filter { category ->
+                    category != ProductMainCategory.ALL
+                }
                 .forEach { category ->
                     DropdownMenuItem(
                         text = {
@@ -623,8 +836,12 @@ private fun ProductSubCategoryDropdown(
             },
             shape = RoundedCornerShape(8.dp),
             border = BorderStroke(
-                1.dp,
-                if (uiState.selectedMainCategory != null) Color.LightGray else Color(0xFFDDDDDD)
+                width = 1.dp,
+                color = if (uiState.selectedMainCategory != null) {
+                    Color.LightGray
+                } else {
+                    Color(0xFFDDDDDD)
+                }
             ),
             color = Color.White,
             modifier = Modifier.fillMaxWidth()
@@ -641,6 +858,7 @@ private fun ProductSubCategoryDropdown(
                     fontSize = 13.sp,
                     color = if (uiState.selectedSubCategory != null) Color.Black else Color.Gray
                 )
+
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = null,
@@ -652,7 +870,9 @@ private fun ProductSubCategoryDropdown(
 
         DropdownMenu(
             expanded = uiState.isSubCategoryExpanded,
-            onDismissRequest = { onSubCategoryExpandChange(false) },
+            onDismissRequest = {
+                onSubCategoryExpandChange(false)
+            },
             containerColor = Color.White
         ) {
             uiState.subCategoryList.forEach { subCategory ->
@@ -674,9 +894,6 @@ private fun ProductSubCategoryDropdown(
     }
 }
 
-// ─────────────────────────────────────────────────────────
-// 상단바: CommunityCloverTopBar와 동일한 구조
-// ─────────────────────────────────────────────────────────
 @Composable
 fun ProductEditTopBar(
     onBackClick: () -> Unit = {}
@@ -688,6 +905,7 @@ fun ProductEditTopBar(
                 .statusBarsPadding()
                 .background(Color.White)
         )
+
         Surface(
             color = Color(0xFFE8F8E0),
             modifier = Modifier
@@ -710,8 +928,11 @@ fun ProductEditTopBar(
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
-                        ) { onBackClick() }
+                        ) {
+                            onBackClick()
+                        }
                 )
+
                 Box(
                     modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.Center
@@ -725,10 +946,33 @@ fun ProductEditTopBar(
                         contentScale = ContentScale.Fit
                     )
                 }
+
                 Spacer(modifier = Modifier.size(48.dp))
             }
         }
     }
+}
+
+@Composable
+private fun ProductTextField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    singleLine: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    OutlinedTextField(
+        modifier = Modifier.fillMaxWidth(),
+        value = value,
+        onValueChange = onValueChange,
+        label = {
+            Text(text = label)
+        },
+        singleLine = singleLine,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType
+        )
+    )
 }
 
 @Composable
@@ -739,22 +983,111 @@ private fun productTextFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedContainerColor = Color.White
 )
 
-// ─────────────────────────────────────────────────────────
-// Preview
-// ─────────────────────────────────────────────────────────
+private fun ProductEditFormState.validateProductForm(): String? {
+    if (name.isBlank()) {
+        return "상품명을 입력해 주세요."
+    }
+
+    if (price.isBlank()) {
+        return "가격을 입력해 주세요."
+    }
+
+    val priceValue = price.trim().toIntOrNull()
+
+    if (priceValue == null || priceValue <= 0) {
+        return "가격은 1원 이상 숫자로 입력해 주세요."
+    }
+
+    if (content.isBlank()) {
+        return "상품 설명을 입력해 주세요."
+    }
+
+    if (size.isBlank()) {
+        return "사이즈를 입력해 주세요."
+    }
+
+    if (grade.isBlank()) {
+        return "상품 상태를 입력해 주세요."
+    }
+
+    if (tradingArea.isBlank()) {
+        return "거래 지역을 입력해 주세요."
+    }
+
+    if (categoryId.isBlank()) {
+        return "카테고리 ID를 입력해 주세요."
+    }
+
+    if (categoryId.trim().toLongOrNull() == null) {
+        return "카테고리 ID는 숫자로 입력해 주세요."
+    }
+
+    if (colorId.isNotBlank() && colorId.trim().toLongOrNull() == null) {
+        return "색상 ID는 숫자로 입력해 주세요."
+    }
+
+    val safePostStatus = postStatus.trim().ifBlank {
+        "ACTIVE"
+    }
+
+    val allowedStatus = setOf(
+        "ACTIVE",
+        "RESERVED",
+        "SOLD_OUT",
+        "HIDDEN"
+    )
+
+    if (safePostStatus !in allowedStatus) {
+        return "판매 상태는 ACTIVE, RESERVED, SOLD_OUT, HIDDEN 중 하나로 입력해 주세요."
+    }
+
+    return null
+}
+
+private fun ProductEditFormState.normalized(): ProductEditFormState {
+    return copy(
+        name = name.trim(),
+        price = price.trim(),
+        content = content.trim(),
+        size = size.trim(),
+        grade = grade.trim(),
+        tradingArea = tradingArea.trim(),
+        recommendedType = recommendedType.trim(),
+        postStatus = postStatus.trim().ifBlank {
+            "ACTIVE"
+        },
+        categoryId = categoryId.trim(),
+        colorId = colorId.trim()
+    )
+}
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ProductRegisterPreview() {
-    var uiState by remember { mutableStateOf(ProductEditUiState(isEditMode = false)) }
+    var uiState by remember {
+        mutableStateOf(ProductEditUiState(isEditMode = false))
+    }
 
     ProductEditScreen(
         uiState = uiState,
-        onTitleChange = { uiState = uiState.copy(title = it) },
-        onPriceChange = { uiState = uiState.copy(price = it) },
-        onDescriptionChange = { uiState = uiState.copy(description = it) },
-        onTradeLocationChange = { uiState = uiState.copy(tradeLocation = it) },
-        onSizeChange = { uiState = uiState.copy(size = it) },
-        onFitChange = { uiState = uiState.copy(fit = it) },
+        onTitleChange = {
+            uiState = uiState.copy(title = it)
+        },
+        onPriceChange = {
+            uiState = uiState.copy(price = it)
+        },
+        onDescriptionChange = {
+            uiState = uiState.copy(description = it)
+        },
+        onTradeLocationChange = {
+            uiState = uiState.copy(tradeLocation = it)
+        },
+        onSizeChange = {
+            uiState = uiState.copy(size = it)
+        },
+        onFitChange = {
+            uiState = uiState.copy(fit = it)
+        },
         onMainCategorySelect = { category ->
             uiState = uiState.copy(
                 selectedMainCategory = category,
@@ -763,15 +1096,21 @@ fun ProductRegisterPreview() {
                 selectedSubCategory = null
             )
         },
-        onMainCategoryExpandChange = { uiState = uiState.copy(isMainCategoryExpanded = it) },
+        onMainCategoryExpandChange = {
+            uiState = uiState.copy(isMainCategoryExpanded = it)
+        },
         onSubCategorySelect = { subCategory ->
             uiState = uiState.copy(
                 selectedSubCategory = subCategory,
                 isSubCategoryExpanded = false
             )
         },
-        onSubCategoryExpandChange = { uiState = uiState.copy(isSubCategoryExpanded = it) },
-        onImageUrisChange = { imageUris -> uiState = uiState.copy(imageUris = imageUris) }
+        onSubCategoryExpandChange = {
+            uiState = uiState.copy(isSubCategoryExpanded = it)
+        },
+        onImageUrisChange = { imageUris ->
+            uiState = uiState.copy(imageUris = imageUris)
+        }
     )
 }
 
@@ -797,12 +1136,24 @@ fun ProductEditPreview() {
 
     ProductEditScreen(
         uiState = uiState,
-        onTitleChange = { uiState = uiState.copy(title = it) },
-        onPriceChange = { uiState = uiState.copy(price = it) },
-        onDescriptionChange = { uiState = uiState.copy(description = it) },
-        onTradeLocationChange = { uiState = uiState.copy(tradeLocation = it) },
-        onSizeChange = { uiState = uiState.copy(size = it) },
-        onFitChange = { uiState = uiState.copy(fit = it) },
+        onTitleChange = {
+            uiState = uiState.copy(title = it)
+        },
+        onPriceChange = {
+            uiState = uiState.copy(price = it)
+        },
+        onDescriptionChange = {
+            uiState = uiState.copy(description = it)
+        },
+        onTradeLocationChange = {
+            uiState = uiState.copy(tradeLocation = it)
+        },
+        onSizeChange = {
+            uiState = uiState.copy(size = it)
+        },
+        onFitChange = {
+            uiState = uiState.copy(fit = it)
+        },
         onMainCategorySelect = { category ->
             uiState = uiState.copy(
                 selectedMainCategory = category,
@@ -811,14 +1162,20 @@ fun ProductEditPreview() {
                 selectedSubCategory = null
             )
         },
-        onMainCategoryExpandChange = { uiState = uiState.copy(isMainCategoryExpanded = it) },
+        onMainCategoryExpandChange = {
+            uiState = uiState.copy(isMainCategoryExpanded = it)
+        },
         onSubCategorySelect = { subCategory ->
             uiState = uiState.copy(
                 selectedSubCategory = subCategory,
                 isSubCategoryExpanded = false
             )
         },
-        onSubCategoryExpandChange = { uiState = uiState.copy(isSubCategoryExpanded = it) },
-        onImageUrisChange = { imageUris -> uiState = uiState.copy(imageUris = imageUris) }
+        onSubCategoryExpandChange = {
+            uiState = uiState.copy(isSubCategoryExpanded = it)
+        },
+        onImageUrisChange = { imageUris ->
+            uiState = uiState.copy(imageUris = imageUris)
+        }
     )
 }
