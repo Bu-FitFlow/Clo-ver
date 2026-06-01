@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.Clover" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- 앱 메인 테마 (기본 기기용: API 24 이상 대응) -->
+    <style name="Theme.Clover" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- 기본 테마 속성이 필요하다면 이곳에 추가합니다. -->
+    </style>
 </resources>

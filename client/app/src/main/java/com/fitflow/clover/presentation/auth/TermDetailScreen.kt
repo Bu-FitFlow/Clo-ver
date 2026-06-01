@@ -17,7 +17,41 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.fitflow.clover.R
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 
+// =========================================================================================
+// 🌟 [Design Preview] 우측 Split/Design 탭에서 두 약관의 디자인을 동시에 확인 가능합니다.
+// =========================================================================================
+
+@Preview(
+    name = "Pixel 10 - 1. 이용약관 상세",
+    device = "spec:width=1080px,height=2424px,dpi=420",
+    showBackground = true
+)
+@Composable
+fun TermDetailScreenEssentialPreview() {
+    val fakeNavController = rememberNavController()
+    TermDetailScreen(
+        navController = fakeNavController,
+        title = "이용약관 동의(필수)"
+    )
+}
+
+@Preview(
+    name = "Pixel 10 - 2. 개인정보 상세",
+    device = "spec:width=1080px,height=2424px,dpi=420",
+    showBackground = true
+)
+@Composable
+fun TermDetailScreenPrivacyPreview() {
+    val fakeNavController = rememberNavController()
+    TermDetailScreen(
+        navController = fakeNavController,
+        title = "개인정보 수집 및 이용동의(필수)"
+    )
+}
+//=========================================================================
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TermDetailScreen(navController: NavController, title: String) {
