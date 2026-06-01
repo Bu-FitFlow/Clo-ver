@@ -3,7 +3,6 @@ package com.fitflow.clover.presentation.diagnosis
 import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -12,19 +11,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -68,7 +65,10 @@ fun BodyAnalysisScreen(
     onMoveToMain: () -> Unit
 ) {
     val uiState by viewModel.uiState
-    var currentStep by remember { mutableStateOf(BodyAnalysisStep.USER_INFO) }
+
+    var currentStep by remember {
+        mutableStateOf(BodyAnalysisStep.USER_INFO)
+    }
 
     LaunchedEffect(uiState.isBodyAnalyzing, uiState.bodyPhotoBitmap) {
         if (uiState.isBodyAnalyzing && uiState.bodyPhotoBitmap != null) {
@@ -152,54 +152,59 @@ private fun BodyUserInfoContent(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(horizontal = 26.dp)
+            .systemBarsPadding() // 핸드폰 상태 표시줄 및 네비게이션 바 침범 방지
+            .padding(bottom = 30.dp), // 다음 버튼을 위로 살짝 올려줌
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        DiagnosisTopBar(
+        DiagnosisHeader(
             title = "내 정보",
             onBack = onBack,
             onSkip = onSkip
         )
 
-        Spacer(modifier = Modifier.height(58.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
         Text(
             text = "성별",
-            modifier = Modifier.fillMaxWidth(),
             color = Color.Black,
-            fontSize = 14.sp,
+            fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(22.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(0.85f),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            GenderSelectCard(
+            GenderSelectButton(
                 gender = DiagnosisGender.MALE,
-                selectedGender = uiState.selectedGender,
-                onClick = {
-                    onSelectGender(DiagnosisGender.MALE)
-                }
+                isSelected = uiState.selectedGender == DiagnosisGender.MALE,
+                modifier = Modifier
+                    .weight(1f)
+                    .aspectRatio(0.7f),
+                onClick = { onSelectGender(DiagnosisGender.MALE) }
             )
 
-            GenderSelectCard(
+            Spacer(modifier = Modifier.width(24.dp))
+
+            GenderSelectButton(
                 gender = DiagnosisGender.FEMALE,
-                selectedGender = uiState.selectedGender,
-                onClick = {
-                    onSelectGender(DiagnosisGender.FEMALE)
-                }
+                isSelected = uiState.selectedGender == DiagnosisGender.FEMALE,
+                modifier = Modifier
+                    .weight(1f)
+                    .aspectRatio(0.7f),
+                onClick = { onSelectGender(DiagnosisGender.FEMALE) }
             )
         }
 
-        Spacer(modifier = Modifier.height(80.dp))
+        Spacer(modifier = Modifier.height(50.dp))
 
-        NumberDropdown(
+        FigmaNumberDropdown(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .height(48.dp),
             label = "키",
             suffix = "cm",
             selectedValue = uiState.selectedHeightCm,
@@ -207,9 +212,12 @@ private fun BodyUserInfoContent(
             onSelect = onSelectHeight
         )
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        NumberDropdown(
+        FigmaNumberDropdown(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .height(48.dp),
             label = "몸무게",
             suffix = "kg",
             selectedValue = uiState.selectedWeightKg,
@@ -217,15 +225,17 @@ private fun BodyUserInfoContent(
             onSelect = onSelectWeight
         )
 
+        // 기기 크기에 상관없이 버튼을 항상 아래로 밀어줌
         Spacer(modifier = Modifier.weight(1f))
 
-        GreenBottomButton(
+        FigmaBottomButton(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .height(62.dp),
             text = "다음",
             enabled = uiState.isInfoCompleted,
             onClick = onNext
         )
-
-        Spacer(modifier = Modifier.height(34.dp))
     }
 }
 
@@ -246,31 +256,33 @@ private fun BodyCameraContent(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(horizontal = 26.dp)
+            .systemBarsPadding()
+            .padding(bottom = 30.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        DiagnosisTopBar(
+        DiagnosisHeader(
             title = "체형분석",
             onBack = onBack,
             onSkip = onSkip
         )
 
-        Spacer(modifier = Modifier.height(112.dp))
+        Spacer(modifier = Modifier.height(50.dp))
 
         Text(
-            text = "전신이 잘 보이도록 정면에서 사진을 찍어주세요.\n어둡거나 흐리면 인식이 어려울 수 있습니다.",
-            modifier = Modifier.fillMaxWidth(),
-            color = Color(0xFFFF3B30),
-            fontSize = 14.sp,
+            text = "전면으로 보고 사진을 찍어주세요.\n아닐 시 정확하지 않을 수 있습니다.",
+            color = Color(0xFFF23636),
+            fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center,
             lineHeight = 22.sp
         )
 
-        Spacer(modifier = Modifier.height(34.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
         PhotoCaptureBox(
+            modifier = Modifier
+                .fillMaxWidth(0.6f)
+                .aspectRatio(0.7f),
             bitmap = uiState.bodyPhotoBitmap,
             isLoading = uiState.isBodyAnalyzing,
             onClick = {
@@ -278,29 +290,26 @@ private fun BodyCameraContent(
             }
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(30.dp))
 
-        when {
-            uiState.isBodyAnalyzing -> {
-                Text(
-                    text = "체형 데이터를 분석하고 있어요.",
-                    modifier = Modifier.fillMaxWidth(),
-                    color = Color.Black,
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center
-                )
-            }
+        if (uiState.isBodyAnalyzing) {
+            Text(
+                text = "체형 데이터를 분석하고 있어요.",
+                color = Color.Black,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center
+            )
+        }
 
-            uiState.bodyAnalysisErrorMessage != null -> {
-                Text(
-                    text = uiState.bodyAnalysisErrorMessage.orEmpty(),
-                    modifier = Modifier.fillMaxWidth(),
-                    color = Color(0xFFFF3B30),
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 20.sp
-                )
-            }
+        if (uiState.bodyAnalysisErrorMessage != null) {
+            Text(
+                text = uiState.bodyAnalysisErrorMessage.orEmpty(),
+                color = Color(0xFFF23636),
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(horizontal = 40.dp)
+            )
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -317,14 +326,12 @@ private fun BodyRetryContent(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .statusBarsPadding()
-            .navigationBarsPadding(),
+            .systemBarsPadding(),
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "체형을 인식할 수 없어요.",
@@ -387,241 +394,275 @@ private fun BodyResultContent(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(horizontal = 26.dp)
+            .systemBarsPadding()
+            .padding(bottom = 30.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        DiagnosisTopBar(
+        DiagnosisHeader(
             title = "체형분석",
             onBack = onBack,
             onSkip = onMoveToPersonalColor
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(60.dp))
 
         Text(
             text = result?.title ?: "체형 분석이 완료되었습니다.",
-            modifier = Modifier.fillMaxWidth(),
             color = Color.Black,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            lineHeight = 28.sp
+            lineHeight = 28.sp,
+            modifier = Modifier.padding(horizontal = 40.dp)
         )
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
         Text(
             text = result?.description ?: "추천 스타일 데이터를 준비했어요.",
-            modifier = Modifier.fillMaxWidth(),
             color = Color(0xFF555555),
-            fontSize = 13.sp,
+            fontSize = 14.sp,
             textAlign = TextAlign.Center,
-            lineHeight = 20.sp
+            lineHeight = 22.sp,
+            modifier = Modifier.padding(horizontal = 40.dp)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Text(
             text = result?.recommendMessage ?: "퍼스널 컬러 진단을 이어서 진행해 주세요.",
-            modifier = Modifier.fillMaxWidth(),
             color = Color(0xFF5FAE4F),
-            fontSize = 13.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
-            lineHeight = 20.sp
+            lineHeight = 22.sp,
+            modifier = Modifier.padding(horizontal = 40.dp)
         )
 
         Spacer(modifier = Modifier.weight(1f))
 
-        GreenBottomButton(
-            text = "퍼스널 컬러 진단 하러 가기",
+        FigmaBottomButton(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .height(62.dp),
+            text = "퍼스널 진단 하러 가기",
             enabled = uiState.isBodyResultReady,
             onClick = onMoveToPersonalColor
         )
-
-        Spacer(modifier = Modifier.height(34.dp))
     }
 }
 
 @Composable
-private fun DiagnosisTopBar(
+private fun DiagnosisHeader(
     title: String,
     onBack: () -> Unit,
     onSkip: () -> Unit
 ) {
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 16.dp, vertical = 20.dp)
+            .height(60.dp)
     ) {
-        TextButton(
-            onClick = onBack,
-            contentPadding = PaddingValues(0.dp)
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .size(40.dp)
+                .clickable(onClick = onBack),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "‹",
-                color = Color.Black,
-                fontSize = 36.sp,
-                fontWeight = FontWeight.Light
-            )
+            ChevronLeftIcon()
         }
-
-        Spacer(modifier = Modifier.weight(1f))
 
         Text(
             text = title,
+            modifier = Modifier.align(Alignment.Center),
             color = Color.Black,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = "건너뛰기",
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 8.dp)
+                .clickable(onClick = onSkip),
+            color = Color.Black,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
+        )
+    }
+}
 
-        TextButton(
-            onClick = onSkip,
-            contentPadding = PaddingValues(0.dp)
+@Composable
+private fun ChevronLeftIcon() {
+    Canvas(
+        modifier = Modifier.size(24.dp)
+    ) {
+        val strokeWidth = 2.dp.toPx()
+        drawLine(
+            color = Color.Black,
+            start = Offset(x = size.width * 0.7f, y = size.height * 0.1f),
+            end = Offset(x = size.width * 0.3f, y = size.height * 0.5f),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+
+        drawLine(
+            color = Color.Black,
+            start = Offset(x = size.width * 0.3f, y = size.height * 0.5f),
+            end = Offset(x = size.width * 0.7f, y = size.height * 0.9f),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+    }
+}
+
+@Composable
+private fun GenderSelectButton(
+    gender: DiagnosisGender,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val baseColor = if (gender == DiagnosisGender.MALE) Color(0xFF2196F3) else Color(0xFFE91E63)
+    val lightBgColor = if (gender == DiagnosisGender.MALE) Color(0xFFE3F2FD) else Color(0xFFFCE4EC)
+
+    Box(
+        modifier = modifier
+            .background(
+                color = if (isSelected) lightBgColor else Color.Transparent,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .then( // 선택 시에만 테두리를 그려주어, 평소엔 투명하게 만듦
+                if (isSelected) Modifier.border(2.dp, baseColor, RoundedCornerShape(8.dp))
+                else Modifier
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
+            GenderAvatar(
+                gender = gender,
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .aspectRatio(1f)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
-                text = "건너뛰기",
-                color = Color.Black,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium
+                text = gender.label,
+                color = if (isSelected) baseColor else Color.Black,
+                fontSize = 18.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                textAlign = TextAlign.Center
             )
         }
     }
 }
 
+
 @Composable
-private fun GenderSelectCard(
+private fun GenderAvatar(
     gender: DiagnosisGender,
-    selectedGender: DiagnosisGender?,
-    onClick: () -> Unit
+    modifier: Modifier = Modifier
 ) {
-    val isSelected = selectedGender == gender
+    val drawColor = if (gender == DiagnosisGender.MALE) Color(0xFF2196F3) else Color(0xFFE91E63)
 
-    Column(
-        modifier = Modifier
-            .size(width = 126.dp, height = 188.dp)
-            .border(
-                width = if (isSelected) 1.5.dp else 1.dp,
-                color = Color.Black,
-                shape = RoundedCornerShape(4.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        GenderFigure(gender = gender)
-
-        Text(
-            text = gender.label,
-            color = Color.Black,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Medium
-        )
-    }
-}
-
-@Composable
-private fun GenderFigure(
-    gender: DiagnosisGender
-) {
-    Canvas(
-        modifier = Modifier.size(78.dp)
-    ) {
-        val black = Color.Black
+    Canvas(modifier = modifier) {
         val centerX = size.width / 2f
+        val h = size.height
+        val w = size.width
+
+
+        val headRadius = h / 9f
+        val headCenterY = headRadius
+
 
         drawCircle(
-            color = black,
-            radius = 8.dp.toPx(),
-            center = Offset(centerX, 10.dp.toPx())
+            color = drawColor,
+            radius = headRadius,
+            center = Offset(x = centerX, y = headCenterY)
         )
 
         if (gender == DiagnosisGender.MALE) {
             drawRoundRect(
-                color = black,
-                topLeft = Offset(centerX - 11.dp.toPx(), 24.dp.toPx()),
-                size = Size(22.dp.toPx(), 34.dp.toPx()),
-                cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
+                color = drawColor,
+                topLeft = Offset(x = centerX - w * 0.2f, y = h * 0.30f),
+                size = Size(width = w * 0.4f, height = h * 0.38f),
+                cornerRadius = CornerRadius(x = 8f, y = 8f)
             )
 
             drawLine(
-                color = black,
-                start = Offset(centerX - 20.dp.toPx(), 28.dp.toPx()),
-                end = Offset(centerX - 20.dp.toPx(), 56.dp.toPx()),
-                strokeWidth = 8.dp.toPx(),
+                color = drawColor,
+                start = Offset(centerX - w * 0.28f, h * 0.2f),
+                end = Offset(centerX - w * 0.28f, h * 0.58f),
+                strokeWidth = w * 0.08f,
                 cap = StrokeCap.Round
             )
-
             drawLine(
-                color = black,
-                start = Offset(centerX + 20.dp.toPx(), 28.dp.toPx()),
-                end = Offset(centerX + 20.dp.toPx(), 56.dp.toPx()),
-                strokeWidth = 8.dp.toPx(),
+                color = drawColor,
+                start = Offset(centerX + w * 0.28f, h * 0.2f),
+                end = Offset(centerX + w * 0.28f, h * 0.58f),
+                strokeWidth = w * 0.08f,
                 cap = StrokeCap.Round
             )
-
             drawLine(
-                color = black,
-                start = Offset(centerX - 6.dp.toPx(), 58.dp.toPx()),
-                end = Offset(centerX - 6.dp.toPx(), 76.dp.toPx()),
-                strokeWidth = 8.dp.toPx(),
+                color = drawColor,
+                start = Offset(centerX - w * 0.09f, h * 0.55f),
+                end = Offset(centerX - w * 0.09f, h * 0.98f),
+                strokeWidth = w * 0.1f,
                 cap = StrokeCap.Round
             )
-
             drawLine(
-                color = black,
-                start = Offset(centerX + 6.dp.toPx(), 58.dp.toPx()),
-                end = Offset(centerX + 6.dp.toPx(), 76.dp.toPx()),
-                strokeWidth = 8.dp.toPx(),
+                color = drawColor,
+                start = Offset(centerX + w * 0.09f, h * 0.55f),
+                end = Offset(centerX + w * 0.09f, h * 0.98f),
+                strokeWidth = w * 0.1f,
                 cap = StrokeCap.Round
             )
         } else {
             val dressPath = Path().apply {
-                moveTo(centerX, 24.dp.toPx())
-                lineTo(centerX - 18.dp.toPx(), 58.dp.toPx())
-                lineTo(centerX + 18.dp.toPx(), 58.dp.toPx())
+                moveTo(centerX, h * 0.30f)
+                lineTo(centerX - w * 0.35f, h * 0.62f)
+                lineTo(centerX + w * 0.35f, h * 0.62f)
                 close()
             }
-
-            drawPath(
-                path = dressPath,
-                color = black
-            )
+            drawPath(path = dressPath, color = drawColor)
 
             drawLine(
-                color = black,
-                start = Offset(centerX - 18.dp.toPx(), 30.dp.toPx()),
-                end = Offset(centerX - 28.dp.toPx(), 58.dp.toPx()),
-                strokeWidth = 7.dp.toPx(),
+                color = drawColor,
+                start = Offset(centerX - w * 0.2f, h * 0.2f),
+                end = Offset(centerX - w * 0.4f, h * 0.55f),
+                strokeWidth = w * 0.07f,
                 cap = StrokeCap.Round
             )
-
             drawLine(
-                color = black,
-                start = Offset(centerX + 18.dp.toPx(), 30.dp.toPx()),
-                end = Offset(centerX + 28.dp.toPx(), 58.dp.toPx()),
-                strokeWidth = 7.dp.toPx(),
+                color = drawColor,
+                start = Offset(centerX + w * 0.2f, h * 0.2f),
+                end = Offset(centerX + w * 0.4f, h * 0.55f),
+                strokeWidth = w * 0.07f,
                 cap = StrokeCap.Round
             )
-
             drawLine(
-                color = black,
-                start = Offset(centerX - 7.dp.toPx(), 60.dp.toPx()),
-                end = Offset(centerX - 7.dp.toPx(), 76.dp.toPx()),
-                strokeWidth = 7.dp.toPx(),
+                color = drawColor,
+                start = Offset(centerX - w * 0.1f, h * 0.6f),
+                end = Offset(centerX - w * 0.1f, h * 0.98f),
+                strokeWidth = w * 0.09f,
                 cap = StrokeCap.Round
             )
-
             drawLine(
-                color = black,
-                start = Offset(centerX + 7.dp.toPx(), 60.dp.toPx()),
-                end = Offset(centerX + 7.dp.toPx(), 76.dp.toPx()),
-                strokeWidth = 7.dp.toPx(),
+                color = drawColor,
+                start = Offset(centerX + w * 0.1f, h * 0.6f),
+                end = Offset(centerX + w * 0.1f, h * 0.98f),
+                strokeWidth = w * 0.09f,
                 cap = StrokeCap.Round
             )
         }
@@ -629,7 +670,8 @@ private fun GenderFigure(
 }
 
 @Composable
-private fun NumberDropdown(
+private fun FigmaNumberDropdown(
+    modifier: Modifier,
     label: String,
     suffix: String,
     selectedValue: Int?,
@@ -638,56 +680,47 @@ private fun NumberDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        OutlinedButton(
-            onClick = {
-                expanded = true
-            },
+    Box(modifier = modifier) {
+        Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(46.dp),
-            shape = RoundedCornerShape(3.dp),
-            border = BorderStroke(1.dp, Color.Black),
-            colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = Color.White,
-                contentColor = Color.Black
-            ),
-            contentPadding = PaddingValues(horizontal = 14.dp)
+                .fillMaxSize()
+                .background(Color.White, shape = RoundedCornerShape(6.dp))
+                .border(
+                    width = 1.dp,
+                    color = Color.Black,
+                    shape = RoundedCornerShape(6.dp)
+                )
+                .clickable { expanded = true }
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = selectedValue?.let { "$it$suffix" } ?: label,
-                    color = Color.Black,
-                    fontSize = 15.sp
-                )
+            Text(
+                text = selectedValue?.let { "$it$suffix" } ?: label,
+                color = Color.Black,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
 
-                Spacer(modifier = Modifier.weight(1f))
-
-                Text(
-                    text = if (expanded) "▲" else "▼",
-                    color = Color.Black,
-                    fontSize = 16.sp
-                )
+            Canvas(modifier = Modifier.size(14.dp)) {
+                val path = Path().apply {
+                    moveTo(size.width / 2f, 0f)
+                    lineTo(size.width, size.height)
+                    lineTo(0f, size.height)
+                    close()
+                }
+                drawPath(path, Color.Black)
             }
         }
 
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = {
-                expanded = false
-            },
-            modifier = Modifier.fillMaxWidth()
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.fillMaxWidth(0.85f)
         ) {
             options.forEach { value ->
                 DropdownMenuItem(
-                    text = {
-                        Text(text = "$value$suffix")
-                    },
+                    text = { Text(text = "$value$suffix") },
                     onClick = {
                         onSelect(value)
                         expanded = false
@@ -700,19 +733,16 @@ private fun NumberDropdown(
 
 @Composable
 private fun PhotoCaptureBox(
+    modifier: Modifier,
     bitmap: Bitmap?,
     isLoading: Boolean,
     onClick: () -> Unit
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 54.dp)
-            .height(272.dp)
+        modifier = modifier
             .border(
                 width = 1.dp,
-                color = Color.Black,
-                shape = RoundedCornerShape(0.dp)
+                color = Color.Black
             )
             .clickable(
                 enabled = !isLoading,
@@ -722,11 +752,8 @@ private fun PhotoCaptureBox(
     ) {
         when {
             isLoading -> {
-                CircularProgressIndicator(
-                    color = Color(0xFF98DB82)
-                )
+                CircularProgressIndicator(color = Color(0xFF99DE81))
             }
-
             bitmap != null -> {
                 Image(
                     bitmap = bitmap.asImageBitmap(),
@@ -735,7 +762,6 @@ private fun PhotoCaptureBox(
                     contentScale = ContentScale.Crop
                 )
             }
-
             else -> {
                 PlusIcon()
             }
@@ -746,49 +772,55 @@ private fun PhotoCaptureBox(
 @Composable
 private fun PlusIcon() {
     Canvas(
-        modifier = Modifier.size(74.dp)
+        modifier = Modifier.size(width = 40.dp, height = 40.dp)
     ) {
         drawLine(
             color = Color.Black,
             start = Offset(size.width / 2f, 0f),
             end = Offset(size.width / 2f, size.height),
-            strokeWidth = 1.2.dp.toPx()
+            strokeWidth = 2.dp.toPx(),
+            cap = StrokeCap.Round
         )
-
         drawLine(
             color = Color.Black,
             start = Offset(0f, size.height / 2f),
             end = Offset(size.width, size.height / 2f),
-            strokeWidth = 1.2.dp.toPx()
+            strokeWidth = 2.dp.toPx(),
+            cap = StrokeCap.Round
         )
     }
 }
 
 @Composable
-private fun GreenBottomButton(
+private fun FigmaBottomButton(
+    modifier: Modifier,
     text: String,
     enabled: Boolean,
     onClick: () -> Unit
 ) {
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(66.dp),
-        shape = RoundedCornerShape(4.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF98DB82),
-            disabledContainerColor = Color(0xFFD9D9D9),
-            contentColor = Color.Black,
-            disabledContentColor = Color(0xFF777777)
-        )
+    Box(
+        modifier = modifier
+            .background(
+                color = if (enabled) Color(0xFF99DE81) else Color(0xFFD9D9D9),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = Color.Black,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .clickable(
+                enabled = enabled,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
             color = Color.Black,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
         )
     }
 }

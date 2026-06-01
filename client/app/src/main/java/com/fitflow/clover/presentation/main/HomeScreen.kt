@@ -1,6 +1,7 @@
 package com.fitflow.clover.presentation.main
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,10 +42,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fitflow.clover.R
 import com.fitflow.clover.domain.modal.ProductSummaryModel
 import java.text.NumberFormat
 import java.util.Locale
@@ -228,7 +232,14 @@ private fun MainHeader(
                 .clickable(onClick = onClickLogo),
             contentAlignment = Alignment.Center
         ) {
-            CloverLogo()
+            Image(
+                painter = painterResource(id = R.drawable.main_clover_logo),
+                contentDescription = "Clo-ver 메인 로고",
+                modifier = Modifier
+                    .width(94.dp)
+                    .height(57.dp),
+                contentScale = ContentScale.Fit
+            )
         }
 
         Box(
@@ -239,104 +250,13 @@ private fun MainHeader(
                 .clickable(onClick = onClickNotification),
             contentAlignment = Alignment.Center
         ) {
-            BellIcon()
-        }
-    }
-}
-
-@Composable
-private fun CloverLogo() {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Canvas(
-            modifier = Modifier.size(31.dp)
-        ) {
-            val leafColor = Color(0xFF8DD36F)
-            val strokeColor = Color(0xFF5FAA43)
-            val center = Offset(size.width / 2f, size.height / 2f)
-
-            drawCircle(
-                color = leafColor,
-                radius = 7.dp.toPx(),
-                center = Offset(center.x, center.y - 7.dp.toPx())
-            )
-            drawCircle(
-                color = leafColor,
-                radius = 7.dp.toPx(),
-                center = Offset(center.x - 7.dp.toPx(), center.y)
-            )
-            drawCircle(
-                color = leafColor,
-                radius = 7.dp.toPx(),
-                center = Offset(center.x + 7.dp.toPx(), center.y)
-            )
-            drawCircle(
-                color = leafColor,
-                radius = 7.dp.toPx(),
-                center = Offset(center.x, center.y + 7.dp.toPx())
-            )
-
-            drawLine(
-                color = strokeColor,
-                start = center,
-                end = Offset(center.x + 9.dp.toPx(), center.y + 13.dp.toPx()),
-                strokeWidth = 1.6.dp.toPx(),
-                cap = StrokeCap.Round
+            Image(
+                painter = painterResource(id = R.drawable.ic_notification_bell),
+                contentDescription = "알림",
+                modifier = Modifier.size(32.dp),
+                contentScale = ContentScale.Fit
             )
         }
-
-        Text(
-            text = "Clo-ver",
-            color = Color(0xFF67B74C),
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            lineHeight = 14.sp
-        )
-    }
-}
-
-@Composable
-private fun BellIcon() {
-    Canvas(
-        modifier = Modifier.size(32.dp)
-    ) {
-        val strokeWidth = 2.dp.toPx()
-        val path = Path().apply {
-            moveTo(size.width * 0.25f, size.height * 0.58f)
-            quadraticBezierTo(
-                size.width * 0.26f,
-                size.height * 0.28f,
-                size.width * 0.50f,
-                size.height * 0.22f
-            )
-            quadraticBezierTo(
-                size.width * 0.74f,
-                size.height * 0.28f,
-                size.width * 0.75f,
-                size.height * 0.58f
-            )
-            lineTo(size.width * 0.83f, size.height * 0.72f)
-            lineTo(size.width * 0.17f, size.height * 0.72f)
-            close()
-        }
-
-        drawPath(
-            path = path,
-            color = Color.Black,
-            style = Stroke(width = strokeWidth)
-        )
-
-        drawArc(
-            color = Color.Black,
-            startAngle = 0f,
-            sweepAngle = 180f,
-            useCenter = false,
-            topLeft = Offset(size.width * 0.39f, size.height * 0.67f),
-            size = Size(size.width * 0.22f, size.height * 0.20f),
-            style = Stroke(width = strokeWidth)
-        )
     }
 }
 
@@ -887,7 +807,12 @@ private fun CommunityThumb() {
             .border(1.dp, Color.Black),
         contentAlignment = Alignment.Center
     ) {
-        CloverLogo()
+        Image(
+            painter = painterResource(id = R.drawable.main_clover_logo),
+            contentDescription = "커뮤니티 로고",
+            modifier = Modifier.size(32.dp),
+            contentScale = ContentScale.Fit
+        )
     }
 }
 
