@@ -1,5 +1,6 @@
 package com.fitflow.clover.core.navigation
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +12,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,8 +21,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.fitflow.clover.presentation.chat.ChatScreen
 import com.fitflow.clover.presentation.chat.ChatViewModel
+import com.fitflow.clover.presentation.community.CommunityDetailScreen
+import com.fitflow.clover.presentation.community.CommunityEditScreen
+import com.fitflow.clover.presentation.community.CommunityListScreen
+import com.fitflow.clover.presentation.community.CommunityViewModel
+import com.fitflow.clover.presentation.community.CommunityWriteScreen
 import com.fitflow.clover.presentation.diagnosis.BodyAnalysisScreen
 import com.fitflow.clover.presentation.diagnosis.DiagnosisViewModel
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorResultScreen
@@ -29,13 +43,30 @@ import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorRetr
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorScreen
 import com.fitflow.clover.presentation.main.MainScreen
 import com.fitflow.clover.presentation.product.ProductDetailScreen
+import com.fitflow.clover.presentation.product.ProductEditScreen
 import com.fitflow.clover.presentation.product.ProductListScreen
+import com.fitflow.clover.presentation.product.ProductViewModel
 
 @Composable
-fun CloverNavHost() {
-    val currentScreen = remember {
-        mutableStateOf<ScreenRoute>(ScreenRoute.BodyAnalysis)
-    }
+fun CloverNavHost(
+    modifier: Modifier = Modifier
+) {
+    val navController = rememberNavController()
+
+    CloverNavHost(
+        navController = navController,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun CloverNavHost(
+    navController: NavHostController,
+    modifier: Modifier = Modifier,
+    startDestination: String = ScreenRoute.BodyAnalysis.route
+) {
+    val productViewModel: ProductViewModel = viewModel()
+    val communityViewModel: CommunityViewModel = viewModel()
 
     val diagnosisViewModel = remember {
         DiagnosisViewModel()
@@ -43,6 +74,22 @@ fun CloverNavHost() {
 
     val chatViewModel = remember {
         ChatViewModel()
+    }
+
+    fun navigateSingleTop(route: String) {
+        navController.navigate(route) {
+            launchSingleTop = true
+        }
+    }
+
+    fun popBackOrMain() {
+        val popped = navController.popBackStack()
+
+        if (!popped) {
+            navController.navigate(ScreenRoute.Main.route) {
+                launchSingleTop = true
+            }
+        }
     }
 
     fun currentBodyType(): String {
@@ -69,163 +116,304 @@ fun CloverNavHost() {
         )
     }
 
-    when (val screen = currentScreen.value) {
-        ScreenRoute.BodyAnalysis -> {
+    NavHost(
+        navController = navController,
+        startDestination = startDestination,
+        modifier = modifier
+    ) {
+        composable(ScreenRoute.BodyAnalysis.route) {
             BodyAnalysisScreen(
                 viewModel = diagnosisViewModel,
                 onMoveToPersonalColor = {
-                    currentScreen.value = ScreenRoute.PersonalColorQuestion
+                    navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
                 },
                 onMoveToMain = {
-                    currentScreen.value = ScreenRoute.PersonalColorQuestion
+                    navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
                 }
             )
         }
 
-        ScreenRoute.PersonalColorQuestion -> {
+        composable(ScreenRoute.PersonalColorQuestion.route) {
             PersonalColorScreen(
                 viewModel = diagnosisViewModel,
                 onMoveToResult = {
-                    currentScreen.value = ScreenRoute.PersonalColorResult
+                    navigateSingleTop(ScreenRoute.PersonalColorResult.route)
                 },
                 onMoveToRetry = {
-                    currentScreen.value = ScreenRoute.PersonalColorRetry
+                    navigateSingleTop(ScreenRoute.PersonalColorRetry.route)
                 },
                 onMoveToMain = {
-                    currentScreen.value = ScreenRoute.Main
+                    navigateSingleTop(ScreenRoute.Main.route)
                 }
             )
         }
 
-        ScreenRoute.PersonalColorResult -> {
+        composable(ScreenRoute.PersonalColorResult.route) {
             PersonalColorResultScreen(
                 result = diagnosisViewModel.uiState.value.personalColorResult
                     ?: fallbackPersonalColorResult(),
                 userDisplayName = currentUserDisplayName(),
                 onMoveToMain = {
-                    currentScreen.value = ScreenRoute.Main
+                    navController.navigate(ScreenRoute.Main.route) {
+                        popUpTo(ScreenRoute.BodyAnalysis.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
 
-        ScreenRoute.PersonalColorRetry -> {
+        composable(ScreenRoute.PersonalColorRetry.route) {
             PersonalColorRetryScreen(
                 onRetry = {
                     diagnosisViewModel.resetPersonalColorPhoto()
-                    currentScreen.value = ScreenRoute.PersonalColorQuestion
+                    navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
                 },
                 onMoveToMain = {
-                    currentScreen.value = ScreenRoute.Main
+                    navigateSingleTop(ScreenRoute.Main.route)
                 }
             )
         }
 
-        ScreenRoute.Main -> {
+        composable(ScreenRoute.Main.route) {
             MainScreen(
                 bodyType = currentBodyType(),
                 onClickLogo = {
-                    currentScreen.value = ScreenRoute.Main
+                    navigateSingleTop(ScreenRoute.Main.route)
                 },
                 onClickNotification = {
-                    currentScreen.value = ScreenRoute.Notification
+                    navigateSingleTop(ScreenRoute.Notification.route)
                 },
                 onClickChat = {
                     chatViewModel.backToChatList()
-                    currentScreen.value = ScreenRoute.Chat
+                    navigateSingleTop(ScreenRoute.Chat.route)
                 },
                 onClickTradePost = {
-                    currentScreen.value = ScreenRoute.TradePost
+                    navigateSingleTop(ScreenRoute.TradePost.route)
                 },
                 onClickCommunity = {
-                    currentScreen.value = ScreenRoute.Community
+                    navigateSingleTop(ScreenRoute.CommunityList.route)
                 },
                 onClickMyPage = {
-                    currentScreen.value = ScreenRoute.MyPage
+                    navigateSingleTop(ScreenRoute.MyPage.route)
                 },
                 onClickSale = {
-                    currentScreen.value = ScreenRoute.Sale
+                    productViewModel.prepareRegister()
+                    navigateSingleTop(ScreenRoute.ProductEdit.route)
                 },
                 onClickWrite = {
-                    currentScreen.value = ScreenRoute.CommunityWrite
+                    communityViewModel.resetWriteState()
+                    navigateSingleTop(ScreenRoute.CommunityWrite.route)
                 },
                 onClickProductMore = {
-                    currentScreen.value = ScreenRoute.ProductList(
-                        recommendedType = null
-                    )
+                    navigateSingleTop(ScreenRoute.ProductList.route)
                 },
                 onClickBodyProductMore = {
-                    currentScreen.value = ScreenRoute.ProductList(
-                        recommendedType = currentBodyType()
-                    )
+                    navigateSingleTop(ScreenRoute.ProductList.route)
                 },
                 onClickProductDetail = { productId ->
-                    currentScreen.value = ScreenRoute.ProductDetail(
-                        productId = productId
+                    navController.navigate(
+                        ScreenRoute.ProductDetail.createRoute(productId)
                     )
                 },
                 onClickCommunityMore = {
-                    currentScreen.value = ScreenRoute.Community
+                    navigateSingleTop(ScreenRoute.CommunityList.route)
                 },
                 onClickCarbonBanner = {
-                    currentScreen.value = ScreenRoute.CarbonPoint
+                    navigateSingleTop(ScreenRoute.CarbonPoint.route)
                 }
             )
         }
 
-        is ScreenRoute.ProductList -> {
-            ProductListScreen(
-                recommendedType = screen.recommendedType,
-                onBack = {
-                    currentScreen.value = ScreenRoute.Main
-                },
-                onClickProduct = { productId ->
-                    currentScreen.value = ScreenRoute.ProductDetail(
-                        productId = productId
-                    )
+        composable(ScreenRoute.ProductList.route) {
+            ProductListRouteContent(
+                navController = navController,
+                productViewModel = productViewModel,
+                communityViewModel = communityViewModel,
+                onBackClick = {
+                    popBackOrMain()
                 }
             )
         }
 
-        is ScreenRoute.ProductDetail -> {
+        composable(
+            route = ScreenRoute.ProductDetail.route,
+            arguments = listOf(
+                navArgument("productId") {
+                    type = NavType.LongType
+                }
+            )
+        ) { backStackEntry ->
+            val productId = backStackEntry.arguments?.getLong("productId") ?: return@composable
+
             ProductDetailScreen(
-                productId = screen.productId,
+                productId = productId,
                 onBack = {
-                    currentScreen.value = ScreenRoute.Main
+                    popBackOrMain()
                 },
-                onOpenChat = { productId, sellerId ->
+                onOpenChat = { selectedProductId, sellerId ->
                     chatViewModel.backToChatList()
 
-                    currentScreen.value = ScreenRoute.ChatRoom(
-                        productId = productId,
-                        sellerId = sellerId,
-                        chatRoomId = null
+                    navController.navigate(
+                        ScreenRoute.ChatRoom.createRoute(
+                            productId = selectedProductId,
+                            sellerId = sellerId,
+                            chatRoomId = null
+                        )
                     )
                 },
                 onOpenSellerProfile = { sellerId ->
-                    currentScreen.value = ScreenRoute.SellerProfile(
-                        sellerId = sellerId
+                    navController.navigate(
+                        ScreenRoute.SellerProfile.createRoute(sellerId)
                     )
                 },
-                onReportProduct = { productId ->
-                    currentScreen.value = ScreenRoute.Report(
-                        targetType = "PRODUCT",
-                        targetId = productId
+                onReportProduct = { reportProductId ->
+                    navController.navigate(
+                        ScreenRoute.Report.createRoute(
+                            targetType = "PRODUCT",
+                            targetId = reportProductId
+                        )
                     )
                 }
             )
         }
 
-        ScreenRoute.Notification -> {
-            MainPlaceholderScreen(
-                title = "알림",
-                description = "알림 설정 또는 알림 목록 화면으로 연결될 예정입니다.",
-                onBackToMain = {
-                    currentScreen.value = ScreenRoute.Main
+        composable(ScreenRoute.ProductEdit.route) {
+            ProductEditRouteContent(
+                navController = navController,
+                productViewModel = productViewModel
+            )
+        }
+
+        composable(ScreenRoute.Sale.route) {
+            LaunchedEffect(Unit) {
+                productViewModel.prepareRegister()
+            }
+
+            ProductEditRouteContent(
+                navController = navController,
+                productViewModel = productViewModel
+            )
+        }
+
+        composable(ScreenRoute.Community.route) {
+            CommunityListRouteContent(
+                navController = navController,
+                productViewModel = productViewModel,
+                communityViewModel = communityViewModel
+            )
+        }
+
+        composable(ScreenRoute.CommunityList.route) {
+            CommunityListRouteContent(
+                navController = navController,
+                productViewModel = productViewModel,
+                communityViewModel = communityViewModel
+            )
+        }
+
+        composable(ScreenRoute.CommunityWrite.route) {
+            val writeUiState by communityViewModel.writeUiState.collectAsState()
+
+            CommunityWriteScreen(
+                uiState = writeUiState,
+                onBackClick = {
+                    popBackOrMain()
+                },
+                onTitleChange = communityViewModel::onWriteTitleChange,
+                onCategorySelect = communityViewModel::onWriteCategorySelect,
+                onCategoryDropdownToggle = communityViewModel::onWriteCategoryDropdownToggle,
+                onContentBlocksChange = communityViewModel::onWriteContentBlocksChange,
+                onCompleteClick = { imageUri: Uri? ->
+                    communityViewModel.submitPost(imageUri) {
+                        navController.navigate(ScreenRoute.CommunityList.route) {
+                            popUpTo(ScreenRoute.CommunityList.route) {
+                                inclusive = false
+                            }
+                            launchSingleTop = true
+                        }
+                    }
                 }
             )
         }
 
-        ScreenRoute.Chat -> {
+        composable(
+            route = ScreenRoute.CommunityDetail.route,
+            arguments = listOf(
+                navArgument("postId") {
+                    type = NavType.LongType
+                }
+            )
+        ) { backStackEntry ->
+            val postId = backStackEntry.arguments?.getLong("postId") ?: return@composable
+            val detailUiState by communityViewModel.detailUiState.collectAsState()
+
+            LaunchedEffect(postId) {
+                communityViewModel.loadPostDetail(postId)
+            }
+
+            CommunityDetailScreen(
+                uiState = detailUiState,
+                onBackClick = {
+                    popBackOrMain()
+                },
+                onLikeClick = communityViewModel::onLikeClick,
+                onCommentInputChange = communityViewModel::onCommentInputChange,
+                onCommentSubmit = communityViewModel::onCommentSubmit,
+                onReplyClick = communityViewModel::onReplyClick,
+                onReplyInputChange = communityViewModel::onReplyInputChange,
+                onReplySubmit = communityViewModel::onReplySubmit,
+                onCommentDeleteClick = communityViewModel::onCommentDeleteClick,
+                onMenuClick = communityViewModel::onDetailMenuClick,
+                onEditClick = {
+                    navController.navigate(
+                        ScreenRoute.CommunityEdit.createRoute(postId)
+                    )
+                },
+                onDeleteClick = {
+                    communityViewModel.deleteCurrentPost {
+                        popBackOrMain()
+                    }
+                },
+                onReportClick = communityViewModel::onReportClick,
+                onBlockClick = communityViewModel::onBlockClick
+            )
+        }
+
+        composable(
+            route = ScreenRoute.CommunityEdit.route,
+            arguments = listOf(
+                navArgument("postId") {
+                    type = NavType.LongType
+                }
+            )
+        ) { backStackEntry ->
+            val postId = backStackEntry.arguments?.getLong("postId") ?: return@composable
+            val editUiState by communityViewModel.editUiState.collectAsState()
+
+            LaunchedEffect(postId) {
+                communityViewModel.startEdit(postId)
+            }
+
+            CommunityEditScreen(
+                uiState = editUiState,
+                onBackClick = {
+                    popBackOrMain()
+                },
+                onTitleChange = communityViewModel::onEditTitleChange,
+                onCategorySelect = communityViewModel::onEditCategorySelect,
+                onCategoryDropdownToggle = communityViewModel::onEditCategoryDropdownToggle,
+                onContentBlocksChange = communityViewModel::onEditContentBlocksChange,
+                onSubmitClick = { imageUri: Uri? ->
+                    communityViewModel.submitEditPost(postId, imageUri) {
+                        popBackOrMain()
+                    }
+                }
+            )
+        }
+
+        composable(ScreenRoute.Chat.route) {
             LaunchedEffect(Unit) {
                 chatViewModel.backToChatList()
             }
@@ -234,121 +422,292 @@ fun CloverNavHost() {
                 viewModel = chatViewModel,
                 openProductChatOnStart = false,
                 onBackClick = {
-                    currentScreen.value = ScreenRoute.Main
+                    navigateSingleTop(ScreenRoute.Main.route)
                 },
                 onLogoClick = {
                     chatViewModel.backToChatList()
-                    currentScreen.value = ScreenRoute.Main
+                    navigateSingleTop(ScreenRoute.Main.route)
                 }
             )
         }
 
-        is ScreenRoute.ChatRoom -> {
-            val hasProductChatArgs = screen.productId != null && screen.sellerId != null
+        composable(
+            route = ScreenRoute.ChatRoom.route,
+            arguments = listOf(
+                navArgument("productId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("sellerId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("chatRoomId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val productId = backStackEntry.arguments
+                ?.getString("productId")
+                ?.toLongOrNull()
+
+            val sellerId = backStackEntry.arguments
+                ?.getString("sellerId")
+                ?.toLongOrNull()
+
+            val hasProductChatArgs = productId != null && sellerId != null
 
             ChatScreen(
                 viewModel = chatViewModel,
                 openProductChatOnStart = hasProductChatArgs,
-                productId = screen.productId,
-                sellerId = screen.sellerId,
+                productId = productId,
+                sellerId = sellerId,
                 onBackClick = {
                     chatViewModel.backToChatList()
 
-                    if (screen.productId != null) {
-                        currentScreen.value = ScreenRoute.ProductDetail(
-                            productId = screen.productId
-                        )
+                    if (productId != null) {
+                        navController.navigate(
+                            ScreenRoute.ProductDetail.createRoute(productId)
+                        ) {
+                            launchSingleTop = true
+                        }
                     } else {
-                        currentScreen.value = ScreenRoute.Main
+                        navigateSingleTop(ScreenRoute.Main.route)
                     }
                 },
                 onLogoClick = {
                     chatViewModel.backToChatList()
-                    currentScreen.value = ScreenRoute.Main
+                    navigateSingleTop(ScreenRoute.Main.route)
                 }
             )
         }
 
-        ScreenRoute.TradePost -> {
+        composable(ScreenRoute.Notification.route) {
+            MainPlaceholderScreen(
+                title = "알림",
+                description = "알림 설정 또는 알림 목록 화면으로 연결될 예정입니다.",
+                onBackToMain = {
+                    navigateSingleTop(ScreenRoute.Main.route)
+                }
+            )
+        }
+
+        composable(ScreenRoute.TradePost.route) {
             MainPlaceholderScreen(
                 title = "판매글",
                 description = "내 판매글 또는 거래 게시글 화면으로 연결될 예정입니다.",
                 onBackToMain = {
-                    currentScreen.value = ScreenRoute.Main
+                    navigateSingleTop(ScreenRoute.Main.route)
                 }
             )
         }
 
-        ScreenRoute.Community -> {
-            MainPlaceholderScreen(
-                title = "커뮤니티",
-                description = "커뮤니티 목록 화면으로 연결될 예정입니다.",
-                onBackToMain = {
-                    currentScreen.value = ScreenRoute.Main
-                }
-            )
-        }
-
-        ScreenRoute.CommunityWrite -> {
-            MainPlaceholderScreen(
-                title = "글쓰기",
-                description = "커뮤니티 글쓰기 화면으로 연결될 예정입니다.",
-                onBackToMain = {
-                    currentScreen.value = ScreenRoute.Main
-                }
-            )
-        }
-
-        ScreenRoute.MyPage -> {
+        composable(ScreenRoute.MyPage.route) {
             MainPlaceholderScreen(
                 title = "마이 페이지",
                 description = "마이페이지 화면으로 연결될 예정입니다.",
                 onBackToMain = {
-                    currentScreen.value = ScreenRoute.Main
+                    navigateSingleTop(ScreenRoute.Main.route)
                 }
             )
         }
 
-        ScreenRoute.Sale -> {
-            MainPlaceholderScreen(
-                title = "판매",
-                description = "상품 판매 등록 화면으로 연결될 예정입니다.",
-                onBackToMain = {
-                    currentScreen.value = ScreenRoute.Main
+        composable(
+            route = ScreenRoute.Report.route,
+            arguments = listOf(
+                navArgument("targetType") {
+                    type = NavType.StringType
+                    defaultValue = "PRODUCT"
+                },
+                navArgument("targetId") {
+                    type = NavType.StringType
+                    defaultValue = "0"
                 }
             )
-        }
+        ) { backStackEntry ->
+            val targetType = backStackEntry.arguments?.getString("targetType") ?: "PRODUCT"
+            val targetId = backStackEntry.arguments
+                ?.getString("targetId")
+                ?.toLongOrNull()
+                ?: 0L
 
-        is ScreenRoute.Report -> {
             MainPlaceholderScreen(
                 title = "신고",
-                description = "${screen.targetType} ${screen.targetId} 신고 화면으로 연결될 예정입니다.",
+                description = "$targetType $targetId 신고 화면으로 연결될 예정입니다.",
                 onBackToMain = {
-                    currentScreen.value = ScreenRoute.Main
+                    popBackOrMain()
                 }
             )
         }
 
-        is ScreenRoute.SellerProfile -> {
+        composable(
+            route = ScreenRoute.SellerProfile.route,
+            arguments = listOf(
+                navArgument("sellerId") {
+                    type = NavType.LongType
+                }
+            )
+        ) { backStackEntry ->
+            val sellerId = backStackEntry.arguments?.getLong("sellerId") ?: 0L
+
             MainPlaceholderScreen(
                 title = "판매자 프로필",
-                description = "판매자 ID ${screen.sellerId} 프로필 화면으로 연결될 예정입니다.",
+                description = "판매자 ID $sellerId 프로필 화면으로 연결될 예정입니다.",
                 onBackToMain = {
-                    currentScreen.value = ScreenRoute.Main
+                    popBackOrMain()
                 }
             )
         }
 
-        ScreenRoute.CarbonPoint -> {
+        composable(ScreenRoute.CarbonPoint.route) {
             MainPlaceholderScreen(
                 title = "탄소 포인트",
                 description = "탄소 포인트 화면으로 연결될 예정입니다.",
                 onBackToMain = {
-                    currentScreen.value = ScreenRoute.Main
+                    navigateSingleTop(ScreenRoute.Main.route)
                 }
             )
         }
     }
+}
+
+@Composable
+private fun ProductListRouteContent(
+    navController: NavHostController,
+    productViewModel: ProductViewModel,
+    communityViewModel: CommunityViewModel,
+    onBackClick: () -> Unit
+) {
+    val listUiState by productViewModel.listUiState.collectAsState()
+
+    ProductListScreen(
+        uiState = listUiState,
+        onProductClick = { productId ->
+            navController.navigate(
+                ScreenRoute.ProductDetail.createRoute(productId)
+            )
+        },
+        onMainCategorySelect = productViewModel::onMainCategorySelect,
+        onMainCategoryExpandChange = productViewModel::onMainCategoryExpandChange,
+        onSubCategorySelect = productViewModel::onSubCategorySelect,
+        onSubCategoryExpandChange = productViewModel::onSubCategoryExpandChange,
+        onFilterClick = productViewModel::onFilterClick,
+        onProductListClick = {
+            navController.navigate(ScreenRoute.ProductList.route) {
+                launchSingleTop = true
+            }
+        },
+        onCommunityClick = {
+            navController.navigate(ScreenRoute.CommunityList.route) {
+                launchSingleTop = true
+            }
+        },
+        onSellClick = {
+            productViewModel.prepareRegister()
+            navController.navigate(ScreenRoute.ProductEdit.route)
+        },
+        onCommunityWriteClick = {
+            communityViewModel.resetWriteState()
+            navController.navigate(ScreenRoute.CommunityWrite.route)
+        },
+        onChatClick = {
+            navController.navigate(ScreenRoute.Chat.route) {
+                launchSingleTop = true
+            }
+        },
+        onMyPageClick = {
+            navController.navigate(ScreenRoute.MyPage.route) {
+                launchSingleTop = true
+            }
+        },
+        onBackClick = onBackClick
+    )
+}
+
+@Composable
+private fun ProductEditRouteContent(
+    navController: NavHostController,
+    productViewModel: ProductViewModel
+) {
+    val editUiState by productViewModel.editUiState.collectAsState()
+
+    ProductEditScreen(
+        uiState = editUiState,
+        onBackClick = {
+            navController.popBackStack()
+        },
+        onTitleChange = productViewModel::onEditTitleChange,
+        onPriceChange = productViewModel::onEditPriceChange,
+        onDescriptionChange = productViewModel::onEditDescriptionChange,
+        onTradeLocationChange = productViewModel::onEditTradeLocationChange,
+        onSizeChange = productViewModel::onEditSizeChange,
+        onFitChange = productViewModel::onEditFitChange,
+        onMainCategorySelect = productViewModel::onEditMainCategorySelect,
+        onMainCategoryExpandChange = productViewModel::onEditMainCategoryExpandChange,
+        onSubCategorySelect = productViewModel::onEditSubCategorySelect,
+        onSubCategoryExpandChange = productViewModel::onEditSubCategoryExpandChange,
+        onImageUrisChange = productViewModel::onEditImageUrisChange,
+        onSubmitClick = {
+            productViewModel.submitProduct {
+                navController.popBackStack()
+            }
+        }
+    )
+}
+
+@Composable
+private fun CommunityListRouteContent(
+    navController: NavHostController,
+    productViewModel: ProductViewModel,
+    communityViewModel: CommunityViewModel
+) {
+    val communityListUiState by communityViewModel.listUiState.collectAsState()
+
+    CommunityListScreen(
+        uiState = communityListUiState,
+        onPostClick = { postId ->
+            navController.navigate(
+                ScreenRoute.CommunityDetail.createRoute(postId)
+            )
+        },
+        onWriteClick = {
+            communityViewModel.resetWriteState()
+            navController.navigate(ScreenRoute.CommunityWrite.route)
+        },
+        onCategorySelect = communityViewModel::onCategorySelect,
+        onSearchQueryChange = communityViewModel::onSearchQueryChange,
+        onBackClick = {
+            navController.popBackStack()
+        },
+        onProductListClick = {
+            navController.navigate(ScreenRoute.ProductList.route) {
+                launchSingleTop = true
+            }
+        },
+        onCommunityClick = {
+            navController.navigate(ScreenRoute.CommunityList.route) {
+                launchSingleTop = true
+            }
+        },
+        onSellClick = {
+            productViewModel.prepareRegister()
+            navController.navigate(ScreenRoute.ProductEdit.route)
+        },
+        onChatClick = {
+            navController.navigate(ScreenRoute.Chat.route) {
+                launchSingleTop = true
+            }
+        },
+        onMyPageClick = {
+            navController.navigate(ScreenRoute.MyPage.route) {
+                launchSingleTop = true
+            }
+        }
+    )
 }
 
 @Composable
