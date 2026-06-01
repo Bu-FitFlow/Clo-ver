@@ -15,14 +15,14 @@ import org.springframework.web.bind.annotation.*;
 public class VerificationController {
     private final MailService mailService;
 
-    @Operation(summary = "인증 메일 발송")
+    @Operation(summary = "인증 메일 발송", description = "회원가입 등 이메일 소유권 확인이 필요한 경우, 입력한 이메일 주소로 고유한 인증 토큰이 포함된 확인 링크를 발송합니다.")
     @PostMapping("/verification-requests")
     public ResponseEntity<String> sendMessage(@RequestParam("email") String email) {
         mailService.sendVerificationEmail(email);
         return ResponseEntity.ok("인증 메일이 성공적으로 발송되었습니다.");
     }
 
-    @Operation(summary = "인증 메일 링크 검증")
+    @Operation(summary = "인증 메일 링크 검증", description = "사용자가 이메일에서 수신한 인증 링크를 클릭했을 때 호출됩니다. 전달된 토큰과 이메일의 유효성을 검증하고, 성공 여부에 따라 결과를 HTML 형식으로 반환하여 웹 브라우저에 표시합니다.")
     @GetMapping(value = "/verify", produces = "text/html; charset=UTF-8")
     public ResponseEntity<String> verifyEmail(@RequestParam("email") String email, @RequestParam("token") String token) {
         boolean isVerified = mailService.verifyEmail(email, token);

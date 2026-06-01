@@ -10,4 +10,9 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
             Image.ReferenceType referenceType,
             Long referenceId
     );
+
+    List<Image> findByReferenceTypeAndReferenceIdInOrderBySortOrderAsc(
+            Image.ReferenceType referenceType,
+            List<Long> referenceIds
+    );
 }

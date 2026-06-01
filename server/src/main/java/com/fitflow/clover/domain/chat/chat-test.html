@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>채팅 테스트 클라이언트</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<h2>웹소켓 채팅 테스트</h2>
+
+<div>
+    <input id="jwtToken" placeholder="JWT 토큰 (Bearer 포함/미포함 확인)" style="width: 300px;" type="text">
+</div>
+<br>
+<div>
+    <input id="productId" placeholder="Product ID (상품 번호)" type="text">
+    <button onclick="createRoom()">방 생성 (REST API)</button>
+</div>
+<br>
+<div>
+    <input id="roomId" placeholder="Room ID (예: 1)" type="text">
+    <button onclick="connect()">연결 및 구독</button>
+    <button onclick="disconnect()">연결 해제</button>
+</div>
+<br>
+<div>
+    <input id="message" placeholder="보낼 메시지" type="text">
+    <button onclick="sendMessage()">전송</button>
+</div>
+
+<hr>
+<h3>메시지 수신 내역:</h3>
+<ul id="messages"></ul>
+
+<script>
+    let stompClient = null;
+
+    function createRoom() {
+        const token = document.getElementById('jwtToken').value;
+        const productId = document.getElementById('productId').value;
+
+        fetch(`http://localhost:8080/api/chat/rooms?productId=${productId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': token
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('방 생성 요청 실패');
+                }
+                return response.text();
+            })
+            .then(roomId => {
+                document.getElementById('roomId').value = roomId;
+                alert('방 생성(또는 조회) 성공! Room ID: ' + roomId);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('방 생성 실패! 콘솔을 확인하세요.');
+            });
+    }
+
+    function connect() {
+        const token = document.getElementById('jwtToken').value;
+        const roomId = document.getElementById('roomId').value;
+
+        const socket = new SockJS('http://localhost:8080/ws-stomp');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({'Authorization': token}, function (frame) {
+            console.log('Connected: ' + frame);
+            alert("연결 성공!");
+
+            // 💡 [추가된 부분] 연결 성공 즉시 이전 대화 내역을 REST API로 불러온다.
+            fetchHistory(roomId, token);
+
+            stompClient.subscribe('/sub/chat/room/' + roomId, function (message) {
+                const receivedData = JSON.parse(message.body);
+                showGreeting(receivedData.senderId + "번 유저: " + receivedData.content);
+            });
+        }, function (error) {
+            console.error("Connection error: ", error);
+            alert("연결 실패! 콘솔을 확인하세요.");
+        });
+    }
+
+    // 💡 [추가된 함수] REST API 호출 및 화면 렌더링
+    function fetchHistory(roomId, token) {
+        fetch(`http://localhost:8080/api/chat/rooms/${roomId}/messages`, {
+            method: 'GET',
+            headers: {
+                'Authorization': token
+            }
+        })
+            .then(response => response.json())
+            .then(messages => {
+                document.getElementById('messages').innerHTML = ''; // 기존 목록 초기화
+                messages.forEach(msg => {
+                    showGreeting(msg.senderId + "번 유저: " + msg.content);
+                });
+            })
+            .catch(error => console.error('이전 대화 불러오기 실패:', error));
+    }
+
+    function disconnect() {
+        if (stompClient !== null) {
+            stompClient.disconnect();
+        }
+        console.log("Disconnected");
+        alert("연결 해제됨");
+    }
+
+    function sendMessage() {
+        const roomId = document.getElementById('roomId').value;
+        const content = document.getElementById('message').value;
+
+        const chatMessage = {
+            roomId: roomId,
+            content: content,
+            messageType: "TEXT"
+        };
+
+        stompClient.send("/pub/chat/message", {}, JSON.stringify(chatMessage));
+        document.getElementById('message').value = '';
+    }
+
+    function showGreeting(message) {
+        const messageElement = document.createElement('li');
+        messageElement.appendChild(document.createTextNode(message));
+        document.getElementById('messages').appendChild(messageElement);
+    }
+</script>
+</body>
+</html>
