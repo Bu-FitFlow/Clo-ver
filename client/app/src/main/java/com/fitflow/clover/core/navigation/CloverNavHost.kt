@@ -28,6 +28,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.fitflow.clover.presentation.auth.*
 import com.fitflow.clover.presentation.chat.ChatScreen
 import com.fitflow.clover.presentation.chat.ChatViewModel
 import com.fitflow.clover.presentation.community.CommunityDetailScreen
@@ -46,6 +47,7 @@ import com.fitflow.clover.presentation.product.ProductDetailScreen
 import com.fitflow.clover.presentation.product.ProductEditScreen
 import com.fitflow.clover.presentation.product.ProductListScreen
 import com.fitflow.clover.presentation.product.ProductViewModel
+import com.fitflow.clover.presentation.splash.SplashScreen
 
 @Composable
 fun CloverNavHost(
@@ -63,7 +65,7 @@ fun CloverNavHost(
 fun CloverNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    startDestination: String = ScreenRoute.BodyAnalysis.route
+    startDestination: String = "splash"
 ) {
     val productViewModel: ProductViewModel = viewModel()
     val communityViewModel: CommunityViewModel = viewModel()
@@ -121,6 +123,38 @@ fun CloverNavHost(
         startDestination = startDestination,
         modifier = modifier
     ) {
+        composable("splash") {
+            SplashScreen(navController)
+        }
+
+        composable("login") {
+            LoginMain(navController)
+        }
+
+        composable("join_terms") {
+            JoinTerms(navController)
+        }
+
+        composable("term_detail_1") {
+            TermDetailScreen(navController, "이용약관 동의(필수)")
+        }
+
+        composable("term_detail_2") {
+            TermDetailScreen(navController, "개인정보 수집 및 이용동의(필수)")
+        }
+
+        composable("join_detail") {
+            JoinDetail(navController)
+        }
+
+        composable("find_id_pw") {
+            FindIdPw(navController)
+        }
+
+        composable("reset_password") {
+            ResetPasswordScreen(navController)
+        }
+
         composable(ScreenRoute.BodyAnalysis.route) {
             BodyAnalysisScreen(
                 viewModel = diagnosisViewModel,
