@@ -1,6 +1,6 @@
 package com.fitflow.clover.global.config;
 
-import com.fitflow.clover.global.security.SecurityUtil;
+import com.fitflow.clover.global.security.auth.SecurityUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;

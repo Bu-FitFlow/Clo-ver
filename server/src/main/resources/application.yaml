@@ -10,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
@@ -54,4 +54,9 @@ jwt:
 app:
   base-url: http://localhost:8080
   mail:
-    from: ${EMAIL_USERNAME}
+    from:
+      verification: ${EMAIL_USERNAME}
+      #no-reply: ${EMAIL_USERNAME}
+  cdn:
+    url: https://cdn.clo-ver.shop
+  ai-diagnosis-url: http://206.189.46.237:8000

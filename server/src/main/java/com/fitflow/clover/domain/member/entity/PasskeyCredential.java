@@ -20,18 +20,18 @@ public class PasskeyCredential extends BaseTimeEntity {
     private Member member;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "BLOB")
     private byte[] credentialId;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "BLOB")
     private byte[] publicKey;
 
     @Column(nullable = false)
     private Long signCount;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "BLOB")
     private byte[] userHandle;
 
     @Builder
