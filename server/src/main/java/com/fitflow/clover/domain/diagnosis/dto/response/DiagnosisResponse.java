@@ -8,12 +8,14 @@ public class DiagnosisResponse {
     private final Long diagnosisId;
     private final Long memberId;
     private final String obesityType;
+    private final String personalColor;
     private final String resultTitle;
 
     public DiagnosisResponse(Diagnosis diagnosis) {
         this.diagnosisId = diagnosis.getId();
         this.memberId = diagnosis.getMemberId();
         this.obesityType = diagnosis.getObesityType();
+        this.personalColor = diagnosis.getPersonalColor();
         this.resultTitle = diagnosis.getResultTitle();
     }
 }
