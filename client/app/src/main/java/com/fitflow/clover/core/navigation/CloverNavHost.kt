@@ -513,19 +513,21 @@ fun CloverNavHost(
                 onBackClick = {
                     chatViewModel.backToChatList()
 
-                    if (productId != null) {
-                        navController.navigate(
-                            ScreenRoute.ProductDetail.createRoute(productId)
-                        ) {
-                            launchSingleTop = true
-                        }
-                    } else {
+                    val popped = navController.popBackStack()
+
+                    if (!popped) {
                         navigateSingleTop(ScreenRoute.Main.route)
                     }
                 },
                 onLogoClick = {
                     chatViewModel.backToChatList()
-                    navigateSingleTop(ScreenRoute.Main.route)
+
+                    navController.navigate(ScreenRoute.Main.route) {
+                        launchSingleTop = true
+                        popUpTo(ScreenRoute.Main.route) {
+                            inclusive = false
+                        }
+                    }
                 }
             )
         }
