@@ -120,11 +120,11 @@ fun CloverNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = startDestination,
+        startDestination = "splash",
         modifier = modifier
     ) {
         composable("splash") {
-            SplashScreen(navController)
+            SplashScreen(navController = navController)
         }
 
         composable("login") {

@@ -29,6 +29,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import com.fitflow.clover.core.navigation.ScreenRoute
 
 val CloverGreen = Color(0xFF99DE81)
@@ -36,6 +37,8 @@ val CloverGreen = Color(0xFF99DE81)
 fun LoginMain(navController: NavController) {
     var id by remember { mutableStateOf("") }
     var pw by remember { mutableStateOf("") }
+
+    var isPwVisible by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -51,16 +54,13 @@ fun LoginMain(navController: NavController) {
 
             Spacer(modifier = Modifier.weight(13.9f))
 
-
             Image(
                 painter = painterResource(id = R.drawable.frame_31),
                 contentDescription = "Clover Main Logo",
                 modifier = Modifier.size(287.dp)
             )
 
-
             Spacer(modifier = Modifier.weight(3.9f))
-
 
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
@@ -70,7 +70,6 @@ fun LoginMain(navController: NavController) {
                     color = Color.Black,
                     modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
                 )
-
 
                 var isIdFocused by remember { mutableStateOf(false) }
                 BasicTextField(
@@ -105,7 +104,6 @@ fun LoginMain(navController: NavController) {
                 )
             }
 
-
             Spacer(modifier = Modifier.weight(1.8f))
 
             // Password 입력란 영역
@@ -118,12 +116,11 @@ fun LoginMain(navController: NavController) {
                     modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
                 )
 
-
                 var isPwFocused by remember { mutableStateOf(false) }
                 BasicTextField(
                     value = pw,
                     onValueChange = { pw = it },
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (isPwVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
                     textStyle = TextStyle(
                         color = Color.Black,
                         fontSize = 14.sp,
@@ -142,22 +139,36 @@ fun LoginMain(navController: NavController) {
                             shape = RoundedCornerShape(5.dp)
                         ),
                     decorationBox = { innerTextField ->
-                        Box(
+                        Row(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(horizontal = 12.dp),
-                            contentAlignment = Alignment.CenterStart
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            innerTextField()
+                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                                innerTextField()
+                            }
+
+                            IconButton(
+                                onClick = { isPwVisible = !isPwVisible },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (isPwVisible) R.drawable.eye else R.drawable.eyeinvisibleoutlined
+                                    ),
+                                    contentDescription = "비밀번호 보이기 토글",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = Color.Gray
+                                )
+                            }
                         }
                     }
                 )
             }
 
-
             Spacer(modifier = Modifier.weight(4.3f))
 
-            // 로그인 버튼 (조건 미충족 시 클릭 방어, 색상은 초록색 고정유지)
             Button(
                 onClick = {
                     if (id.isNotBlank() && pw.isNotBlank()) {
@@ -169,7 +180,7 @@ fun LoginMain(navController: NavController) {
                         }
                     }
                 },
-                enabled = true, // 회색 변조 방지
+                enabled = true,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
@@ -185,10 +196,8 @@ fun LoginMain(navController: NavController) {
                 )
             }
 
-
             Spacer(modifier = Modifier.weight(2.2f))
 
-            // 하단 링크 영역
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -213,15 +222,12 @@ fun LoginMain(navController: NavController) {
                 )
             }
 
-
             Spacer(modifier = Modifier.weight(22.8f))
 
-            // 키보드 대응 여백
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JoinDetail(navController: NavController) {
