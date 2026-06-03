@@ -28,6 +28,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.fitflow.clover.mypage.mainscreen.MyPageScreen
 import com.fitflow.clover.presentation.auth.*
 import com.fitflow.clover.presentation.chat.ChatScreen
 import com.fitflow.clover.presentation.chat.ChatViewModel
@@ -544,11 +545,12 @@ fun CloverNavHost(
         }
 
         composable(ScreenRoute.MyPage.route) {
-            MainPlaceholderScreen(
-                title = "마이 페이지",
-                description = "마이페이지 화면으로 연결될 예정입니다.",
-                onBackToMain = {
+            MyPageScreen(
+                onSettingsClick = {
                     navigateSingleTop(ScreenRoute.Main.route)
+                },
+                onMyWritingClick = {
+                    navigateSingleTop(ScreenRoute.CommunityList.route)
                 }
             )
         }
