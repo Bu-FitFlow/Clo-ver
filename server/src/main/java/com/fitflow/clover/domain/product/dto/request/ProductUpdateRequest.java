@@ -32,6 +32,8 @@ public record ProductUpdateRequest(
 
         String recommendedType,
 
+        String personalColor,
+
         List<String> hashtags,
 
         List<MultipartFile> images

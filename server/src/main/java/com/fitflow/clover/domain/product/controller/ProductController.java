@@ -100,4 +100,16 @@ public class ProductController {
 
         return ResponseEntity.ok(resultMessage);
     }
+
+    @Operation(summary = "맞춤 체형 상품 추천", description = "로그인한 유저의 체형 진단 결과를 바탕으로 추천 상품을 제공합니다.")
+    @GetMapping("/recommendations")
+    public ResponseEntity<Slice<ProductListResponse>> getRecommendedProducts(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PageableDefault(size = 10) Pageable pageable) {
+
+        Long memberId = Long.parseLong(userDetails.getUsername());
+        Slice<ProductListResponse> response = productService.getRecommendedProducts(memberId, pageable);
+
+        return ResponseEntity.ok(response);
+    }
 }

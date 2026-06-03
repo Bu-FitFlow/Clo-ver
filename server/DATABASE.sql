@@ -55,6 +55,7 @@ CREATE TABLE product
     grade            VARCHAR(20)  NOT NULL COMMENT '상품 상태',
     trading_area     VARCHAR(100) NOT NULL COMMENT '거래 가능 지역 (예: 천안, 서울 등)',
     recommended_type VARCHAR(50) COMMENT '상품을 추천하는 체형',
+    personal_color   VARCHAR(50) COMMENT '상품에 어울리는 퍼스널 컬러',
     post_status      VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE' COMMENT '판매 상태(ACTIVE, RESERVED, SOLD_OUT, HIDDEN, DELETED)',
     view_count       INT          NOT NULL DEFAULT 0 COMMENT '조회수',
     wishlist_count   INT          NOT NULL DEFAULT 0 COMMENT '찜/장바구니 담긴 수',

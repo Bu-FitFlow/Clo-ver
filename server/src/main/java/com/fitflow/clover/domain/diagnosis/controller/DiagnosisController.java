@@ -1,5 +1,6 @@
 package com.fitflow.clover.domain.diagnosis.controller;
 
+import com.fitflow.clover.domain.diagnosis.dto.request.DiagnosisColorRequest;
 import com.fitflow.clover.domain.diagnosis.dto.request.DiagnosisRequest;
 import com.fitflow.clover.domain.diagnosis.dto.response.DiagnosisResponse;
 import com.fitflow.clover.domain.diagnosis.entity.Diagnosis;
@@ -22,9 +23,8 @@ public class DiagnosisController {
 
     private final DiagnosisService diagnosisService;
 
-    @Operation(summary = "AI 체형 분석 및 진단 결과 생성", description = "사용자의 성별, 신체 정보(키, 몸무게)와 정면/측면 사진을 기반으로 외부 AI 서버와 통신하여 체형을 분석하고 결과를 저장합니다."
-    )
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "AI 체형 분석 및 진단 결과 생성", description = "사용자의 성별, 신체 정보(키, 몸무게)와 정면/측면 사진을 기반으로 외부 AI 서버와 통신하여 체형을 분석하고 결과를 저장합니다.")
+    @PostMapping(value = "/body", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<DiagnosisResponse> createBodyScan(@ModelAttribute DiagnosisRequest request) {
         Diagnosis diagnosis = diagnosisService.createBodyScan(
                 request.getMemberId(),
@@ -33,6 +33,17 @@ public class DiagnosisController {
                 request.getWeight(),
                 request.getFrontImg(),
                 request.getSideImg()
+        );
+
+        return ApiResponse.success(new DiagnosisResponse(diagnosis));
+    }
+
+    @Operation(summary = "AI 퍼스널 컬러 진단 결과 생성", description = "사용자의 정면 사진을 기반으로 외부 AI 서버와 통신하여 퍼스널 컬러를 진단하고 결과를 저장합니다.")
+    @PostMapping(value = "/color", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<DiagnosisResponse> createColorScan(@ModelAttribute DiagnosisColorRequest request) {
+        Diagnosis diagnosis = diagnosisService.createColorScan(
+                request.getMemberId(),
+                request.getFrontImg()
         );
 
         return ApiResponse.success(new DiagnosisResponse(diagnosis));

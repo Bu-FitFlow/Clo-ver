@@ -51,6 +51,9 @@ public class Product extends BaseTimeEntity {
     @Column(name = "recommended_type", length = 50)
     private String recommendedType;
 
+    @Column(name = "personal_color", length = 50)
+    private String personalColor;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "post_status", nullable = false, length = 20)
@@ -99,5 +102,6 @@ public class Product extends BaseTimeEntity {
         this.grade = request.grade();
         this.tradingArea = request.tradingArea();
         this.recommendedType = request.recommendedType();
+        this.personalColor = request.personalColor();
     }
 }
