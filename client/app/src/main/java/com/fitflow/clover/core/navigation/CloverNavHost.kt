@@ -171,7 +171,7 @@ fun CloverNavHost(
             PersonalColorScreen(
                 viewModel = diagnosisViewModel,
                 onBack = {
-                    currentScreen.value = ScreenRoute.BodyAnalysis
+                    navigateSingleTop(ScreenRoute.BodyAnalysis.route)
                 },
                 onMoveToResult = {
                     navigateSingleTop(ScreenRoute.PersonalColorResult.route)

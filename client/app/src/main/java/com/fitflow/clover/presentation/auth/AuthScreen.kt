@@ -29,6 +29,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
+import com.fitflow.clover.core.navigation.ScreenRoute
 
 val CloverGreen = Color(0xFF99DE81)
 @Composable
@@ -47,20 +48,20 @@ fun LoginMain(navController: NavController) {
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 🎯 [비율 여백 1] 상단 여백
+
             Spacer(modifier = Modifier.weight(13.9f))
 
-            // 🎯 Clover 메인 로고
+
             Image(
                 painter = painterResource(id = R.drawable.frame_31),
                 contentDescription = "Clover Main Logo",
                 modifier = Modifier.size(287.dp)
             )
 
-            // 🎯 [비율 여백 2] 로고 하단 여백
+
             Spacer(modifier = Modifier.weight(3.9f))
 
-            // ID 입력란 영역
+
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = "ID",
@@ -70,7 +71,7 @@ fun LoginMain(navController: NavController) {
                     modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
                 )
 
-                // 🛠️ contentPadding 에러 원천 차단: 높이 고정에 최적화된 Custom 텍스트 필드 구조
+
                 var isIdFocused by remember { mutableStateOf(false) }
                 BasicTextField(
                     value = id,
@@ -96,7 +97,7 @@ fun LoginMain(navController: NavController) {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(horizontal = 12.dp),
-                            contentAlignment = Alignment.CenterStart // 수직 정중앙 정렬로 글자 잘림 해결!
+                            contentAlignment = Alignment.CenterStart
                         ) {
                             innerTextField()
                         }
@@ -104,7 +105,7 @@ fun LoginMain(navController: NavController) {
                 )
             }
 
-            // 🎯 [비율 여백 3] 입력창 간격
+
             Spacer(modifier = Modifier.weight(1.8f))
 
             // Password 입력란 영역
@@ -117,7 +118,7 @@ fun LoginMain(navController: NavController) {
                     modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
                 )
 
-                // 🛠️ contentPadding 에러 원천 차단: 높이 고정에 최적화된 Custom 텍스트 필드 구조
+
                 var isPwFocused by remember { mutableStateOf(false) }
                 BasicTextField(
                     value = pw,
@@ -145,7 +146,7 @@ fun LoginMain(navController: NavController) {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(horizontal = 12.dp),
-                            contentAlignment = Alignment.CenterStart // 패스워드 마스킹 수직 정중앙 정렬
+                            contentAlignment = Alignment.CenterStart
                         ) {
                             innerTextField()
                         }
@@ -153,14 +154,19 @@ fun LoginMain(navController: NavController) {
                 )
             }
 
-            // 🎯 [비율 여백 4] 로그인 버튼 상단 여백
+
             Spacer(modifier = Modifier.weight(4.3f))
 
             // 로그인 버튼 (조건 미충족 시 클릭 방어, 색상은 초록색 고정유지)
             Button(
                 onClick = {
                     if (id.isNotBlank() && pw.isNotBlank()) {
-                        // 로그인 성공 로직 진입점
+                        navController.navigate(ScreenRoute.Main.route) {
+                            popUpTo("login") {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
                     }
                 },
                 enabled = true, // 회색 변조 방지
@@ -179,7 +185,7 @@ fun LoginMain(navController: NavController) {
                 )
             }
 
-            // 🎯 [비율 여백 5]
+
             Spacer(modifier = Modifier.weight(2.2f))
 
             // 하단 링크 영역
@@ -207,7 +213,7 @@ fun LoginMain(navController: NavController) {
                 )
             }
 
-            // 🎯 최하단 바닥 밸런싱 여백
+
             Spacer(modifier = Modifier.weight(22.8f))
 
             // 키보드 대응 여백
@@ -232,7 +238,7 @@ fun JoinDetail(navController: NavController) {
 
     val cloverGreen = Color(0xFF99DE81)
 
-    // 🎯 [실시간 회원가입 활성화 여부 검증 파이프라인]
+
     val isJoinEnabled = name.isNotBlank() &&
             id.isNotBlank() &&
             isIdChecked && isIdAvailable && // ID 중복확인 완료 필수
@@ -254,7 +260,7 @@ fun JoinDetail(navController: NavController) {
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 🎯 로고 위치 가이드 (Y:91)
+
             Spacer(modifier = Modifier.height(91.dp))
             Image(
                 painter = painterResource(id = R.drawable.frame_31),
@@ -265,7 +271,7 @@ fun JoinDetail(navController: NavController) {
             // 이름 입력칸 시작점 (Y:290) 보정 마진
             Spacer(modifier = Modifier.height(30.dp))
 
-            // 🎯 피그마 규격 가로폭인 309.dp 영역 잠금 기둥
+
             Column(
                 modifier = Modifier.width(309.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -407,13 +413,15 @@ fun JoinDetail(navController: NavController) {
             Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 🎯 모든 조건 만족 시에만 활성화되는 완료 버튼 적용
             Button(
                 onClick = {
                     if (isJoinEnabled) {
-                        navController.navigate("login")
+                        navController.navigate(ScreenRoute.BodyAnalysis.route) {
+                            launchSingleTop = true
+                        }
                     }
                 },
+
                 enabled = isJoinEnabled, // 🌟 유효성 검사 결과에 따라 켜고 꺼짐
                 modifier = Modifier
                     .fillMaxWidth()
@@ -437,7 +445,7 @@ fun JoinDetail(navController: NavController) {
         }
     }
 }
-// 🎯 3. 약관 동의 화면 (기능/라우팅 원본 유지 + UI 디자인 스펙만 정밀 반영)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JoinTerms(navController: NavController) {
@@ -447,9 +455,9 @@ fun JoinTerms(navController: NavController) {
     val isAllChecked = term1 && term2 && term3
 
     Scaffold(
-        containerColor = Color.White, // 피그마 기준 깨끗한 화이트 배경
+        containerColor = Color.White,
         topBar = {
-            // 🎯 상단 커스텀 영역 (Y: 63 눈눈높이 타겟팅)
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -457,7 +465,7 @@ fun JoinTerms(navController: NavController) {
                     .padding(top = 15.dp) // 피그마 Y:63 라인을 맞추기 위한 상단 마진
                     .height(48.dp)
             ) {
-                // 🎯 뒤로가기 아이콘 (크기 40*40, 위치 X:27)
+
                 IconButton(
                     onClick = { navController.popBackStack() },
                     modifier = Modifier
@@ -472,7 +480,7 @@ fun JoinTerms(navController: NavController) {
                     )
                 }
 
-                // 🎯 상단 메시지 (폰트 Medium, 크기 28, 색상 검은색, 위치 X:149, Y:71.73)
+
                 Text(
                     text = "약관 동의",
                     fontSize = 28.sp, // 요청 스펙 크기 28 반영
@@ -512,7 +520,7 @@ fun JoinTerms(navController: NavController) {
 
             Spacer(modifier = Modifier.weight(6f))
 
-            // ⭐️ 원래 작성하셨던 오리지널 기능 코드를 그대로 유지합니다. (절대 안 튕김)
+
             CustomCheckBoxRow("약관 전체 동의", isAllChecked, { val t = !isAllChecked; term1 = t; term2 = t; term3 = t })
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 1.dp, color = Color.LightGray)
 
@@ -522,7 +530,7 @@ fun JoinTerms(navController: NavController) {
 
             Spacer(modifier = Modifier.weight(15f))
 
-            // 🎯 하단 다음 버튼 (크기 345*63, 위치 X:24 배치, 색상 99DE81, 모서리 5, 외곽선 X)
+
             Button(
                 onClick = { navController.navigate("join_detail") },
                 enabled = term1 && term2,
@@ -536,7 +544,7 @@ fun JoinTerms(navController: NavController) {
                 shape = RoundedCornerShape(5.dp), // 모서리 5 반영
                 elevation = null // 외곽선 X, 그림자 제거 플랫화
             ) {
-                // 🎯 다음 버튼 글씨 (폰트 Medium, 크기 24, 색상 검은색)
+
                 Text(
                     text = "다음",
                     color = Color.Black, // 검은색 적용
@@ -548,24 +556,4 @@ fun JoinTerms(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
-}
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true, widthDp = 393, heightDp = 852, name = "1. 로그인 메인")
-@Composable
-fun LoginMainPreview() {
-    val mockNavController = androidx.navigation.compose.rememberNavController()
-    LoginMain(navController = mockNavController)
-}
-
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true, widthDp = 393, heightDp = 852, name = "2. 약관 동의")
-@Composable
-fun JoinTermsPreview() {
-    val mockNavController = androidx.navigation.compose.rememberNavController()
-    JoinTerms(navController = mockNavController)
-}
-
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true, widthDp = 393, heightDp = 852, name = "3. 회원가입 상세")
-@Composable
-fun JoinDetailPreview() {
-    val mockNavController = androidx.navigation.compose.rememberNavController()
-    JoinDetail(navController = mockNavController)
 }

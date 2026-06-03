@@ -334,19 +334,3 @@ fun ReportScreen(
     }
 }
 
-// -----------------------------------------------------------------
-// 🎨 안드로이드 스튜디오 우측 Preview 탭에서 메인 화면만 보기 위한 코드
-// -----------------------------------------------------------------
-
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true, widthDp = 393, heightDp = 852, name = "메인 신고하기 화면")
-@Composable
-fun ReportScreenPreview() {
-    val mockNavController = androidx.navigation.compose.rememberNavController()
-    val mockViewModel = androidx.lifecycle.viewmodel.compose.viewModel<ReportViewModel>()
-
-    ReportScreen(
-        navController = mockNavController,
-        viewModel = mockViewModel,
-        targetUserName = "김클로버 (clover_123)"
-    )
-}

@@ -244,18 +244,22 @@ fun ProductListScreen(
                                     isFabMenuExpanded = false
                                     onNotificationClick()
                                 }
+
                                 ProductMenuItem("채팅방") {
                                     isFabMenuExpanded = false
                                     onChatClick()
                                 }
+
                                 ProductMenuItem("판매글") {
                                     isFabMenuExpanded = false
                                     onProductListClick()
                                 }
+
                                 ProductMenuItem("커뮤니티") {
                                     isFabMenuExpanded = false
                                     onCommunityClick()
                                 }
+
                                 ProductMenuItem("마이페이지") {
                                     isFabMenuExpanded = false
                                     onMyPageClick()
@@ -274,6 +278,7 @@ fun ProductListScreen(
                                     isFabMenuExpanded = false
                                     onSellClick()
                                 }
+
                                 ProductMenuItem("글쓰기") {
                                     isFabMenuExpanded = false
                                     onCommunityWriteClick()
@@ -558,6 +563,7 @@ private fun CategoryChip(
                 color = if (enabled) Color.Black else Color.Gray,
                 fontWeight = FontWeight.Medium
             )
+
             Icon(
                 imageVector = if (isExpanded) {
                     Icons.Default.KeyboardArrowUp
@@ -636,7 +642,7 @@ fun ProductGridCard(
             Spacer(modifier = Modifier.height(2.dp))
 
             Text(
-                text = formatPrice(product.price),
+                text = formatProductListPrice(product.price),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -668,6 +674,7 @@ fun ProductGridCard(
                         tint = Color.Red,
                         modifier = Modifier.size(11.dp)
                     )
+
                     Text(
                         text = "${product.likeCount}",
                         fontSize = 11.sp,
@@ -740,7 +747,7 @@ private fun ProductSummaryModelCard(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = formatPrice(product.price),
+                    text = formatProductListPrice(product.price),
                     color = Color.Black,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
@@ -887,7 +894,7 @@ private fun ProductListErrorContent(
     }
 }
 
-private fun formatPrice(price: Int): String {
+private fun formatProductListPrice(price: Int): String {
     return "%,d원".format(price)
 }
 

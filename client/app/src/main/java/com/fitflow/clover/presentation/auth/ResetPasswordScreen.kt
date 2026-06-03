@@ -25,20 +25,6 @@ import com.fitflow.clover.R
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.tooling.preview.Devices
-
-@Preview(
-    name = "다양한 디바이스 테스트 기기",
-    device = Devices.PIXEL_4,
-    showBackground = true
-)
-@Composable
-fun ResetPasswordScreenPreview() {
-    val fakeNavController = rememberNavController()
-    ResetPasswordScreen(navController = fakeNavController)
-}
-
-// =====================================================================================
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResetPasswordScreen(navController: NavController) {
@@ -62,7 +48,7 @@ fun ResetPasswordScreen(navController: NavController) {
                 }
             )
         },
-        // 🌟 [핵심] 하단 버튼을 bottomBar에 격리시켜 어떤 폰에서든 항상 화면 최하단에 예쁘게 붙어있도록 고정합니다.
+
         bottomBar = {
             Box(
                 modifier = Modifier

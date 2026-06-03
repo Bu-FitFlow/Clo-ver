@@ -24,18 +24,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.runtime.Composable
 
-@Preview(
-    name = "Pixel 10 - 아이디 비밀번호 찾기",
-    device = "spec:width=1080px,height=2424px,dpi=420",
-    showBackground = true
-)
-@Composable
-fun FindIdPwPixel10Preview() {
-    val fakeNavController = rememberNavController()
-    FindIdPw(navController = fakeNavController)
-}
-//==================================================================================================
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FindIdPw(navController: NavController) {
