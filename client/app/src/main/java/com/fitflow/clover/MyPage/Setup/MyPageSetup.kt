@@ -28,8 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -37,7 +35,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable // 🎯 composable 인식을 위해 필수 추가
 import androidx.navigation.compose.rememberNavController
@@ -62,7 +59,7 @@ object MyPageDestinations {
 
 // 💡 마이페이지 화면 이동을 총괄하는 네비게이션 호스트
 @Composable
-fun MyPageNavHost() {
+fun MyPageNavHost(onExitMyPage: () -> Unit) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = MyPageDestinations.MYPAGE_SCREEN) {
@@ -135,7 +132,7 @@ fun MyPageSetup(navController: NavController) { // 🎯 1. 괄호 안에 navCont
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 상단바
-            //SetupTopBar()
+            SetupTopBar()
 
             Column(
                 modifier = Modifier
@@ -329,28 +326,18 @@ fun MyPageSetup(navController: NavController) { // 🎯 1. 괄호 안에 navCont
 
 } // fun MyPageSetup {}
 
-/*
-// 상단바 상세 설정
 @Composable
 fun SetupTopBar() {
     Box(
         modifier = Modifier
-            .width(393.dp)
-            .height(63.dp)
-            .background(Color.White)
-            .drawBehind {
-                drawLine(
-                    color = Color.LightGray,
-                    start = Offset(0f, size.height),
-                    end = Offset(size.width, size.height),
-                    strokeWidth = 1.dp.toPx()
-                )
-            },
-        contentAlignment = Alignment.Center
+            .width(393.dp)  // 가로 사이즈
+            .height(57.dp) // 세로 사이즈
+            .background(Color.White) // 배경을 흰색으로 채움
     ) {
     }
 }
- */
+
+
 
 // 누를 수 없는 대분류 타이틀 전용 컴포넌트
 @Composable
@@ -427,5 +414,5 @@ fun SettingTextItem(text: String, onClick: () -> Unit) {
 @Composable
 fun MyPageSetupPreview() {
     // 미리보기에서도 전체 화면 흐름을 안전하게 볼 수 있도록 Host를 띄워줍니다.
-    MyPageNavHost()
+    MyPageNavHost(onExitMyPage = {})
 }
