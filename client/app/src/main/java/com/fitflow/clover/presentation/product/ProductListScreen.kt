@@ -577,7 +577,6 @@ private fun CategoryChip(
         }
     }
 }
-
 @Composable
 fun ProductGridCard(
     product: ProductSummary,

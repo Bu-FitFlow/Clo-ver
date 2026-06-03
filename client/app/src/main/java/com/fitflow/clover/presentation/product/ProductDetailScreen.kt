@@ -32,6 +32,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.fitflow.clover.domain.modal.ProductDetailModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 @Composable
 fun ProductDetailScreen(
@@ -45,8 +47,8 @@ fun ProductDetailScreen(
         ProductViewModel()
     }
 
-    val detailUiState = productViewModel.detailUiState.value
-    val wishlistUiState = productViewModel.wishlistUiState.value
+    val detailUiState by productViewModel.detailUiState.collectAsState()
+    val wishlistUiState by productViewModel.wishlistUiState.collectAsState()
 
     val snackbarHostState = remember {
         SnackbarHostState()
@@ -72,22 +74,24 @@ fun ProductDetailScreen(
         }
     }
 
+    val product = detailUiState.product
+
     Scaffold(
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
         bottomBar = {
-            detailUiState.product?.let { product ->
+            product?.let { currentProduct ->
                 ProductDetailBottomBar(
-                    product = product,
+                    product = currentProduct,
                     isWishlistProcessing = wishlistUiState.isProcessing,
                     onClickWishlist = {
                         productViewModel.toggleWishlist()
                     },
                     onClickChat = {
                         onOpenChat(
-                            product.productId,
-                            product.sellerId
+                            currentProduct.productId,
+                            currentProduct.sellerId
                         )
                     }
                 )
@@ -107,7 +111,20 @@ fun ProductDetailScreen(
                     )
                 }
 
-                detailUiState.product == null -> {
+                product != null -> {
+                    ProductDetailContent(
+                        product = product,
+                        onBack = onBack,
+                        onOpenSellerProfile = {
+                            onOpenSellerProfile(product.sellerId)
+                        },
+                        onReportProduct = {
+                            onReportProduct(product.productId)
+                        }
+                    )
+                }
+
+                else -> {
                     ProductDetailErrorContent(
                         message = detailUiState.errorMessage.orEmpty(),
                         onBack = onBack,
@@ -115,19 +132,6 @@ fun ProductDetailScreen(
                             productViewModel.loadProductDetail(
                                 productId = productId
                             )
-                        }
-                    )
-                }
-
-                else -> {
-                    ProductDetailContent(
-                        product = detailUiState.product,
-                        onBack = onBack,
-                        onOpenSellerProfile = {
-                            onOpenSellerProfile(detailUiState.product.sellerId)
-                        },
-                        onReportProduct = {
-                            onReportProduct(detailUiState.product.productId)
                         }
                     )
                 }

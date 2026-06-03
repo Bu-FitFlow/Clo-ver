@@ -180,17 +180,61 @@ class ProductViewModel(
                     errorMessage = null
                 )
             }.onFailure { throwable ->
-                val fallbackProduct = allProducts
-                    .find { product -> product.productId == productId }
-                    ?.toProductDetailModel()
+                val fallbackProduct = findFallbackProductDetail(
+                    productId = productId
+                )
 
                 _detailUiState.value = ProductDetailUiState(
                     isLoading = false,
                     product = fallbackProduct,
-                    errorMessage = throwable.message
+                    errorMessage = if (fallbackProduct == null) {
+                        throwable.message
+                    } else {
+                        null
+                    }
                 )
             }
         }
+    }
+
+    private fun findFallbackProductDetail(
+        productId: Long
+    ): ProductDetailModel? {
+        val productFromCurrentList = allProducts
+            .find { product ->
+                product.productId == productId
+            }
+            ?.toProductDetailModel()
+
+        if (productFromCurrentList != null) {
+            return productFromCurrentList
+        }
+
+        val productFromListModels = _listUiState.value.productModels
+            .find { product ->
+                product.productId == productId
+            }
+            ?.toProductDetailModel()
+
+        if (productFromListModels != null) {
+            return productFromListModels
+        }
+
+        val productFromDummyModels = dummyProductModels
+            .find { product ->
+                product.productId == productId
+            }
+            ?.toProductDetailModel()
+
+        if (productFromDummyModels != null) {
+            return productFromDummyModels
+        }
+
+        return mainHomeFallbackProductModels
+            .find { product ->
+                product.productId == productId
+            }
+            ?.toProductDetailModel()
     }
 
     fun toggleWishlist() {
@@ -999,6 +1043,40 @@ private fun ProductSummary.toProductDetailModel(): ProductDetailModel {
     )
 }
 
+private fun ProductSummaryModel.toProductDetailModel(): ProductDetailModel {
+    return ProductDetailModel(
+        productId = productId,
+        sellerId = sellerId,
+        categoryId = categoryId,
+        colorId = colorId,
+        name = name,
+        price = price,
+        content = content,
+        size = size,
+        grade = grade,
+        tradingArea = tradingArea,
+        recommendedType = recommendedType,
+        postStatus = postStatus,
+        viewCount = viewCount,
+        wishlistCount = wishlistCount,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        images = listOfNotNull(
+            thumbnailImageUrl?.let { imageUrl ->
+                ProductImageModel(
+                    imageId = productId,
+                    imageUrl = imageUrl,
+                    referenceType = "PRODUCT",
+                    referenceId = productId,
+                    sortOrder = 0,
+                    createdAt = createdAt
+                )
+            }
+        ),
+        isWishlisted = false
+    )
+}
+
 private fun Long.toProductMainCategory(): ProductMainCategory {
     return when (this) {
         1L -> ProductMainCategory.TOP
@@ -1152,3 +1230,178 @@ private val dummySoldProducts = listOf(
 private val dummyProductModels = dummyProducts.map { product ->
     product.toProductSummaryModel()
 }
+
+private val mainHomeFallbackProductModels = listOf(
+    ProductSummaryModel(
+        productId = 1L,
+        sellerId = 1L,
+        categoryId = 3L,
+        colorId = null,
+        name = "데님 워싱 자켓",
+        price = 39800,
+        content = "가볍게 걸치기 좋은 데님 워싱 자켓입니다.",
+        size = "M",
+        grade = "브랜드",
+        tradingArea = "서울 강남구",
+        recommendedType = "BALANCED",
+        postStatus = "ACTIVE",
+        viewCount = 12,
+        wishlistCount = 4,
+        createdAt = "방금 전",
+        updatedAt = "방금 전",
+        thumbnailImageUrl = null
+    ),
+    ProductSummaryModel(
+        productId = 2L,
+        sellerId = 1L,
+        categoryId = 3L,
+        colorId = null,
+        name = "화이트 셔츠 자켓",
+        price = 42000,
+        content = "깔끔한 무드의 셔츠형 아우터입니다.",
+        size = "L",
+        grade = "브랜드",
+        tradingArea = "서울 마포구",
+        recommendedType = "RECTANGLE",
+        postStatus = "ACTIVE",
+        viewCount = 18,
+        wishlistCount = 6,
+        createdAt = "3분 전",
+        updatedAt = "3분 전",
+        thumbnailImageUrl = null
+    ),
+    ProductSummaryModel(
+        productId = 3L,
+        sellerId = 1L,
+        categoryId = 1L,
+        colorId = null,
+        name = "블랙 이너 티셔츠",
+        price = 19800,
+        content = "어디에나 받쳐 입기 좋은 기본 티셔츠입니다.",
+        size = "M",
+        grade = "브랜드",
+        tradingArea = "서울 성동구",
+        recommendedType = "INVERTED_TRIANGLE",
+        postStatus = "ACTIVE",
+        viewCount = 25,
+        wishlistCount = 9,
+        createdAt = "8분 전",
+        updatedAt = "8분 전",
+        thumbnailImageUrl = null
+    ),
+    ProductSummaryModel(
+        productId = 4L,
+        sellerId = 1L,
+        categoryId = 2L,
+        colorId = null,
+        name = "카고 와이드 팬츠",
+        price = 35000,
+        content = "활동성이 좋은 와이드 카고 팬츠입니다.",
+        size = "M",
+        grade = "브랜드",
+        tradingArea = "경기 수원시",
+        recommendedType = "TRIANGLE",
+        postStatus = "ACTIVE",
+        viewCount = 31,
+        wishlistCount = 11,
+        createdAt = "15분 전",
+        updatedAt = "15분 전",
+        thumbnailImageUrl = null
+    ),
+    ProductSummaryModel(
+        productId = 5L,
+        sellerId = 1L,
+        categoryId = 2L,
+        colorId = null,
+        name = "데님 스트레이트 팬츠",
+        price = 29000,
+        content = "데일리로 입기 좋은 스트레이트 데님 팬츠입니다.",
+        size = "L",
+        grade = "브랜드",
+        tradingArea = "인천 부평구",
+        recommendedType = "BALANCED",
+        postStatus = "ACTIVE",
+        viewCount = 40,
+        wishlistCount = 13,
+        createdAt = "20분 전",
+        updatedAt = "20분 전",
+        thumbnailImageUrl = null
+    ),
+    ProductSummaryModel(
+        productId = 6L,
+        sellerId = 1L,
+        categoryId = 3L,
+        colorId = null,
+        name = "라이트 후드 집업",
+        price = 27000,
+        content = "간절기에 입기 좋은 후드 집업입니다.",
+        size = "M",
+        grade = "브랜드",
+        tradingArea = "대전 서구",
+        recommendedType = "OVAL",
+        postStatus = "ACTIVE",
+        viewCount = 44,
+        wishlistCount = 15,
+        createdAt = "30분 전",
+        updatedAt = "30분 전",
+        thumbnailImageUrl = null
+    ),
+    ProductSummaryModel(
+        productId = 7L,
+        sellerId = 1L,
+        categoryId = 1L,
+        colorId = null,
+        name = "그레이 니트",
+        price = 33000,
+        content = "부드러운 착용감의 그레이 니트입니다.",
+        size = "FREE",
+        grade = "브랜드",
+        tradingArea = "서울 송파구",
+        recommendedType = "RECTANGLE",
+        postStatus = "ACTIVE",
+        viewCount = 52,
+        wishlistCount = 18,
+        createdAt = "45분 전",
+        updatedAt = "45분 전",
+        thumbnailImageUrl = null
+    ),
+    ProductSummaryModel(
+        productId = 8L,
+        sellerId = 1L,
+        categoryId = 4L,
+        colorId = null,
+        name = "미니멀 스커트",
+        price = 24000,
+        content = "차분한 분위기의 미니멀 스커트입니다.",
+        size = "S",
+        grade = "브랜드",
+        tradingArea = "부산 해운대구",
+        recommendedType = "HOURGLASS",
+        postStatus = "ACTIVE",
+        viewCount = 61,
+        wishlistCount = 21,
+        createdAt = "1시간 전",
+        updatedAt = "1시간 전",
+        thumbnailImageUrl = null
+    ),
+    ProductSummaryModel(
+        productId = 9L,
+        sellerId = 1L,
+        categoryId = 3L,
+        colorId = null,
+        name = "크롭 블루종",
+        price = 46000,
+        content = "핏이 예쁜 크롭 블루종 아우터입니다.",
+        size = "M",
+        grade = "브랜드",
+        tradingArea = "광주 서구",
+        recommendedType = "BALANCED",
+        postStatus = "ACTIVE",
+        viewCount = 73,
+        wishlistCount = 25,
+        createdAt = "2시간 전",
+        updatedAt = "2시간 전",
+        thumbnailImageUrl = null
+    )
+)
+
