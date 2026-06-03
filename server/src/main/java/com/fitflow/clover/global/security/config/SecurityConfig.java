@@ -58,7 +58,8 @@ public class SecurityConfig {
                                 "/api/members/check-id",
                                 "/api/members/check-email",
                                 "/api/members/check-nickname",
-                                "/api/test/image"
+                                "/api/test/image",
+                                "/api/ping"
                         ).permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
