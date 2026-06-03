@@ -51,7 +51,7 @@ fun Search(onSearchExecute: (String) -> Unit = { query -> println("기본 검색
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 상단바
-            //SearchTopBar()
+            SearchTopBar()
 
             Box(
                 modifier = Modifier
@@ -238,6 +238,17 @@ fun Search(onSearchExecute: (String) -> Unit = { query -> println("기본 검색
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SearchTopBar() {
+    Box(
+        modifier = Modifier
+            .width(393.dp)  // 가로 사이즈
+            .height(57.dp) // 세로 사이즈
+            .background(Color.White) // 배경을 흰색으로 채움
+    ) {
     }
 }
 

@@ -65,7 +65,7 @@ fun NotificationPush(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally // 가운데 정렬
 
         ) {
-            //PushTopBar()
+            PushTopBar()
 
             // 위에서 아래로 요소를 배치 (Groovy의 LinearLayout vertical 느낌)
             Column(
@@ -154,6 +154,17 @@ fun NotificationPush(navController: NavController) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun PushTopBar() {
+    Box(
+        modifier = Modifier
+            .width(393.dp)  // 가로 사이즈
+            .height(57.dp) // 세로 사이즈
+            .background(Color.White) // 배경을 흰색으로 채움
+    ) {
     }
 }
 

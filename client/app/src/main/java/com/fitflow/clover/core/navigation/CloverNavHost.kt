@@ -28,6 +28,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.fitflow.clover.mypage.setup.MyPageNavHost
 import com.fitflow.clover.presentation.auth.*
 import com.fitflow.clover.presentation.chat.ChatScreen
 import com.fitflow.clover.presentation.chat.ChatViewModel
@@ -553,10 +554,9 @@ fun CloverNavHost(
         }
 
         composable(ScreenRoute.MyPage.route) {
-            MainPlaceholderScreen(
-                title = "마이 페이지",
-                description = "마이페이지 화면으로 연결될 예정입니다.",
-                onBackToMain = {
+            MyPageNavHost(
+                onExitMyPage = {
+                    // 🎯 마이페이지 메인 화면에서 '뒤로가기'를 누르면 전체 앱의 메인 화면으로 이동!
                     navigateSingleTop(ScreenRoute.Main.route)
                 }
             )

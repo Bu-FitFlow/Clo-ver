@@ -70,7 +70,7 @@ fun MyProfileModify(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 상단바
-            //MyProfileModifyTopBar()
+            MyProfileModifyTopBar()
 
             // 위에서 아래로 요소를 배치 (Groovy의 LinearLayout vertical 느낌)
             Column(
@@ -212,6 +212,17 @@ fun MyProfileModify(navController: NavHostController) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MyProfileModifyTopBar() {
+    Box(
+        modifier = Modifier
+            .width(393.dp)  // 가로 사이즈
+            .height(57.dp) // 세로 사이즈
+            .background(Color.White) // 배경을 흰색으로 채움
+    ) {
     }
 }
 

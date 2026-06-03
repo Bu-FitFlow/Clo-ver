@@ -44,7 +44,7 @@ fun MyPageScreen(onSettingsClick: () -> Unit,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 상단바
-            //MyPageScreenTopBar()
+            MyPageScreenTopBar()
 
             Box(
                 modifier = Modifier
@@ -257,6 +257,17 @@ fun MyPageScreen(onSettingsClick: () -> Unit,
 
 
         }
+    }
+}
+
+@Composable
+fun MyPageScreenTopBar() {
+    Box(
+        modifier = Modifier
+            .width(393.dp)  // 가로 사이즈
+            .height(57.dp) // 세로 사이즈
+            .background(Color.White) // 배경을 흰색으로 채움
+    ) {
     }
 }
 

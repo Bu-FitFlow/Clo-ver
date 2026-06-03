@@ -46,7 +46,7 @@ fun PersonalInformation(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally // 가운데 정렬
 
         ) {
-            //PersonalInformationTopBar()
+            PersonalInformationTopBar()
 
             Box(
                 modifier = Modifier
@@ -155,6 +155,17 @@ fun PersonalInformation(navController: NavController) {
                 }
             } // LazyColumn () {}
         }
+    }
+}
+
+@Composable
+fun PersonalInformationTopBar() {
+    Box(
+        modifier = Modifier
+            .width(393.dp)  // 가로 사이즈
+            .height(57.dp) // 세로 사이즈
+            .background(Color.White) // 배경을 흰색으로 채움
+    ) {
     }
 }
 
