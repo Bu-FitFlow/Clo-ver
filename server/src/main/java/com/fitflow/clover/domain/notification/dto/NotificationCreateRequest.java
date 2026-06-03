@@ -1,15 +1,11 @@
 package com.fitflow.clover.domain.notification.dto;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+public record NotificationCreateRequest(
 
-@Getter
-@NoArgsConstructor
-public class NotificationCreateRequest {
-
-    private Long receiverId;
-    private Long senderId;
-    private String notificationType;
-    private String content;
-    private Long relatedId;
+        Long receiverId,
+        Long senderId,
+        String notificationType,
+        String content,
+        Long relatedId
+) {
 }

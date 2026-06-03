@@ -2,20 +2,20 @@ package com.fitflow.clover.domain.notification.dto;
 
 import com.fitflow.clover.domain.notification.entity.Notification;
 import lombok.Builder;
-import lombok.Getter;
 
-@Getter
+import java.time.LocalDateTime;
+
 @Builder
-public class NotificationResponse {
-
-    private Long notificationId;
-    private Long receiverId;
-    private Long senderId;
-    private String notificationType;
-    private String content;
-    private Long relatedId;
-    private boolean isRead;
-
+public record NotificationResponse(
+        Long notificationId,
+        Long receiverId,
+        Long senderId,
+        String notificationType,
+        String content,
+        Long relatedId,
+        boolean isRead,
+        LocalDateTime createdAt
+) {
     public static NotificationResponse from(Notification notification) {
         return NotificationResponse.builder()
                 .notificationId(notification.getNotificationId())
@@ -25,6 +25,7 @@ public class NotificationResponse {
                 .content(notification.getContent())
                 .relatedId(notification.getRelatedId())
                 .isRead(notification.isRead())
+                .createdAt(notification.getCreatedAt())
                 .build();
     }
 }
