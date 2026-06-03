@@ -200,6 +200,16 @@ class ProductViewModel(
     private fun findFallbackProductDetail(
         productId: Long
     ): ProductDetailModel? {
+        val productFromMainHomeModels = mainHomeFallbackProductModels
+            .find { product ->
+                product.productId == productId
+            }
+            ?.toProductDetailModel()
+
+        if (productFromMainHomeModels != null) {
+            return productFromMainHomeModels
+        }
+
         val productFromCurrentList = allProducts
             .find { product ->
                 product.productId == productId
@@ -220,17 +230,7 @@ class ProductViewModel(
             return productFromListModels
         }
 
-        val productFromDummyModels = dummyProductModels
-            .find { product ->
-                product.productId == productId
-            }
-            ?.toProductDetailModel()
-
-        if (productFromDummyModels != null) {
-            return productFromDummyModels
-        }
-
-        return mainHomeFallbackProductModels
+        return dummyProductModels
             .find { product ->
                 product.productId == productId
             }
@@ -242,42 +242,31 @@ class ProductViewModel(
 
         if (_wishlistUiState.value.isProcessing) return
 
-        viewModelScope.launch {
-            _wishlistUiState.value = WishlistUiState(
-                isProcessing = true,
-                errorMessage = null
-            )
-
-            runCatching {
-                if (currentProduct.isWishlisted) {
-                    productUseCase.removeWishlist(
-                        productId = currentProduct.productId
-                    )
-                } else {
-                    productUseCase.addWishlist(
-                        productId = currentProduct.productId
-                    )
-                }
-            }.onSuccess { isWishlisted ->
-                _detailUiState.update {
-                    it.copy(
-                        product = currentProduct.copy(
-                            isWishlisted = isWishlisted
-                        )
-                    )
-                }
-
-                _wishlistUiState.value = WishlistUiState(
-                    isProcessing = false,
-                    errorMessage = null
-                )
-            }.onFailure { throwable ->
-                _wishlistUiState.value = WishlistUiState(
-                    isProcessing = false,
-                    errorMessage = throwable.message
-                )
-            }
+        val nextWishlisted = !currentProduct.isWishlisted
+        val nextWishlistCount = if (nextWishlisted) {
+            currentProduct.wishlistCount + 1
+        } else {
+            (currentProduct.wishlistCount - 1).coerceAtLeast(0)
         }
+
+        _wishlistUiState.value = WishlistUiState(
+            isProcessing = true,
+            errorMessage = null
+        )
+
+        _detailUiState.update {
+            it.copy(
+                product = currentProduct.copy(
+                    isWishlisted = nextWishlisted,
+                    wishlistCount = nextWishlistCount
+                )
+            )
+        }
+
+        _wishlistUiState.value = WishlistUiState(
+            isProcessing = false,
+            errorMessage = null
+        )
     }
 
     fun clearListError() {

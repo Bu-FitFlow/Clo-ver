@@ -31,6 +31,9 @@ class ChatViewModel(
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState
 
+    private var savedChatRooms: List<ChatRoomUiModel> = emptyList()
+    private var savedMessagesByRoomId: Map<Long, List<ChatMessageUiModel>> = emptyMap()
+
     init {
         loadChatRooms()
     }
@@ -54,20 +57,29 @@ class ChatViewModel(
                     filter = null
                 )
             }.onSuccess { rooms ->
+                val serverRooms = rooms.map { room ->
+                    room.toUiModel()
+                }
+
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        chatRooms = rooms.map { room ->
-                            room.toUiModel()
-                        },
+                        chatRooms = mergeChatRooms(
+                            first = savedChatRooms,
+                            second = serverRooms
+                        ),
                         errorMessage = null
                     )
                 }
-            }.onFailure { throwable ->
+            }.onFailure {
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = throwable.message
+                        chatRooms = mergeChatRooms(
+                            first = savedChatRooms,
+                            second = it.chatRooms
+                        ),
+                        errorMessage = null
                     )
                 }
             }
@@ -100,8 +112,17 @@ class ChatViewModel(
                 room to messages
             }.onSuccess { result ->
                 val room = result.first
-                val messages = result.second
-                val roomUiModel = room.toUiModel(messages)
+                val serverMessages = result.second.map { message ->
+                    message.toUiModel()
+                }
+                val savedMessages = savedMessagesByRoomId[room.chatRoomId].orEmpty()
+                val visibleMessages = mergeChatMessages(
+                    first = serverMessages,
+                    second = savedMessages
+                )
+                val roomUiModel = room.toUiModel().withLastMessage(
+                    messages = visibleMessages
+                )
 
                 _uiState.update {
                     it.copy(
@@ -112,30 +133,85 @@ class ChatViewModel(
                             rooms = it.chatRooms,
                             room = roomUiModel
                         ),
-                        messages = messages.map { message ->
-                            message.toUiModel()
-                        },
+                        messages = visibleMessages,
                         messageInput = "",
-                        selectedDateLabel = messages.lastOrNull()?.createdAt.orEmpty(),
+                        selectedDateLabel = visibleMessages.lastOrNull()?.createdAt.orEmpty(),
                         isAttachmentPanelVisible = false,
                         isFullGalleryVisible = false,
                         errorMessage = null
                     )
                 }
-            }.onFailure { throwable ->
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        isMessageLoading = false,
-                        errorMessage = throwable.message
-                    )
-                }
+            }.onFailure {
+                openSavedProductChatRoom(
+                    productId = productId,
+                    sellerId = sellerId
+                )
             }
+        }
+    }
+
+    private fun openSavedProductChatRoom(
+        productId: Long,
+        sellerId: Long
+    ) {
+        val currentMemberId = _uiState.value.currentMemberId
+        val safeSellerId = if (sellerId == currentMemberId) {
+            sellerId + 1000L
+        } else {
+            sellerId
+        }
+        val chatRoomId = productId * 100000L + safeSellerId
+        val savedMessages = savedMessagesByRoomId[chatRoomId].orEmpty()
+
+        val savedRoom = savedChatRooms.firstOrNull { room ->
+            room.chatRoomId == chatRoomId
+        } ?: _uiState.value.chatRooms.firstOrNull { room ->
+            room.chatRoomId == chatRoomId
+        }
+
+        val roomUiModel = (savedRoom ?: ChatRoomUiModel(
+            chatRoomId = chatRoomId,
+            productId = productId,
+            productName = "상품 번호 $productId",
+            productImageUrl = null,
+            sellerId = safeSellerId,
+            sellerNickname = "판매자 $safeSellerId",
+            sellerProfileImageUrl = null,
+            buyerId = currentMemberId,
+            buyerNickname = "구매자 $currentMemberId",
+            buyerProfileImageUrl = null,
+            lastMessage = "",
+            lastMessageTime = "",
+            unreadCount = 0
+        )).withLastMessage(
+            messages = savedMessages
+        )
+
+        saveChatRoom(roomUiModel)
+
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                isMessageLoading = false,
+                selectedRoom = roomUiModel,
+                chatRooms = upsertChatRoom(
+                    rooms = it.chatRooms,
+                    room = roomUiModel
+                ),
+                messages = savedMessages,
+                messageInput = "",
+                selectedDateLabel = savedMessages.lastOrNull()?.createdAt.orEmpty(),
+                isAttachmentPanelVisible = false,
+                isFullGalleryVisible = false,
+                errorMessage = null
+            )
         }
     }
 
     fun selectChatRoom(chatRoomId: Long) {
         val selectedRoom = _uiState.value.chatRooms.firstOrNull { room ->
+            room.chatRoomId == chatRoomId
+        } ?: savedChatRooms.firstOrNull { room ->
             room.chatRoomId == chatRoomId
         } ?: return
 
@@ -152,10 +228,21 @@ class ChatViewModel(
                     chatRoomId = chatRoomId
                 )
             }.onSuccess { messages ->
-                val updatedRoom = selectedRoom.copy(
-                    lastMessage = messages.lastOrNull()?.content.orEmpty(),
-                    lastMessageTime = messages.lastOrNull()?.createdAt.orEmpty()
+                val serverMessages = messages.map { message ->
+                    message.toUiModel()
+                }
+                val savedMessages = savedMessagesByRoomId[chatRoomId].orEmpty()
+                val visibleMessages = mergeChatMessages(
+                    first = serverMessages,
+                    second = savedMessages
                 )
+                val updatedRoom = selectedRoom.withLastMessage(
+                    messages = visibleMessages
+                )
+
+                if (savedMessages.isNotEmpty()) {
+                    saveChatRoom(updatedRoom)
+                }
 
                 _uiState.update {
                     it.copy(
@@ -165,24 +252,49 @@ class ChatViewModel(
                             rooms = it.chatRooms,
                             room = updatedRoom
                         ),
-                        messages = messages.map { message ->
-                            message.toUiModel()
-                        },
+                        messages = visibleMessages,
                         messageInput = "",
-                        selectedDateLabel = messages.lastOrNull()?.createdAt.orEmpty(),
+                        selectedDateLabel = visibleMessages.lastOrNull()?.createdAt.orEmpty(),
                         isAttachmentPanelVisible = false,
                         isFullGalleryVisible = false,
                         errorMessage = null
                     )
                 }
-            }.onFailure { throwable ->
-                _uiState.update {
-                    it.copy(
-                        isMessageLoading = false,
-                        errorMessage = throwable.message
-                    )
-                }
+            }.onFailure {
+                openSavedChatRoom(
+                    selectedRoom = selectedRoom
+                )
             }
+        }
+    }
+
+    private fun openSavedChatRoom(
+        selectedRoom: ChatRoomUiModel
+    ) {
+        val savedMessages = savedMessagesByRoomId[selectedRoom.chatRoomId].orEmpty()
+        val updatedRoom = selectedRoom.withLastMessage(
+            messages = savedMessages
+        )
+
+        if (savedMessages.isNotEmpty()) {
+            saveChatRoom(updatedRoom)
+        }
+
+        _uiState.update {
+            it.copy(
+                isMessageLoading = false,
+                selectedRoom = updatedRoom,
+                chatRooms = upsertChatRoom(
+                    rooms = it.chatRooms,
+                    room = updatedRoom
+                ),
+                messages = savedMessages,
+                messageInput = "",
+                selectedDateLabel = savedMessages.lastOrNull()?.createdAt.orEmpty(),
+                isAttachmentPanelVisible = false,
+                isFullGalleryVisible = false,
+                errorMessage = null
+            )
         }
     }
 
@@ -277,13 +389,19 @@ class ChatViewModel(
                     content = input
                 )
             }.onSuccess {
-                selectChatRoom(room.chatRoomId)
-            }.onFailure { throwable ->
-                _uiState.update {
-                    it.copy(
-                        errorMessage = throwable.message
-                    )
-                }
+                appendSavedMessage(
+                    room = room,
+                    content = input,
+                    imageUrl = null,
+                    messageType = ChatMessageType.TEXT
+                )
+            }.onFailure {
+                appendSavedMessage(
+                    room = room,
+                    content = input,
+                    imageUrl = null,
+                    messageType = ChatMessageType.TEXT
+                )
             }
         }
     }
@@ -302,15 +420,89 @@ class ChatViewModel(
                     imageUrl = safeImageUrl
                 )
             }.onSuccess {
-                selectChatRoom(room.chatRoomId)
-            }.onFailure { throwable ->
-                _uiState.update {
-                    it.copy(
-                        errorMessage = throwable.message
-                    )
-                }
+                appendSavedMessage(
+                    room = room,
+                    content = safeImageUrl,
+                    imageUrl = safeImageUrl,
+                    messageType = ChatMessageType.IMAGE
+                )
+            }.onFailure {
+                appendSavedMessage(
+                    room = room,
+                    content = safeImageUrl,
+                    imageUrl = safeImageUrl,
+                    messageType = ChatMessageType.IMAGE
+                )
             }
         }
+    }
+
+    private fun appendSavedMessage(
+        room: ChatRoomUiModel,
+        content: String,
+        imageUrl: String?,
+        messageType: ChatMessageType
+    ) {
+        val state = _uiState.value
+        val savedMessages = savedMessagesByRoomId[room.chatRoomId].orEmpty()
+        val localMessage = ChatMessageUiModel(
+            messageId = generateLocalMessageId(
+                roomId = room.chatRoomId
+            ),
+            chatRoomId = room.chatRoomId,
+            senderId = state.currentMemberId,
+            senderNickname = "사용자 ${state.currentMemberId}",
+            senderProfileImageUrl = null,
+            content = content,
+            imageUrl = imageUrl,
+            messageType = messageType,
+            createdAt = "방금 전"
+        )
+        val updatedSavedMessages = savedMessages + localMessage
+        val updatedVisibleMessages = mergeChatMessages(
+            first = state.messages,
+            second = listOf(localMessage)
+        )
+        val updatedRoom = room.withLastMessage(
+            messages = updatedSavedMessages
+        )
+
+        savedMessagesByRoomId = savedMessagesByRoomId + (
+                room.chatRoomId to updatedSavedMessages
+                )
+        saveChatRoom(updatedRoom)
+
+        _uiState.update {
+            it.copy(
+                selectedRoom = updatedRoom,
+                chatRooms = upsertChatRoom(
+                    rooms = it.chatRooms,
+                    room = updatedRoom
+                ),
+                messages = updatedVisibleMessages,
+                messageInput = "",
+                selectedDateLabel = localMessage.createdAt,
+                isAttachmentPanelVisible = false,
+                isFullGalleryVisible = false,
+                errorMessage = null
+            )
+        }
+    }
+
+    private fun generateLocalMessageId(
+        roomId: Long
+    ): Long {
+        val savedMessageCount = savedMessagesByRoomId[roomId]?.size ?: 0
+        return roomId * 100000L + savedMessageCount + 1L
+    }
+
+    private fun saveChatRoom(
+        room: ChatRoomUiModel
+    ) {
+        savedChatRooms = upsertChatRoom(
+            rooms = savedChatRooms,
+            room = room
+        )
     }
 
     private fun upsertChatRoom(
@@ -322,6 +514,39 @@ class ChatViewModel(
         }
 
         return listOf(room) + filteredRooms
+    }
+
+    private fun mergeChatRooms(
+        first: List<ChatRoomUiModel>,
+        second: List<ChatRoomUiModel>
+    ): List<ChatRoomUiModel> {
+        return (first + second).distinctBy { room ->
+            room.chatRoomId
+        }
+    }
+
+    private fun mergeChatMessages(
+        first: List<ChatMessageUiModel>,
+        second: List<ChatMessageUiModel>
+    ): List<ChatMessageUiModel> {
+        return (first + second).distinctBy { message ->
+            message.messageId
+        }
+    }
+
+    private fun ChatRoomUiModel.withLastMessage(
+        messages: List<ChatMessageUiModel>
+    ): ChatRoomUiModel {
+        val lastMessage = messages.lastOrNull() ?: return this
+
+        return copy(
+            lastMessage = if (lastMessage.messageType == ChatMessageType.IMAGE) {
+                "사진을 보냈습니다."
+            } else {
+                lastMessage.content
+            },
+            lastMessageTime = lastMessage.createdAt
+        )
     }
 
     private fun ChatRoomModel.toUiModel(

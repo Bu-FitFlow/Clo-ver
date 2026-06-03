@@ -286,12 +286,19 @@ fun CloverNavHost(
 
             ProductDetailScreen(
                 productId = productId,
+                productViewModel = productViewModel,
                 onBack = {
                     popBackOrMain()
                 },
+                onClickLogo = {
+                    navController.navigate(ScreenRoute.Main.route) {
+                        launchSingleTop = true
+                        popUpTo(ScreenRoute.Main.route) {
+                            inclusive = false
+                        }
+                    }
+                },
                 onOpenChat = { selectedProductId, sellerId ->
-                    chatViewModel.backToChatList()
-
                     navController.navigate(
                         ScreenRoute.ChatRoom.createRoute(
                             productId = selectedProductId,
