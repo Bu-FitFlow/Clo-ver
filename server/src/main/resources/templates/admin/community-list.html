@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Clo-ver Admin - 커뮤니티 글 관리</title>
+    <link href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAMAAAHgaCuzAAAABgdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExURQAAAKd6PsgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAARSURBVAjXY2sgCMAgkiA6SgAALgB/a7onpQAAAABJRU5ErkJggg=="
+          rel="icon">
+    <link rel="stylesheet" th:href="@{/css/style.css}" type="text/css">
+    <link rel="stylesheet" th:href="@{/css/home.css}" type="text/css">
+</head>
+<body class="dashboard-layout">
+
+<div th:replace="~{fragments/sidebar :: sidebar('community')}"></div>
+
+<div class="main-content">
+
+    <div th:replace="~{fragments/topbar :: topbar}"></div>
+
+    <div class="content-body">
+        <h2>커뮤니티 게시글 관리</h2>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>게시판 유형</th>
+                    <th>제목</th>
+                    <th>작성자 ID</th>
+                    <th>조회수 / 댓글수</th>
+                    <th>상태</th>
+                    <th>관리자 작업</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="post : ${communities}">
+                    <td th:text="${post.communityId}"></td>
+                    <td>
+                            <span class="badge"
+                                  th:classappend="${post.boardType == 'FREE' ? 'badge-success' : (post.boardType == 'REVIEW' ? 'badge-warning' : 'badge-danger')}"
+                                  th:text="${post.boardType}">
+                            </span>
+                    </td>
+                    <td th:text="${post.title}"></td>
+                    <td th:text="${post.writerId}"></td>
+                    <td th:text="${post.viewCount} + ' / ' + ${post.commentCount}"></td>
+                    <td>
+                        <strong th:style="${post.postStatus == 'ACTIVE' ? 'color: green;' : 'color: red;'}"
+                                th:text="${post.postStatus}"></strong>
+                    </td>
+                    <td>
+                        <form method="post" style="margin: 0;"
+                              th:action="@{/communities/{id}/hide(id=${post.communityId})}" th:if="${post.postStatus == 'ACTIVE'}">
+                            <button class="btn" onclick="return confirm('이 게시글을 강제 숨김 처리하시겠습니까?');"
+                                    style="padding: 6px 12px; background-color: #dc3545; font-size: 12px; width: auto;"
+                                    type="submit">블라인드
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(communities)}">
+                    <td colspan="7" style="text-align: center;">조회된 게시글이 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center;" th:if="${page != null and page.totalPages > 0}">
+            <a style="margin-right: 15px; color: #007bff; text-decoration: none;" th:href="@{/communities(page=${page.number - 1})}"
+               th:if="${page.hasPrevious()}">&laquo; 이전 페이지</a>
+            <strong style="color: #495057;" th:text="${page.number + 1} + ' / ' + ${page.totalPages}"></strong>
+            <a style="margin-left: 15px; color: #007bff; text-decoration: none;" th:href="@{/communities(page=${page.number + 1})}"
+               th:if="${page.hasNext()}">다음 페이지 &raquo;</a>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

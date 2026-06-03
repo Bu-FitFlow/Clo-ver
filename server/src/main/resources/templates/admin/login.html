@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Clo-ver Admin - 로그인</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" type="text/css">
+    <link rel="stylesheet" th:href="@{/css/login.css}" type="text/css">
+</head>
+<body class="auth-wrapper">
+
+<div class="auth-container">
+    <h2>Clo-ver 관리자 로그인</h2>
+
+    <div class="error-msg" th:if="${param.error}">
+        아이디 또는 비밀번호가 올바르지 않습니다.
+    </div>
+
+    <form method="post" th:action="@{/login-process}">
+        <div class="input-group">
+            <label for="username">관리자 아이디</label>
+            <input autofocus id="username" name="username" required type="text">
+        </div>
+        <div class="input-group">
+            <label for="password">비밀번호</label>
+            <input id="password" name="password" required type="password">
+        </div>
+        <button class="btn btn-primary" type="submit">로그인</button>
+    </form>
+
+    <div class="links">
+        <a th:href="@{/signup}">새로운 관리자 등록</a>
+    </div>
+</div>
+
+</body>
+</html>

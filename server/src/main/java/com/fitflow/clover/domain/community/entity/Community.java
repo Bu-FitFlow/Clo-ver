@@ -25,7 +25,7 @@ public class Community extends BaseTimeEntity {
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
-    @Column(name = "title", nullable = false, length = 255)
+    @Column(name = "title", nullable = false)
     private String title;
 
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
@@ -97,9 +97,5 @@ public class Community extends BaseTimeEntity {
     public void updateFreePost(String title, String content) {
         this.title = title;
         this.content = content;
-    }
-
-    public void increaseViewCount() {
-        this.viewCount++;
     }
 }

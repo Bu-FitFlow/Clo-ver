@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +40,7 @@ public class CommunityRecommendService {
                                 c.getWishlistCount()
                         );
                     })
-                    .collect(Collectors.toList());
+                    .toList();
 
             result.addAll(posts);
         }
