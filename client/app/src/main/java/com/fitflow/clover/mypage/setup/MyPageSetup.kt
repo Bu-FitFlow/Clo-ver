@@ -24,6 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +44,7 @@ import androidx.navigation.compose.rememberNavController
 import com.fitflow.clover.R
 import com.fitflow.clover.mypage.mainscreen.MyPageScreen
 import com.fitflow.clover.mypage.mainscreen.MyWriting
+import com.fitflow.clover.mypage.MyPageViewModel
 
 
 // 💡 화면들의 이동 주소 정의
@@ -64,13 +66,19 @@ object MyPageDestinations {
 
 // 💡 마이페이지 화면 이동을 총괄하는 네비게이션 호스트
 @Composable
-fun MyPageNavHost(onExitMyPage: () -> Unit) {
+fun MyPageNavHost(onExitMyPage: () -> Unit,
+                  viewModel: MyPageViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
     val navController = rememberNavController()
+
+    // 🎯 DB에서 변경되는 진행률 값을 실시간 감시하는 레이더를 켭니다!
+    val cloverProgress by viewModel.cloverProgress.collectAsState()
 
     NavHost(navController = navController, startDestination = MyPageDestinations.MYPAGE_SCREEN) {
         // 🎯 1. 마이페이지 메인 화면 등록
         composable(MyPageDestinations.MYPAGE_SCREEN) {
             MyPageScreen(
+                cloverProgress = cloverProgress,
                 onSettingsClick = {
                     // 아이콘을 누르면 SETUP(설정창)으로 이동합니다.
                     navController.navigate(MyPageDestinations.SETUP)

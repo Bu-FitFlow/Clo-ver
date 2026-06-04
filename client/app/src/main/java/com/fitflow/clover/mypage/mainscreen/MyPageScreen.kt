@@ -32,7 +32,8 @@ import androidx.compose.ui.unit.sp
 import com.fitflow.clover.R
 
 @Composable
-fun MyPageScreen(onSettingsClick: () -> Unit,
+fun MyPageScreen(cloverProgress: Float,
+                 onSettingsClick: () -> Unit,
                  onMyWritingClick: () -> Unit,
                  onGoodsClick: () -> Unit,
                  onBackClick: () -> Unit = {}) {
@@ -170,7 +171,7 @@ fun MyPageScreen(onSettingsClick: () -> Unit,
                     Box(
                         modifier = Modifier
                             .fillMaxHeight()
-                            .fillMaxWidth(0.35f) // 🔥 0.0f ~ 1.0f 사이로 채워지는 양 조절 (0.35 = 35%)
+                            .fillMaxWidth(cloverProgress) // 🔥 0.0f ~ 1.0f 사이로 채워지는 양 조절 (0.35 = 35%)
                             .background(Color(0xFF99DE81), shape = androidx.compose.foundation.shape.CircleShape)
                     )
                 }
@@ -318,7 +319,8 @@ fun MyPageScreenTopBar() {
 @Composable
 fun MyPageScreenPreview() {
 
-    MyPageScreen(onSettingsClick = {},
+    MyPageScreen(cloverProgress = 0.35f,
+        onSettingsClick = {},
         onMyWritingClick = {},
         onGoodsClick = {},
         onBackClick = {})
