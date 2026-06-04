@@ -55,6 +55,10 @@ object MyPageDestinations {
     const val NOTIFICATION_PUSH = "notification_push"
 
     const val PERSONAL_INFORMATION= "personal_information"
+
+    const val MY_PAGE = "mypage_screen"
+    const val USER_PROFILE = "user_page_screen"
+    const val SEARCH_BAR = "search_bar"
 }
 
 // 💡 마이페이지 화면 이동을 총괄하는 네비게이션 호스트

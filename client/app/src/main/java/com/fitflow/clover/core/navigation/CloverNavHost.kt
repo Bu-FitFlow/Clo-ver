@@ -28,6 +28,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.fitflow.clover.mypage.mainscreen.MyPageScreen
+import com.fitflow.clover.mypage.mainscreen.SearchBar
+import com.fitflow.clover.mypage.mainscreen.UserPageScreen
 import com.fitflow.clover.mypage.setup.MyPageNavHost
 import com.fitflow.clover.mypage.setup.NotificationPush
 import com.fitflow.clover.presentation.auth.*
@@ -264,7 +267,9 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.CarbonPoint.route)
                 },
                 onClickSearch = {
-                    navigateSingleTop("search_screen")
+                    navController.navigate("search_bar") {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -545,14 +550,15 @@ fun CloverNavHost(
             )
         }
 
-        composable("search_screen") {
-            // 다른 파일들과 구별하기 위해 질문자님의 파일 패키지명을 앞에 통째로 붙여 호출합니다.
-            com.fitflow.clover.mypage.mainscreen.(
-                onBackClick = {
-                    popBackOrMain()
-                }
+
+// 4. 검색바 화면 등록 (상대방이 하드코딩한 경로 이름이 "search_screen"이었다면 아래처럼 연결!)
+        composable(ScreenRoute.SearchBar.route) {
+            SearchBar( // 👈 일단 이렇게만 적으면 빨간색으로 뜰 거예요.
+                onBackClick = { navController.popBackStack() }
             )
         }
+
+
 
         composable(ScreenRoute.TradePost.route) {
             MainPlaceholderScreen(
@@ -631,6 +637,7 @@ fun CloverNavHost(
         }
     }
 }
+
 
 
 @Composable

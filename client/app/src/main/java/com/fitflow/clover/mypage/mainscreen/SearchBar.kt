@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.fitflow.clover.R
 
 @Composable
-fun Search(onBackClick: () -> Unit = {},
+fun SearchBar(onBackClick: () -> Unit = {},
            onSearchExecute: (String) -> Unit = { query -> println("기본 검색 실행 로그: $query")})
 {
     var searchQuery by remember { mutableStateOf("") }
@@ -53,7 +53,7 @@ fun Search(onBackClick: () -> Unit = {},
             horizontalAlignment = Alignment.Companion.CenterHorizontally
         ) {
             // 상단바
-            SearchTopBar()
+            SearchBarTopBar()
 
             Box(
                 modifier = Modifier.Companion
@@ -245,7 +245,7 @@ fun Search(onBackClick: () -> Unit = {},
 }
 
 @Composable
-fun SearchTopBar() {
+fun SearchBarTopBar() {
     Box(
         modifier = Modifier.Companion
             .width(393.dp)  // 가로 사이즈
@@ -258,7 +258,7 @@ fun SearchTopBar() {
 //미리보기 도화지 설정창
 @Preview(showBackground = true, device = "spec:width=393dp,height=852dp")
 @Composable
-fun SearchPreview() {
+fun SearchBarPreview() {
 
-    Search()
+    SearchBar()
 }

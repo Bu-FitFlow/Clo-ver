@@ -79,6 +79,7 @@ sealed class ScreenRoute(val route: String) {
     data object TradePost : ScreenRoute("trade_post")
     data object MyPage : ScreenRoute("my_page")
     data object Sale : ScreenRoute("sale")
+    data object SearchBar : ScreenRoute("searchbar")
 
     data object Report : ScreenRoute("report?targetType={targetType}&targetId={targetId}") {
         fun createRoute(
