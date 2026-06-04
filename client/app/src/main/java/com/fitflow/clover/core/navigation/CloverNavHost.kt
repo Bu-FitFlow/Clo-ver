@@ -227,7 +227,7 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.Chat.route)
                 },
                 onClickTradePost = {
-                    navigateSingleTop(ScreenRoute.TradePost.route)
+                    navigateSingleTop(ScreenRoute.ProductList.route)
                 },
                 onClickCommunity = {
                     navigateSingleTop(ScreenRoute.CommunityList.route)
@@ -256,6 +256,11 @@ fun CloverNavHost(
                 },
                 onClickCommunityMore = {
                     navigateSingleTop(ScreenRoute.CommunityList.route)
+                },
+                onClickCommunityPost = { postId ->
+                    navController.navigate(
+                        ScreenRoute.CommunityDetail.createRoute(postId)
+                    )
                 },
                 onClickCarbonBanner = {
                     navigateSingleTop(ScreenRoute.CarbonPoint.route)
@@ -365,6 +370,9 @@ fun CloverNavHost(
                 onBackClick = {
                     popBackOrMain()
                 },
+                onLogoClick = {
+                    navigateSingleTop(ScreenRoute.Main.route)
+                },
                 onTitleChange = communityViewModel::onWriteTitleChange,
                 onCategorySelect = communityViewModel::onWriteCategorySelect,
                 onCategoryDropdownToggle = communityViewModel::onWriteCategoryDropdownToggle,
@@ -401,6 +409,9 @@ fun CloverNavHost(
                 uiState = detailUiState,
                 onBackClick = {
                     popBackOrMain()
+                },
+                onLogoClick = {
+                    navigateSingleTop(ScreenRoute.Main.route)
                 },
                 onLikeClick = communityViewModel::onLikeClick,
                 onCommentInputChange = communityViewModel::onCommentInputChange,
@@ -444,6 +455,9 @@ fun CloverNavHost(
                 uiState = editUiState,
                 onBackClick = {
                     popBackOrMain()
+                },
+                onLogoClick = {
+                    navigateSingleTop(ScreenRoute.Main.route)
                 },
                 onTitleChange = communityViewModel::onEditTitleChange,
                 onCategorySelect = communityViewModel::onEditCategorySelect,
@@ -513,19 +527,21 @@ fun CloverNavHost(
                 onBackClick = {
                     chatViewModel.backToChatList()
 
-                    if (productId != null) {
-                        navController.navigate(
-                            ScreenRoute.ProductDetail.createRoute(productId)
-                        ) {
-                            launchSingleTop = true
-                        }
-                    } else {
+                    val popped = navController.popBackStack()
+
+                    if (!popped) {
                         navigateSingleTop(ScreenRoute.Main.route)
                     }
                 },
                 onLogoClick = {
                     chatViewModel.backToChatList()
-                    navigateSingleTop(ScreenRoute.Main.route)
+
+                    navController.navigate(ScreenRoute.Main.route) {
+                        launchSingleTop = true
+                        popUpTo(ScreenRoute.Main.route) {
+                            inclusive = false
+                        }
+                    }
                 }
             )
         }
@@ -635,6 +651,11 @@ private fun ProductListRouteContent(
                 ScreenRoute.ProductDetail.createRoute(productId)
             )
         },
+        onLogoClick = {
+            navController.navigate(ScreenRoute.Main.route) {
+                launchSingleTop = true
+            }
+        },
         onMainCategorySelect = productViewModel::onMainCategorySelect,
         onMainCategoryExpandChange = productViewModel::onMainCategoryExpandChange,
         onSubCategorySelect = productViewModel::onSubCategorySelect,
@@ -721,6 +742,11 @@ private fun CommunityListRouteContent(
         onWriteClick = {
             communityViewModel.resetWriteState()
             navController.navigate(ScreenRoute.CommunityWrite.route)
+        },
+        onLogoClick = {
+            navController.navigate(ScreenRoute.Main.route) {
+                launchSingleTop = true
+            }
         },
         onCategorySelect = communityViewModel::onCategorySelect,
         onSearchQueryChange = communityViewModel::onSearchQueryChange,

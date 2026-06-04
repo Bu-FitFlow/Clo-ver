@@ -74,6 +74,7 @@ fun HomeScreen(
     onClickBodyProductMore: () -> Unit,
     onClickProductDetail: (Long) -> Unit,
     onClickCommunityMore: () -> Unit,
+    onClickCommunityPost: (Long) -> Unit = {},
     onClickCarbonBanner: () -> Unit
 ) {
     val mainViewModel = remember {
@@ -160,7 +161,8 @@ fun HomeScreen(
                 CommunitySection(
                     title = "커뮤니티 최신글",
                     posts = mainViewModel.latestCommunityPosts,
-                    onClickMore = onClickCommunityMore
+                    onClickMore = onClickCommunityMore,
+                    onClickPost = onClickCommunityPost
                 )
 
                 Spacer(modifier = Modifier.height(18.dp))
@@ -168,7 +170,8 @@ fun HomeScreen(
                 CommunitySection(
                     title = "커뮤니티 인기글",
                     posts = mainViewModel.popularCommunityPosts,
-                    onClickMore = onClickCommunityMore
+                    onClickMore = onClickCommunityMore,
+                    onClickPost = onClickCommunityPost
                 )
 
                 Spacer(modifier = Modifier.height(26.dp))
@@ -734,7 +737,8 @@ private fun MainDivider() {
 private fun CommunitySection(
     title: String,
     posts: List<MainCommunityPostUiModel>,
-    onClickMore: () -> Unit
+    onClickMore: () -> Unit,
+    onClickPost: (Long) -> Unit = {}
 ) {
     SectionHeader(
         title = title,
@@ -748,20 +752,25 @@ private fun CommunitySection(
         verticalArrangement = Arrangement.spacedBy(11.dp)
     ) {
         posts.forEach { post ->
-            CommunityPostRow(post = post)
+            CommunityPostRow(
+                post = post,
+                onClickPost = onClickPost
+            )
         }
     }
 }
 
 @Composable
 private fun CommunityPostRow(
-    post: MainCommunityPostUiModel
+    post: MainCommunityPostUiModel,
+    onClickPost: (Long) -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(37.dp)
-            .border(1.dp, Color.Black),
+            .border(1.dp, Color.Black)
+            .clickable { onClickPost(post.id) },
         verticalAlignment = Alignment.CenterVertically
     ) {
         CommunityThumb()
