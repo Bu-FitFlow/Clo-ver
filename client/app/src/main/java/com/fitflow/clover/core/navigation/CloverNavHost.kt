@@ -268,9 +268,7 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.CarbonPoint.route)
                 },
                 onClickSearch = {
-                    navController.navigate("search_bar") {
-                        launchSingleTop = true
-                    }
+                    navigateSingleTop("search_bar")
                 }
             )
         }
@@ -545,6 +543,7 @@ fun CloverNavHost(
             )
         }
 
+
         composable("notification_screen") {
             NotificationScreen(
                 onBackClick = {
@@ -554,14 +553,11 @@ fun CloverNavHost(
             )
         }
 
-
-// 4. 검색바 화면 등록 (상대방이 하드코딩한 경로 이름이 "search_screen"이었다면 아래처럼 연결!)
         composable(ScreenRoute.SearchBar.route) {
-            SearchBar( // 👈 일단 이렇게만 적으면 빨간색으로 뜰 거예요.
+            SearchBar(
                 onBackClick = { navController.popBackStack() }
             )
         }
-
 
 
         composable(ScreenRoute.TradePost.route) {
@@ -582,6 +578,8 @@ fun CloverNavHost(
                 }
             )
         }
+
+
 
         composable(
             route = ScreenRoute.Report.route,

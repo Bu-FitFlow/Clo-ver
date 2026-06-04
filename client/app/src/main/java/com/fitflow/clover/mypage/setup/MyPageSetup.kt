@@ -3,6 +3,7 @@ package com.fitflow.clover.mypage.setup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable // 🎯 클릭 기능을 위해 필수 추가
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -47,6 +49,8 @@ import com.fitflow.clover.mypage.mainscreen.MyWriting
 object MyPageDestinations {
     const val MYPAGE_SCREEN = "mypage_screen"
     const val MY_WRITING = "my_writing"
+
+    const val GOODS = "goods"
     const val SETUP = "setup"
     const val ACCOUNT_PROFILE = "account_profile"
     const val ACCOUNT_PASSWORD = "account_password"
@@ -56,9 +60,6 @@ object MyPageDestinations {
 
     const val PERSONAL_INFORMATION= "personal_information"
 
-    const val MY_PAGE = "mypage_screen"
-    const val USER_PROFILE = "user_page_screen"
-    const val SEARCH_BAR = "search_bar"
 }
 
 // 💡 마이페이지 화면 이동을 총괄하는 네비게이션 호스트
@@ -77,6 +78,9 @@ fun MyPageNavHost(onExitMyPage: () -> Unit) {
                 onMyWritingClick = {
                     // 🎯 내 글 보기 행을 누르면 MYWRITING 화면으로 이동합니다.
                     navController.navigate(MyPageDestinations.MY_WRITING)
+                },
+                onGoodsClick = {
+
                 },
                 onBackClick = onExitMyPage
 
@@ -110,9 +114,9 @@ fun MyPageNavHost(onExitMyPage: () -> Unit) {
         composable(MyPageDestinations.PERSONAL_INFORMATION) {
             PersonalInformation(navController = navController)
         }
+
     }
 }
-
 
 
 @Composable

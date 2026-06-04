@@ -34,6 +34,7 @@ import com.fitflow.clover.R
 @Composable
 fun MyPageScreen(onSettingsClick: () -> Unit,
                  onMyWritingClick: () -> Unit,
+                 onGoodsClick: () -> Unit,
                  onBackClick: () -> Unit = {}) {
     // 전체 화면을 감싸는 도화지
     Surface(
@@ -219,14 +220,50 @@ fun MyPageScreen(onSettingsClick: () -> Unit,
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // [리스트 영역] 반복문을 사용해 시안의 사각형+선 세트를 4개 생성
-            // 나중에 실제 데이터를 넣을 때는 repeat(4) 대신 리스트 데이터를 넣으면 됩니다.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 31.dp)
+                    .height(1.dp)
+                    .background(Color.Black)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 31.dp)
+                    .clickable { onGoodsClick() },
+                horizontalArrangement = Arrangement.SpaceBetween, // 양 끝으로 배치
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "내 판매 물품",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+
+                // 우측 화살표 아이콘 (시안의 > 모양)
+                Icon(
+                    painter = painterResource(R.drawable.kakaotalk_20260514_111630855), // ⚠️ 가지고 계신 화살표 아이콘(또는 뒤로가기를 회전) 리소스로 변경
+                    contentDescription = "더보기",
+                    modifier = Modifier
+                        .size(20.dp)
+                        .rotate(180f),
+                    tint = Color.Black
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 31.dp)
             ) {
-                repeat(4) { index ->
+                repeat(3) { index ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -274,18 +311,6 @@ fun MyPageScreenTopBar() {
     }
 }
 
-/*
-@Composable
-fun MyPageScreenTopBar() {
-    Box(
-        modifier = Modifier
-            .width(393.dp)  // 가로 사이즈
-            .height(63.dp) // 세로 사이즈
-            .background(Color.White) // 배경을 흰색으로 채움
-    ) {
-    }
-}
- */
 
 
 //미리보기 도화지 설정창
@@ -294,5 +319,7 @@ fun MyPageScreenTopBar() {
 fun MyPageScreenPreview() {
 
     MyPageScreen(onSettingsClick = {},
-        onMyWritingClick = {})
+        onMyWritingClick = {},
+        onGoodsClick = {},
+        onBackClick = {})
 }
