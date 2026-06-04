@@ -58,14 +58,15 @@ public class SecurityConfig {
                                 "/api/members/check-id",
                                 "/api/members/check-email",
                                 "/api/members/check-nickname",
-                                "/api/test/image"
+                                "/api/test/image",
+                                "/api/health"
                         ).permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "api/products", "api/products/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**").permitAll()
                         .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
                         .requestMatchers("/ws-stomp/**").permitAll()
                         .anyRequest().authenticated()

@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<div class="topbar" th:fragment="topbar">
+    <div class="user-info">환영합니다, <strong th:text="${adminName}">관리자</strong>님!</div>
+
+    <form method="post" style="margin: 0;" th:action="@{/logout}">
+        <button class="btn-logout" type="submit">로그아웃</button>
+    </form>
+</div>
+
+</html>

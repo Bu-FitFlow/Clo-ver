@@ -153,7 +153,7 @@ fun PersonalColorScreen(
     ) {
         PersonalColorHeader(
             onBack = onBack,
-            onSkip = onMoveToMain
+            onSkip = onMoveToResult
         )
 
         Text(

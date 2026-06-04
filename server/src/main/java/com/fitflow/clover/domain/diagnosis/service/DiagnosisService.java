@@ -48,7 +48,7 @@ public class DiagnosisService {
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(
-                    appAiDiagnosisUrl + "/analyze",
+                    appAiDiagnosisUrl + "/analyze/body",
                     requestEntity,
                     String.class
             );
@@ -60,15 +60,7 @@ public class DiagnosisService {
 
             if (existingDiagnosis.isPresent()) {
                 Diagnosis diagnosis = existingDiagnosis.get();
-                diagnosis.updateValues(
-                        height,
-                        weight,
-                        obesityType,
-                        "TBD",
-                        "TBD",
-                        "체형 분석 완료(갱신)",
-                        "추후 상세 추천이 제공됩니다."
-                );
+                diagnosis.updateBodyType(height, weight, obesityType);
                 return diagnosis;
             } else {
                 Diagnosis newDiagnosis = new Diagnosis(
@@ -79,6 +71,49 @@ public class DiagnosisService {
                         "TBD",
                         "TBD",
                         "체형 분석 완료",
+                        "추후 상세 추천이 제공됩니다."
+                );
+                return diagnosisRepository.save(newDiagnosis);
+            }
+        } catch (Exception e) {
+            throw new CustomException(ErrorCode.AI_SERVER_ERROR);
+        }
+    }
+
+    public Diagnosis createColorScan(Long memberId, MultipartFile frontImg) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("front_img", frontImg.getResource());
+
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    appAiDiagnosisUrl + "/analyze/color",
+                    requestEntity,
+                    String.class
+            );
+
+            JsonNode rootNode = objectMapper.readTree(response.getBody());
+            String personalColor = rootNode.get("personal_color").asText();
+
+            Optional<Diagnosis> existingDiagnosis = diagnosisRepository.findByMemberId(memberId);
+
+            if (existingDiagnosis.isPresent()) {
+                Diagnosis diagnosis = existingDiagnosis.get();
+                diagnosis.updatePersonalColor(personalColor);
+                return diagnosis;
+            } else {
+                Diagnosis newDiagnosis = new Diagnosis(
+                        memberId,
+                        0,
+                        0,
+                        "TBD",
+                        "TBD",
+                        personalColor,
+                        "퍼스널 컬러 분석 완료",
                         "추후 상세 추천이 제공됩니다."
                 );
                 return diagnosisRepository.save(newDiagnosis);

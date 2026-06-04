@@ -1,5 +1,13 @@
 package com.fitflow.clover.presentation.main
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -74,6 +83,7 @@ fun HomeScreen(
     onClickBodyProductMore: () -> Unit,
     onClickProductDetail: (Long) -> Unit,
     onClickCommunityMore: () -> Unit,
+    onClickCommunityPost: (Long) -> Unit = {},
     onClickCarbonBanner: () -> Unit
 ) {
     val mainViewModel = remember {
@@ -160,7 +170,8 @@ fun HomeScreen(
                 CommunitySection(
                     title = "커뮤니티 최신글",
                     posts = mainViewModel.latestCommunityPosts,
-                    onClickMore = onClickCommunityMore
+                    onClickMore = onClickCommunityMore,
+                    onClickPost = onClickCommunityPost
                 )
 
                 Spacer(modifier = Modifier.height(18.dp))
@@ -168,7 +179,8 @@ fun HomeScreen(
                 CommunitySection(
                     title = "커뮤니티 인기글",
                     posts = mainViewModel.popularCommunityPosts,
-                    onClickMore = onClickCommunityMore
+                    onClickMore = onClickCommunityMore,
+                    onClickPost = onClickCommunityPost
                 )
 
                 Spacer(modifier = Modifier.height(26.dp))
@@ -490,9 +502,9 @@ private fun ProductSection(
         mutableIntStateOf(0)
     }
 
-    val visibleProducts = carouselProducts
-        .drop(currentPage * pageSize)
-        .take(pageSize)
+    var slideDirection by remember(carouselProducts) {
+        mutableIntStateOf(1)
+    }
 
     SectionHeader(
         title = title,
@@ -522,24 +534,60 @@ private fun ProductSection(
         modifier = Modifier
             .fillMaxWidth()
             .height(205.dp)
+            .clipToBounds()
     ) {
-        Row(
+        AnimatedContent(
+            targetState = currentPage,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 23.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            visibleProducts.forEach { product ->
-                ProductCard(
-                    product = product,
-                    onClick = {
-                        onClickProduct(product)
-                    }
-                )
-            }
+                .clipToBounds(),
+            transitionSpec = {
+                val direction = slideDirection
 
-            repeat(pageSize - visibleProducts.size) {
-                Spacer(modifier = Modifier.width(103.dp))
+                val enterTransition = slideInHorizontally(
+                    animationSpec = tween(durationMillis = 280)
+                ) { fullWidth ->
+                    direction * fullWidth
+                } + fadeIn(
+                    animationSpec = tween(durationMillis = 120)
+                )
+
+                val exitTransition = slideOutHorizontally(
+                    animationSpec = tween(durationMillis = 280)
+                ) { fullWidth ->
+                    -direction * fullWidth
+                } + fadeOut(
+                    animationSpec = tween(durationMillis = 120)
+                )
+
+                enterTransition togetherWith exitTransition using SizeTransform(
+                    clip = true
+                )
+            },
+            label = "ProductSectionPageSlide"
+        ) { animatedPage ->
+            val visibleProducts = carouselProducts
+                .drop(animatedPage * pageSize)
+                .take(pageSize)
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 23.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                visibleProducts.forEach { product ->
+                    ProductCard(
+                        product = product,
+                        onClick = {
+                            onClickProduct(product)
+                        }
+                    )
+                }
+
+                repeat(pageSize - visibleProducts.size) {
+                    Spacer(modifier = Modifier.width(103.dp))
+                }
             }
         }
 
@@ -547,6 +595,7 @@ private fun ProductSection(
             ChevronButton(
                 isLeft = true,
                 onClick = {
+                    slideDirection = -1
                     currentPage = if (currentPage == 0) {
                         pageCount - 1
                     } else {
@@ -561,6 +610,7 @@ private fun ProductSection(
             ChevronButton(
                 isLeft = false,
                 onClick = {
+                    slideDirection = 1
                     currentPage = (currentPage + 1) % pageCount
                 },
                 modifier = Modifier
@@ -734,7 +784,8 @@ private fun MainDivider() {
 private fun CommunitySection(
     title: String,
     posts: List<MainCommunityPostUiModel>,
-    onClickMore: () -> Unit
+    onClickMore: () -> Unit,
+    onClickPost: (Long) -> Unit = {}
 ) {
     SectionHeader(
         title = title,
@@ -748,20 +799,25 @@ private fun CommunitySection(
         verticalArrangement = Arrangement.spacedBy(11.dp)
     ) {
         posts.forEach { post ->
-            CommunityPostRow(post = post)
+            CommunityPostRow(
+                post = post,
+                onClickPost = onClickPost
+            )
         }
     }
 }
 
 @Composable
 private fun CommunityPostRow(
-    post: MainCommunityPostUiModel
+    post: MainCommunityPostUiModel,
+    onClickPost: (Long) -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(37.dp)
-            .border(1.dp, Color.Black),
+            .border(1.dp, Color.Black)
+            .clickable { onClickPost(post.id) },
         verticalAlignment = Alignment.CenterVertically
     ) {
         CommunityThumb()

@@ -23,12 +23,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,6 +53,7 @@ fun CommunityListScreen(
     onSearchQueryChange: (String) -> Unit = {},
     onMenuClick: (Long) -> Unit = {},
     onBackClick: () -> Unit = {},
+    onLogoClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onChatClick: () -> Unit = {},
     onProductListClick: () -> Unit = {},
@@ -71,7 +74,7 @@ fun CommunityListScreen(
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    CommunityCloverTopBar(onBackClick = onBackClick)
+                    CommunityCloverTopBar(onBackClick = onBackClick, onLogoClick = onLogoClick)
 
                     Column(
                         modifier = Modifier
@@ -161,57 +164,66 @@ fun CommunityListScreen(
                     Column(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(end = 16.dp, bottom = 64.dp), // 버튼 위쪽에 위치하도록 bottom 여백 조절
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                            .padding(end = 10.dp, bottom = 64.dp),
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         // 상단 메뉴 박스
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = Color.White,
-                            shadowElevation = 4.dp,
-                            modifier = Modifier.width(140.dp)
+                        Column(
+                            modifier = Modifier
+                                .width(134.dp)
+                                .shadow(elevation = 6.dp, shape = RoundedCornerShape(10.dp))
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color.White),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                                MenuItem("알림") {
-                                    isMenuExpanded = false
-                                    onNotificationClick()
-                                }
-                                MenuItem("채팅방") {
-                                    isMenuExpanded = false
-                                    onChatClick()
-                                }
-                                MenuItem("판매글") {
-                                    isMenuExpanded = false
-                                    onProductListClick()
-                                }
-                                MenuItem("커뮤니티") {
-                                    isMenuExpanded = false
-                                    onCommunityClick()
-                                }
-                                MenuItem("마이페이지") {
-                                    isMenuExpanded = false
-                                    onMyPageClick()
-                                }
+                            listOf(
+                                "알림" to { isMenuExpanded = false; onNotificationClick() },
+                                "채팅방" to { isMenuExpanded = false; onChatClick() },
+                                "판매글" to { isMenuExpanded = false; onProductListClick() },
+                                "커뮤니티" to { isMenuExpanded = false; onCommunityClick() },
+                                "마이페이지" to { isMenuExpanded = false; onMyPageClick() }
+                            ).forEach { (label, action) ->
+                                Text(
+                                    text = label,
+                                    color = Color.Black,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable(onClick = action)
+                                        .padding(vertical = 10.dp)
+                                )
                             }
                         }
 
                         // 하단 메뉴 박스
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = Color.White,
-                            shadowElevation = 4.dp,
-                            modifier = Modifier.width(140.dp)
+                        Column(
+                            modifier = Modifier
+                                .width(134.dp)
+                                .shadow(elevation = 6.dp, shape = RoundedCornerShape(10.dp))
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color.White),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                                MenuItem("판매") {
-                                    isMenuExpanded = false
-                                    onSellClick()
-                                }
-                                MenuItem("글쓰기") {
-                                    isMenuExpanded = false
-                                    onWriteClick()
-                                }
+                            listOf(
+                                "판매" to { isMenuExpanded = false; onSellClick() },
+                                "글쓰기" to { isMenuExpanded = false; onWriteClick() }
+                            ).forEach { (label, action) ->
+                                Text(
+                                    text = label,
+                                    color = Color.Black,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable(onClick = action)
+                                        .padding(vertical = 10.dp)
+                                )
                             }
                         }
                     }
@@ -224,8 +236,8 @@ fun CommunityListScreen(
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(end = 16.dp, bottom = 16.dp)
-                        .size(56.dp)
+                        .padding(end = 10.dp, bottom = 10.dp)
+                        .size(40.dp)
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
@@ -266,6 +278,7 @@ fun MenuItem(text: String, onClick: () -> Unit) {
 fun CommunityDetailScreen(
     uiState: CommunityDetailUiState = CommunityDetailUiState(),
     onBackClick: () -> Unit = {},
+    onLogoClick: () -> Unit = {},
     onLikeClick: () -> Unit = {},
     onCommentInputChange: (String) -> Unit = {},
     onCommentSubmit: () -> Unit = {},
@@ -286,7 +299,7 @@ fun CommunityDetailScreen(
         Scaffold(
             containerColor = Color.White,
             topBar = {
-                CommunityCloverTopBar(onBackClick = onBackClick)
+                CommunityCloverTopBar(onBackClick = onBackClick, onLogoClick = onLogoClick)
             }
         ) { paddingValues ->
             when {
@@ -523,6 +536,7 @@ fun CommunityDetailScreen(
 fun CommunityWriteScreen(
     uiState: CommunityWriteUiState = CommunityWriteUiState(),
     onBackClick: () -> Unit = {},
+    onLogoClick: () -> Unit = {},
     onTitleChange: (String) -> Unit = {},
     onCategorySelect: (CommunityCategory) -> Unit = {},
     onCategoryDropdownToggle: (Boolean) -> Unit = {},
@@ -593,7 +607,7 @@ fun CommunityWriteScreen(
             containerColor = Color.White,
             topBar = {
                 Column(modifier = Modifier.fillMaxWidth().statusBarsPadding()) {
-                    CommunityCloverTopBar(onBackClick = onBackClick)
+                    CommunityCloverTopBar(onBackClick = onBackClick, onLogoClick = onLogoClick)
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -706,6 +720,7 @@ fun CommunityWriteScreen(
 fun CommunityEditScreen(
     uiState: CommunityEditUiState = CommunityEditUiState(),
     onBackClick: () -> Unit = {},
+    onLogoClick: () -> Unit = {},
     onTitleChange: (String) -> Unit = {},
     onCategorySelect: (CommunityCategory) -> Unit = {},
     onCategoryDropdownToggle: (Boolean) -> Unit = {},
@@ -784,7 +799,7 @@ fun CommunityEditScreen(
                         .statusBarsPadding()
                 ) {
                     // 공통 상단바 (로고 등)
-                    CommunityCloverTopBar(onBackClick = onBackClick)
+                    CommunityCloverTopBar(onBackClick = onBackClick, onLogoClick = onLogoClick)
 
                     // 제목 입력 및 수정 버튼 영역
                     Row(
@@ -943,17 +958,16 @@ fun CommunityEditScreen(
 // ─────────────────────────────────────────────────────────
 @Composable
 fun CommunityCloverTopBar(
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onLogoClick: () -> Unit = {}
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        // 상태바 영역 - 흰색
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
                 .background(Color.White)
         )
-        // 상단바 - 녹색, 고정 높이 57dp
         Surface(
             color = Color(0xFFE8F8E0),
             modifier = Modifier
@@ -987,7 +1001,11 @@ fun CommunityCloverTopBar(
                         contentDescription = "Clo-ver 로고",
                         modifier = Modifier
                             .width(80.dp)
-                            .height(62.dp),
+                            .height(62.dp)
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) { onLogoClick() },
                         contentScale = ContentScale.Fit
                     )
                 }

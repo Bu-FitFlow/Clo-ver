@@ -1,5 +1,7 @@
 package com.fitflow.clover.domain.product.service;
 
+import com.fitflow.clover.domain.diagnosis.entity.Diagnosis;
+import com.fitflow.clover.domain.diagnosis.repository.DiagnosisRepository;
 import com.fitflow.clover.domain.member.entity.Member;
 import com.fitflow.clover.domain.member.repository.MemberRepository;
 import com.fitflow.clover.domain.product.dto.request.ProductCreateRequest;
@@ -42,6 +44,7 @@ public class ProductService {
     private final WishlistRepository wishlistRepository;
     private final ImageService imageService;
     private final StringRedisTemplate redisTemplate;
+    private final DiagnosisRepository diagnosisRepository;
 
     @Transactional
     public Long createProduct(Long memberId, ProductCreateRequest request, List<MultipartFile> images) {
@@ -203,5 +206,36 @@ public class ProductService {
             product.increaseWishlistCount();
             return "찜 목록에 추가되었습니다.";
         }
+    }
+
+    public Slice<ProductListResponse> getRecommendedProducts(Long memberId, Pageable pageable) {
+
+        Optional<Diagnosis> diagnosisOpt = diagnosisRepository.findByMemberId(memberId);
+        Slice<Product> productSlice;
+
+        if (diagnosisOpt.isPresent()) {
+            String userObesityType = diagnosisOpt.get().getObesityType();
+            String userPersonalColor = diagnosisOpt.get().getPersonalColor(); // 💡 퍼스널 컬러 추출 추가
+
+            productSlice = productRepository.findRecommendedProducts(
+                    userObesityType, userPersonalColor, ProductStatus.ACTIVE, pageable);
+        } else {
+            ProductSearchCondition emptyCondition = new ProductSearchCondition(null, null, null, null, ProductStatus.ACTIVE);
+            productSlice = productRepository.searchProducts(emptyCondition, pageable);
+        }
+
+        List<Product> products = productSlice.getContent();
+        List<Long> productIds = products.stream().map(Product::getProductId).toList();
+        Map<Long, List<String>> imageUrlMap = imageService.getImageUrlMap(Image.ReferenceType.PRODUCT, productIds);
+
+        List<ProductListResponse> content = products.stream()
+                .map(product -> {
+                    List<String> images = imageUrlMap.getOrDefault(product.getProductId(), Collections.emptyList());
+                    String thumbnail = images.isEmpty() ? null : images.getFirst();
+                    return ProductListResponse.from(product, thumbnail);
+                })
+                .toList();
+
+        return new SliceImpl<>(content, pageable, productSlice.hasNext());
     }
 }

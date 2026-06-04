@@ -62,4 +62,16 @@ public class Diagnosis extends BaseTimeEntity {
         this.resultTitle = resultTitle;
         this.resultRecommend = resultRecommend;
     }
+
+    public void updateBodyType(Integer height, Integer weight, String obesityType) {
+        this.height = height;
+        this.weight = weight;
+        this.obesityType = obesityType;
+        this.resultTitle = "체형 분석 완료";
+    }
+
+    public void updatePersonalColor(String personalColor) {
+        this.personalColor = personalColor;
+        this.resultTitle = "퍼스널 컬러 분석 완료";
+    }
 }

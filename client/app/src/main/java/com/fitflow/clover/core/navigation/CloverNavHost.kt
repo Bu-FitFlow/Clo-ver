@@ -43,6 +43,7 @@ import com.fitflow.clover.presentation.community.CommunityListScreen
 import com.fitflow.clover.presentation.community.CommunityViewModel
 import com.fitflow.clover.presentation.community.CommunityWriteScreen
 import com.fitflow.clover.presentation.diagnosis.BodyAnalysisScreen
+import com.fitflow.clover.presentation.diagnosis.DiagnosisSummaryScreen
 import com.fitflow.clover.presentation.diagnosis.DiagnosisViewModel
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorResultScreen
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorResultUiModel
@@ -54,6 +55,9 @@ import com.fitflow.clover.presentation.product.ProductEditScreen
 import com.fitflow.clover.presentation.product.ProductListScreen
 import com.fitflow.clover.presentation.product.ProductViewModel
 import com.fitflow.clover.presentation.splash.SplashScreen
+
+
+private const val DIAGNOSIS_SUMMARY_ROUTE = "diagnosis_summary"
 
 
 @Composable
@@ -127,11 +131,11 @@ fun CloverNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = startDestination,
+        startDestination = "splash",
         modifier = modifier
     ) {
         composable("splash") {
-            SplashScreen(navController)
+            SplashScreen(navController = navController)
         }
 
         composable("login") {
@@ -169,7 +173,12 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
                 },
                 onMoveToMain = {
-                    navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
+                    navController.navigate(ScreenRoute.Main.route) {
+                        popUpTo(ScreenRoute.BodyAnalysis.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -181,13 +190,30 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.BodyAnalysis.route)
                 },
                 onMoveToResult = {
-                    navigateSingleTop(ScreenRoute.PersonalColorResult.route)
+                    navigateSingleTop(DIAGNOSIS_SUMMARY_ROUTE)
                 },
                 onMoveToRetry = {
                     navigateSingleTop(ScreenRoute.PersonalColorRetry.route)
                 },
                 onMoveToMain = {
-                    navigateSingleTop(ScreenRoute.Main.route)
+                    navigateSingleTop(DIAGNOSIS_SUMMARY_ROUTE)
+                }
+            )
+        }
+
+        composable(DIAGNOSIS_SUMMARY_ROUTE) {
+            DiagnosisSummaryScreen(
+                viewModel = diagnosisViewModel,
+                onBack = {
+                    navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
+                },
+                onMoveToMain = {
+                    navController.navigate(ScreenRoute.Main.route) {
+                        popUpTo(ScreenRoute.BodyAnalysis.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -215,7 +241,7 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
                 },
                 onMoveToMain = {
-                    navigateSingleTop(ScreenRoute.Main.route)
+                    navigateSingleTop(DIAGNOSIS_SUMMARY_ROUTE)
                 }
             )
         }
@@ -234,7 +260,7 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.Chat.route)
                 },
                 onClickTradePost = {
-                    navigateSingleTop(ScreenRoute.TradePost.route)
+                    navigateSingleTop(ScreenRoute.ProductList.route)
                 },
                 onClickCommunity = {
                     navigateSingleTop(ScreenRoute.CommunityList.route)
@@ -263,6 +289,11 @@ fun CloverNavHost(
                 },
                 onClickCommunityMore = {
                     navigateSingleTop(ScreenRoute.CommunityList.route)
+                },
+                onClickCommunityPost = { postId ->
+                    navController.navigate(
+                        ScreenRoute.CommunityDetail.createRoute(postId)
+                    )
                 },
                 onClickCarbonBanner = {
                     navigateSingleTop(ScreenRoute.CarbonPoint.route)
@@ -376,6 +407,9 @@ fun CloverNavHost(
                 onBackClick = {
                     popBackOrMain()
                 },
+                onLogoClick = {
+                    navigateSingleTop(ScreenRoute.Main.route)
+                },
                 onTitleChange = communityViewModel::onWriteTitleChange,
                 onCategorySelect = communityViewModel::onWriteCategorySelect,
                 onCategoryDropdownToggle = communityViewModel::onWriteCategoryDropdownToggle,
@@ -412,6 +446,9 @@ fun CloverNavHost(
                 uiState = detailUiState,
                 onBackClick = {
                     popBackOrMain()
+                },
+                onLogoClick = {
+                    navigateSingleTop(ScreenRoute.Main.route)
                 },
                 onLikeClick = communityViewModel::onLikeClick,
                 onCommentInputChange = communityViewModel::onCommentInputChange,
@@ -455,6 +492,9 @@ fun CloverNavHost(
                 uiState = editUiState,
                 onBackClick = {
                     popBackOrMain()
+                },
+                onLogoClick = {
+                    navigateSingleTop(ScreenRoute.Main.route)
                 },
                 onTitleChange = communityViewModel::onEditTitleChange,
                 onCategorySelect = communityViewModel::onEditCategorySelect,
@@ -658,6 +698,11 @@ private fun ProductListRouteContent(
                 ScreenRoute.ProductDetail.createRoute(productId)
             )
         },
+        onLogoClick = {
+            navController.navigate(ScreenRoute.Main.route) {
+                launchSingleTop = true
+            }
+        },
         onMainCategorySelect = productViewModel::onMainCategorySelect,
         onMainCategoryExpandChange = productViewModel::onMainCategoryExpandChange,
         onSubCategorySelect = productViewModel::onSubCategorySelect,
@@ -744,6 +789,11 @@ private fun CommunityListRouteContent(
         onWriteClick = {
             communityViewModel.resetWriteState()
             navController.navigate(ScreenRoute.CommunityWrite.route)
+        },
+        onLogoClick = {
+            navController.navigate(ScreenRoute.Main.route) {
+                launchSingleTop = true
+            }
         },
         onCategorySelect = communityViewModel::onCategorySelect,
         onSearchQueryChange = communityViewModel::onSearchQueryChange,

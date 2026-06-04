@@ -1,11 +1,9 @@
 package com.fitflow.clover.domain.community.controller;
 
-import com.fitflow.clover.domain.community.dto.request.CommentReportRequest;
-import com.fitflow.clover.domain.community.dto.request.CommunityReportRequest;
 import com.fitflow.clover.domain.community.dto.request.FreePostRequest;
-import com.fitflow.clover.domain.community.dto.response.*;
+import com.fitflow.clover.domain.community.dto.response.CommunityListResponse;
+import com.fitflow.clover.domain.community.dto.response.FreeDetailResponse;
 import com.fitflow.clover.domain.community.service.FreeCommunityService;
-import com.fitflow.clover.domain.community.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -23,7 +21,6 @@ import java.util.List;
 public class FreeCommunityController {
 
     private final FreeCommunityService freeCommunityService;
-    private final ReportService reportService;
 
     @Operation(summary = "자유 게시판 목록 조회")
     @GetMapping

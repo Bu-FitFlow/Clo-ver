@@ -1,33 +1,35 @@
-package com.fitflow.clover.domain.community.entity;
+package com.fitflow.clover.domain.notification.entity;
 
+import com.fitflow.clover.domain.member.entity.Member;
+import com.fitflow.clover.global.common.BaseCreatedTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Entity
-@Table(name = "notification")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Notification {
+@Table(name = "notification")
+public class Notification extends BaseCreatedTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "notification_id")
     private Long notificationId;
 
-    @Column(name = "receiver_id", nullable = false)
-    private Long receiverId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "receiver_id", nullable = false)
+    private Member receiverId;
 
-    @Column(name = "sender_id")
-    private Long senderId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sender_id")
+    private Member sender;
 
     @Column(name = "notification_type", nullable = false, length = 50)
     private String notificationType;
 
-    @Column(name = "content", nullable = false, length = 255)
+    @Column(name = "content", nullable = false)
     private String content;
 
     @Column(name = "related_id")
@@ -35,12 +37,9 @@ public class Notification {
 
     @Column(name = "is_read", nullable = false, columnDefinition = "TINYINT")
     @Builder.Default
-    private int isRead = 0;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private boolean isRead = false;
 
     public void read() {
-        this.isRead = 1;
+        this.isRead = true;
     }
 }
