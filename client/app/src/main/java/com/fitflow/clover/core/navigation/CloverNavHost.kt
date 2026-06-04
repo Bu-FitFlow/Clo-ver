@@ -49,6 +49,7 @@ import com.fitflow.clover.presentation.product.ProductEditScreen
 import com.fitflow.clover.presentation.product.ProductListScreen
 import com.fitflow.clover.presentation.product.ProductViewModel
 import com.fitflow.clover.presentation.splash.SplashScreen
+import com.fitflow.clover.presentation.report.ReportScreen
 
 private const val DIAGNOSIS_SUMMARY_ROUTE = "diagnosis_summary"
 
@@ -620,12 +621,10 @@ fun CloverNavHost(
                 ?.toLongOrNull()
                 ?: 0L
 
-            MainPlaceholderScreen(
-                title = "신고",
-                description = "$targetType $targetId 신고 화면으로 연결될 예정입니다.",
-                onBackToMain = {
-                    popBackOrMain()
-                }
+            // 🌟 [틀린 부분 수정] 가짜 화면을 지우고 진짜 내가 만든 ReportScreen을 연결합니다!
+            ReportScreen(
+                navController = navController,
+                targetUserName = "$targetType (ID: $targetId)" // 신고 대상 표시용 (필요에 따라 조절)
             )
         }
 
