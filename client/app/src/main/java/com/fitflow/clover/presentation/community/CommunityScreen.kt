@@ -287,6 +287,7 @@ fun CommunityDetailScreen(
     onReplySubmit: () -> Unit = {},
     onCommentDeleteClick: (Long) -> Unit = {},
     onMenuClick: () -> Unit = {},
+    onMenuDismiss: () -> Unit = {},
     onEditClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
     onReportClick: () -> Unit = {},
@@ -414,7 +415,7 @@ fun CommunityDetailScreen(
                                                     onDeleteClick = onDeleteClick,
                                                     onReportClick = onReportClick,
                                                     onBlockClick = onBlockClick,
-                                                    onDismiss = onMenuClick
+                                                    onDismiss = onMenuDismiss
                                                 )
                                             }
                                         }
