@@ -33,7 +33,8 @@ import com.fitflow.clover.R
 
 @Composable
 fun MyPageScreen(onSettingsClick: () -> Unit,
-                 onMyWritingClick: () -> Unit) {
+                 onMyWritingClick: () -> Unit,
+                 onBackClick: () -> Unit = {}) {
     // 전체 화면을 감싸는 도화지
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -59,7 +60,9 @@ fun MyPageScreen(onSettingsClick: () -> Unit,
                     modifier = Modifier
                         .padding(start=16.dp)
                         .size(28.dp)
-                        .align(Alignment.CenterStart) // 🔥 Box 내부 정렬 규칙 적용
+                        .align(Alignment.CenterStart)
+                        .clickable { onBackClick() }
+                // 🔥 Box 내부 정렬 규칙 적용
 
                 )
                 Text(

@@ -73,7 +73,8 @@ fun MyPageNavHost(onExitMyPage: () -> Unit) {
                 onMyWritingClick = {
                     // 🎯 내 글 보기 행을 누르면 MYWRITING 화면으로 이동합니다.
                     navController.navigate(MyPageDestinations.MY_WRITING)
-                }
+                },
+                onBackClick = onExitMyPage
 
             )
         }

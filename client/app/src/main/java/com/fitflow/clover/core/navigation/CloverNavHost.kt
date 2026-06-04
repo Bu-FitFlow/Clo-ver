@@ -28,7 +28,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.fitflow.clover.domain.usecase.Search
 import com.fitflow.clover.mypage.setup.MyPageNavHost
 import com.fitflow.clover.mypage.setup.NotificationPush
 import com.fitflow.clover.presentation.auth.*
@@ -547,9 +546,8 @@ fun CloverNavHost(
         }
 
         composable("search_screen") {
-            // 💡 별명(MySearchScreen)도 쓰지 마세요! 컴퓨터가 헷갈려하니까
-            // 질문자님 파일 맨 위에 적혀있던 package 주소와 함수 이름을 마침표(.)로 직접 다 이어 붙여줍니다.
-            com.fitflow.clover.domain.usecase.Search( // 👈 주소 이름 전체를 직접 입력합니다.
+            // 다른 파일들과 구별하기 위해 질문자님의 파일 패키지명을 앞에 통째로 붙여 호출합니다.
+            com.fitflow.clover.domain.usecase.Search(
                 onBackClick = {
                     popBackOrMain()
                 }
