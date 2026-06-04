@@ -41,6 +41,7 @@ fun NotificationScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
+            NotificationTopBar()
             // 1. 연두색 상단 타이틀 바
             Box(
                 modifier = Modifier
@@ -109,6 +110,17 @@ fun NotificationScreen(
 
             // 3. 하단 나머지 공간은 아무것도 넣지 않아 시안처럼 깔끔한 흰색 빈 화면으로 둡니다.
         }
+    }
+}
+
+@Composable
+fun NotificationTopBar() {
+    Box(
+        modifier = Modifier
+            .width(393.dp)  // 가로 사이즈
+            .height(57.dp) // 세로 사이즈
+            .background(Color.White) // 배경을 흰색으로 채움
+    ) {
     }
 }
 

@@ -29,6 +29,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.fitflow.clover.mypage.mainscreen.MyPageScreen
+import com.fitflow.clover.mypage.mainscreen.NotificationScreen
 import com.fitflow.clover.mypage.mainscreen.SearchBar
 import com.fitflow.clover.mypage.mainscreen.UserPageScreen
 import com.fitflow.clover.mypage.setup.MyPageNavHost
@@ -226,7 +227,7 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.Main.route)
                 },
                 onClickNotification = {
-                    navigateSingleTop("notification_push")
+                    navigateSingleTop("notification_screen")
                 },
                 onClickChat = {
                     chatViewModel.backToChatList()
@@ -544,9 +545,12 @@ fun CloverNavHost(
             )
         }
 
-        composable("notification_push") {
-            NotificationPush(
-                navController = navController
+        composable("notification_screen") {
+            NotificationScreen(
+                onBackClick = {
+                    // 알림창에서 뒤로가기 누르면 메인 화면으로 돌아옵니다.
+                    navController.popBackStack()
+                }
             )
         }
 

@@ -106,11 +106,13 @@ fun MyPageNavHost(onExitMyPage: () -> Unit) {
         composable(MyPageDestinations.NOTIFICATION_PUSH) {
             NotificationPush(navController = navController)
         }
+
         composable(MyPageDestinations.PERSONAL_INFORMATION) {
             PersonalInformation(navController = navController)
         }
     }
 }
+
 
 
 @Composable
