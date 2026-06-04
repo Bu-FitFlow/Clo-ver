@@ -52,6 +52,8 @@ import com.fitflow.clover.R
 import com.fitflow.clover.domain.modal.ProductSummaryModel
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.compose.ui.text.style.TextOverflow
+import coil.compose.AsyncImage
 
 private val MainGreen = Color(0xFF99DE81)
 private val HeaderGreen = Color(0x3399DE81)
@@ -474,12 +476,21 @@ private fun ProductSection(
     onClickProduct: (ProductSummaryModel) -> Unit
 ) {
     val pageSize = 3
-    val pageCount = ((products.size + pageSize - 1) / pageSize).coerceAtLeast(1)
-    var currentPage by remember(products) {
+
+    val carouselProducts = products
+        .distinctBy { product ->
+            product.productId
+        }
+        .take(9)
+
+    val pageCount = ((carouselProducts.size + pageSize - 1) / pageSize)
+        .coerceAtLeast(1)
+
+    var currentPage by remember(carouselProducts) {
         mutableIntStateOf(0)
     }
 
-    val visibleProducts = products
+    val visibleProducts = carouselProducts
         .drop(currentPage * pageSize)
         .take(pageSize)
 
@@ -490,7 +501,7 @@ private fun ProductSection(
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    if (products.isEmpty()) {
+    if (carouselProducts.isEmpty()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -526,33 +537,40 @@ private fun ProductSection(
                     }
                 )
             }
+
+            repeat(pageSize - visibleProducts.size) {
+                Spacer(modifier = Modifier.width(103.dp))
+            }
         }
 
-        ChevronButton(
-            isLeft = true,
-            onClick = {
-                currentPage = if (currentPage == 0) {
-                    pageCount - 1
-                } else {
-                    currentPage - 1
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = 4.dp)
-        )
+        if (carouselProducts.size > pageSize) {
+            ChevronButton(
+                isLeft = true,
+                onClick = {
+                    currentPage = if (currentPage == 0) {
+                        pageCount - 1
+                    } else {
+                        currentPage - 1
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 4.dp)
+            )
 
-        ChevronButton(
-            isLeft = false,
-            onClick = {
-                currentPage = (currentPage + 1) % pageCount
-            },
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = 4.dp)
-        )
+            ChevronButton(
+                isLeft = false,
+                onClick = {
+                    currentPage = (currentPage + 1) % pageCount
+                },
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 4.dp)
+            )
+        }
     }
 }
+
 
 @Composable
 private fun SectionHeader(
@@ -594,24 +612,48 @@ private fun ProductCard(
             .width(103.dp)
             .clickable(onClick = onClick)
     ) {
-        ProductImagePlaceholder(
+        Box(
             modifier = Modifier
                 .width(103.dp)
                 .height(150.dp)
-        )
+                .clip(RoundedCornerShape(0.dp))
+                .background(Color(0xFFD9D9D9)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (!product.thumbnailImageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = product.thumbnailImageUrl,
+                    contentDescription = product.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                ProductImagePlaceholder(
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "${product.name}\n${product.grade}\n${formatMainPrice(product.price)}",
+            text = buildString {
+                append(product.name)
+                append("\n")
+                append(product.grade.ifBlank { "브랜드" })
+                append("\n")
+                append(formatMainPrice(product.price))
+            },
             color = Color.Black,
             fontSize = 10.sp,
             lineHeight = 12.sp,
             fontWeight = FontWeight.Normal,
-            maxLines = 3
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
+
 
 @Composable
 private fun ProductImagePlaceholder(
@@ -621,21 +663,21 @@ private fun ProductImagePlaceholder(
         modifier = modifier.background(Color(0xFFD9D9D9))
     ) {
         drawRect(
-            color = Color(0xFFBFC7CC),
+            color = Color(0xFFD9D9D9),
             size = size
         )
 
         drawRoundRect(
-            color = Color(0xFFE7EEF2),
-            topLeft = Offset(size.width * 0.28f, size.height * 0.05f),
-            size = Size(size.width * 0.45f, size.height * 0.42f),
+            color = Color(0xFFEFEFEF),
+            topLeft = Offset(size.width * 0.22f, size.height * 0.10f),
+            size = Size(size.width * 0.56f, size.height * 0.42f),
             cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
         )
 
         drawRoundRect(
-            color = Color(0xFF1F1F1F),
-            topLeft = Offset(size.width * 0.38f, size.height * 0.37f),
-            size = Size(size.width * 0.30f, size.height * 0.58f),
+            color = Color(0xFF222222),
+            topLeft = Offset(size.width * 0.34f, size.height * 0.38f),
+            size = Size(size.width * 0.34f, size.height * 0.50f),
             cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
         )
     }

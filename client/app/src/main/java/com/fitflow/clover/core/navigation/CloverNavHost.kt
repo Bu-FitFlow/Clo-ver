@@ -120,11 +120,11 @@ fun CloverNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = startDestination,
+        startDestination = "splash",
         modifier = modifier
     ) {
         composable("splash") {
-            SplashScreen(navController)
+            SplashScreen(navController = navController)
         }
 
         composable("login") {
@@ -171,7 +171,7 @@ fun CloverNavHost(
             PersonalColorScreen(
                 viewModel = diagnosisViewModel,
                 onBack = {
-                    currentScreen.value = ScreenRoute.BodyAnalysis
+                    navigateSingleTop(ScreenRoute.BodyAnalysis.route)
                 },
                 onMoveToResult = {
                     navigateSingleTop(ScreenRoute.PersonalColorResult.route)
@@ -286,12 +286,19 @@ fun CloverNavHost(
 
             ProductDetailScreen(
                 productId = productId,
+                productViewModel = productViewModel,
                 onBack = {
                     popBackOrMain()
                 },
+                onClickLogo = {
+                    navController.navigate(ScreenRoute.Main.route) {
+                        launchSingleTop = true
+                        popUpTo(ScreenRoute.Main.route) {
+                            inclusive = false
+                        }
+                    }
+                },
                 onOpenChat = { selectedProductId, sellerId ->
-                    chatViewModel.backToChatList()
-
                     navController.navigate(
                         ScreenRoute.ChatRoom.createRoute(
                             productId = selectedProductId,

@@ -20,21 +20,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.fitflow.clover.core.component.CloverTextField
 import com.fitflow.clover.R
+import androidx.compose.foundation.background
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.runtime.Composable
-
-@Preview(
-    name = "Pixel 10 - 아이디 비밀번호 찾기",
-    device = "spec:width=1080px,height=2424px,dpi=420",
-    showBackground = true
-)
-@Composable
-fun FindIdPwPixel10Preview() {
-    val fakeNavController = rememberNavController()
-    FindIdPw(navController = fakeNavController)
-}
-//==================================================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,23 +48,23 @@ fun FindIdPw(navController: NavController) {
     val isPwFindEnabled = idInput.isNotBlank() && nameInput.isNotBlank() && emailInput.isNotBlank() && authCodeInput.isNotBlank() && isPwAuthSent
     val isPasswordMatching = newPwInput.isNotEmpty() && newPwConfirmInput.isNotEmpty() && (newPwInput == newPwConfirmInput)
 
-    // 🌟 1. 대화면 기기 대응: 전체 화면에서 컨텐츠가 가운데 오도록 래핑
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
+            .statusBarsPadding()
             .verticalScroll(rememberScrollState()),
         contentAlignment = Alignment.TopCenter
     ) {
 
-        // 🌟 2. 피그마 기본 디자인 가로 스펙(너비 393.dp)을 기준으로 가로 상자를 고정합니다.
-        // 이렇게 하면 내부 Box들의 offset x, y 좌표가 원래 주신 스펙과 100% 똑같이 작동하면서도 전체가 중앙 정렬됩니다.
         Box(
             modifier = Modifier
                 .width(393.dp)
-                .height(800.dp) // 기본 스크롤 영역 확보
+                .height(800.dp)
+                .align(Alignment.TopCenter)
         ) {
 
-            // 🎯 공통 상단 영역: 뒤로가기 아이콘 (X:27, Y:63)
+            //  공통 상단 영역: 뒤로가기 아이콘 (X:27, Y:63)
             IconButton(
                 onClick = { navController.popBackStack() },
                 modifier = Modifier
@@ -89,8 +78,7 @@ fun FindIdPw(navController: NavController) {
                 )
             }
 
-            // 🎯 공통 상단 영역: 타이틀 메세지 (Y:71) - 상단 글씨 가운데 정렬 반영
-            // (뒤로가기 버튼 위치 보정 및 시안처럼 완전히 화면 중앙에 오도록 x축을 0.dp로 잡고 fillMaxWidth 중앙 정렬)
+            //  공통 상단 영역: 타이틀 메세지 (Y:71)
             Box(
                 modifier = Modifier
                     .offset(y = 71.dp)
@@ -106,7 +94,7 @@ fun FindIdPw(navController: NavController) {
             }
 
             // -----------------------------------------------------------------------------------------
-            // 🎯 [화면 1] 메인 입력 폼 (아이디 찾기 / 비밀번호 찾기 기본 입력)
+            //[화면 1] 메인 입력 폼 (아이디 찾기 / 비밀번호 찾기 기본 입력)
             // -----------------------------------------------------------------------------------------
             if (!showIdResult && !showPwReset) {
 
@@ -153,7 +141,7 @@ fun FindIdPw(navController: NavController) {
                 }
 
                 if (tabIndex == 0) {
-                    // 🍏 [아이디 찾기 입력 란] 원래 주신 좌표값 100% 동일하게 복구
+                    // 🍏 [아이디 찾기 입력 란]
                     Box(modifier = Modifier.offset(x = 42.dp, y = 300.dp).width(309.dp).height(40.dp)) {
                         CloverTextField(value = nameInput, onValueChange = { nameInput = it }, label = "이름 입력", modifier = Modifier.fillMaxSize())
                     }
@@ -196,7 +184,7 @@ fun FindIdPw(navController: NavController) {
                     }
 
                 } else {
-                    // 🍎 [비밀번호 찾기 입력 란] 원래 주신 좌표값 100% 동일하게 복구
+                    //  [비밀번호 찾기 입력 란]
                     Box(modifier = Modifier.offset(x = 43.dp, y = 260.dp).width(309.dp).height(40.dp)) {
                         CloverTextField(value = idInput, onValueChange = { idInput = it }, label = "ID", modifier = Modifier.fillMaxSize())
                     }
@@ -244,7 +232,7 @@ fun FindIdPw(navController: NavController) {
             }
 
             // -----------------------------------------------------------------------------------------
-            // 🎯 [화면 2] 아이디 찾기 완료 결과 화면
+            //  아이디 찾기 완료 결과 화면
             // -----------------------------------------------------------------------------------------
             if (showIdResult && !showPwReset) {
                 Text(
@@ -291,7 +279,7 @@ fun FindIdPw(navController: NavController) {
             }
 
             // -----------------------------------------------------------------------------------------
-            // 🎯 [화면 3] 비밀번호 찾기 완료 -> 새 비밀번호 입력 화면
+            //비밀번호 찾기 완료 -> 새 비밀번호 입력 화면
             // -----------------------------------------------------------------------------------------
             if (showPwReset && !showIdResult) {
                 Box(modifier = Modifier.offset(x = 43.dp, y = 322.dp).width(309.dp).height(40.dp)) {

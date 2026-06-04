@@ -1,6 +1,12 @@
 package com.fitflow.clover.presentation.diagnosis
 
+import android.Manifest
+import android.content.ContentValues
 import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -45,6 +51,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -246,10 +253,80 @@ private fun BodyCameraContent(
     onBack: () -> Unit,
     onSkip: () -> Unit
 ) {
+    val context = LocalContext.current
+
+    var pendingCameraUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
+
     val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap ->
-        onPhotoCaptured(bitmap)
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            val uri = pendingCameraUri
+
+            if (success && uri != null) {
+                val bitmap = runCatching {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        val source = ImageDecoder.createSource(
+                            context.contentResolver,
+                            uri
+                        )
+
+                        ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
+                            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                        }
+                    } else {
+                        @Suppress("DEPRECATION")
+                        MediaStore.Images.Media.getBitmap(
+                            context.contentResolver,
+                            uri
+                        )
+                    }
+                }.getOrNull()
+
+                onPhotoCaptured(bitmap)
+            } else {
+                onPhotoCaptured(null)
+            }
+
+            pendingCameraUri = null
+        }
+    )
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            if (granted) {
+                val values = ContentValues().apply {
+                    put(
+                        MediaStore.Images.Media.DISPLAY_NAME,
+                        "body_${System.currentTimeMillis()}.jpg"
+                    )
+                    put(
+                        MediaStore.Images.Media.MIME_TYPE,
+                        "image/jpeg"
+                    )
+                }
+
+                val uri = context.contentResolver.insert(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    values
+                )
+
+                if (uri != null) {
+                    pendingCameraUri = uri
+                    cameraLauncher.launch(uri)
+                } else {
+                    onPhotoCaptured(null)
+                }
+            } else {
+                onPhotoCaptured(null)
+            }
+        }
+    )
+
+    fun openCameraSafely() {
+        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
     Column(
@@ -286,7 +363,7 @@ private fun BodyCameraContent(
             bitmap = uiState.bodyPhotoBitmap,
             isLoading = uiState.isBodyAnalyzing,
             onClick = {
-                cameraLauncher.launch(null)
+                openCameraSafely()
             }
         )
 
