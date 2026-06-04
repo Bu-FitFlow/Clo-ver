@@ -1,4 +1,4 @@
-package com.fitflow.clover.domain.usecase
+package com.fitflow.clover.mypage.mainscreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,10 +38,10 @@ import com.fitflow.clover.R
 
 @Composable
 fun Search(onBackClick: () -> Unit = {},
-    onSearchExecute: (String) -> Unit = { query -> println("기본 검색 실행 로그: $query")})
+           onSearchExecute: (String) -> Unit = { query -> println("기본 검색 실행 로그: $query")})
 {
     var searchQuery by remember { mutableStateOf("") }
-        val recentSearches = remember { mutableStateListOf<String>() }
+    val recentSearches = remember { mutableStateListOf<String>() }
 
     // 전체 화면을 감싸는 도화지
     Surface(

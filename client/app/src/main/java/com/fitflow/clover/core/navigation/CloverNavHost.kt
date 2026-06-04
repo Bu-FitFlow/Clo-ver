@@ -547,7 +547,7 @@ fun CloverNavHost(
 
         composable("search_screen") {
             // 다른 파일들과 구별하기 위해 질문자님의 파일 패키지명을 앞에 통째로 붙여 호출합니다.
-            com.fitflow.clover.domain.usecase.Search(
+            com.fitflow.clover.mypage.mainscreen.(
                 onBackClick = {
                     popBackOrMain()
                 }
