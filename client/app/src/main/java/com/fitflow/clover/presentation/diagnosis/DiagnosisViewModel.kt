@@ -42,50 +42,79 @@ class DiagnosisViewModel {
         )
     }
 
-    fun onBodyPhotoCaptured(bitmap: Bitmap?) {
+    fun onFrontBodyPhotoCaptured(bitmap: Bitmap?) {
         if (bitmap == null) {
             uiState.value = uiState.value.copy(
-                bodyPhotoBitmap = null,
+                frontBodyPhotoBitmap = null,
                 isBodyAnalyzing = false,
                 bodyResult = null,
-                bodyAnalysisErrorMessage = "사진을 가져오지 못했어요. 다시 촬영해 주세요."
+                bodyAnalysisErrorMessage = "전면 사진을 가져오지 못했어요. 다시 촬영해 주세요."
             )
             return
         }
 
         uiState.value = uiState.value.copy(
-            bodyPhotoBitmap = bitmap,
+            frontBodyPhotoBitmap = bitmap,
+            sideBodyPhotoBitmap = null,
+            isBodyAnalyzing = false,
+            bodyResult = null,
+            bodyAnalysisErrorMessage = null
+        )
+    }
+
+    fun onSideBodyPhotoCaptured(bitmap: Bitmap?) {
+        if (bitmap == null) {
+            uiState.value = uiState.value.copy(
+                sideBodyPhotoBitmap = null,
+                isBodyAnalyzing = false,
+                bodyResult = null,
+                bodyAnalysisErrorMessage = "옆면 사진을 가져오지 못했어요. 다시 촬영해 주세요."
+            )
+            return
+        }
+
+        uiState.value = uiState.value.copy(
+            sideBodyPhotoBitmap = bitmap,
             isBodyAnalyzing = true,
             bodyResult = null,
             bodyAnalysisErrorMessage = null
         )
     }
 
+    fun onBodyPhotoCaptured(bitmap: Bitmap?) {
+        onFrontBodyPhotoCaptured(bitmap)
+    }
+
     fun completeBodyAnalysis(): Boolean {
         val state = uiState.value
-        val bitmap = state.bodyPhotoBitmap
+        val frontBitmap = state.frontBodyPhotoBitmap
+        val sideBitmap = state.sideBodyPhotoBitmap
 
-        if (!state.isBodyAnalyzing || bitmap == null) {
+        if (!state.isBodyAnalyzing || frontBitmap == null || sideBitmap == null) {
             uiState.value = state.copy(
                 isBodyAnalyzing = false,
                 bodyResult = null,
-                bodyAnalysisErrorMessage = "분석할 사진이 없어요. 다시 촬영해 주세요."
+                bodyAnalysisErrorMessage = "전면 사진과 옆면 사진이 모두 필요해요. 다시 촬영해 주세요."
             )
             return false
         }
 
-        if (!isRecognizablePhoto(bitmap)) {
+        if (!isRecognizablePhoto(frontBitmap) || !isRecognizablePhoto(sideBitmap)) {
             uiState.value = state.copy(
                 isBodyAnalyzing = false,
                 bodyResult = null,
-                bodyAnalysisErrorMessage = "체형을 인식할 수 없어요.\n전신이 화면 중앙에 보이도록 다시 촬영해 주세요."
+                bodyAnalysisErrorMessage = "체형을 인식할 수 없어요.\n전면과 옆면 전신이 화면 중앙에 보이도록 다시 촬영해 주세요."
             )
             return false
         }
 
         uiState.value = state.copy(
             isBodyAnalyzing = false,
-            bodyResult = createBodyResult(state, bitmap),
+            bodyResult = createBodyResult(
+                state = state,
+                frontBitmap = frontBitmap,
+                sideBitmap = sideBitmap
+            ),
             bodyAnalysisErrorMessage = null
         )
 
@@ -93,8 +122,22 @@ class DiagnosisViewModel {
     }
 
     fun resetBodyPhoto() {
+        resetBodyPhotos()
+    }
+
+    fun resetBodyPhotos() {
         uiState.value = uiState.value.copy(
-            bodyPhotoBitmap = null,
+            frontBodyPhotoBitmap = null,
+            sideBodyPhotoBitmap = null,
+            isBodyAnalyzing = false,
+            bodyResult = null,
+            bodyAnalysisErrorMessage = null
+        )
+    }
+
+    fun resetSideBodyPhoto() {
+        uiState.value = uiState.value.copy(
+            sideBodyPhotoBitmap = null,
             isBodyAnalyzing = false,
             bodyResult = null,
             bodyAnalysisErrorMessage = null
@@ -165,7 +208,8 @@ class DiagnosisViewModel {
 
     private fun createBodyResult(
         state: DiagnosisUiState,
-        bitmap: Bitmap
+        frontBitmap: Bitmap,
+        sideBitmap: Bitmap
     ): BodyAnalysisResult {
         val userName = state.userDisplayName.ifBlank {
             "사용자"
@@ -173,7 +217,8 @@ class DiagnosisViewModel {
 
         val bodyType = estimateBodyType(
             state = state,
-            bitmap = bitmap
+            frontBitmap = frontBitmap,
+            sideBitmap = sideBitmap
         )
 
         return when (bodyType) {
@@ -181,7 +226,7 @@ class DiagnosisViewModel {
                 BodyAnalysisResult(
                     bodyType = "LEAN_COLUMN",
                     title = "${userName}님의 체형은\n마른 직선형에 가까워요.",
-                    description = "전체적으로 가늘고 직선적인 실루엣이 돋보이는 체형으로 분석되었어요.",
+                    description = "전면과 옆면 이미지를 함께 확인한 결과, 전체적으로 가늘고 직선적인 실루엣이 돋보이는 체형으로 분석되었어요.",
                     recommendMessage = "너무 큰 오버핏보다는 적당한 두께감과 레이어드가 있는 스타일을 추천해요."
                 )
             }
@@ -190,7 +235,7 @@ class DiagnosisViewModel {
                 BodyAnalysisResult(
                     bodyType = "APPLE",
                     title = "${userName}님의 체형은\n사과형에 가까워요.",
-                    description = "상체 중심의 볼륨감이 비교적 잘 드러나는 체형으로 분석되었어요.",
+                    description = "전면 폭과 옆면 볼륨을 함께 확인한 결과, 상체 중심의 볼륨감이 비교적 잘 드러나는 체형으로 분석되었어요.",
                     recommendMessage = "상체는 깔끔하게 정리하고 하의나 아우터로 세로 라인을 살리는 스타일을 추천해요."
                 )
             }
@@ -199,7 +244,7 @@ class DiagnosisViewModel {
                 BodyAnalysisResult(
                     bodyType = "INVERTED_TRIANGLE",
                     title = "${userName}님의 체형은\n역삼각형에 가까워요.",
-                    description = "어깨와 상체 라인이 비교적 강조되는 체형으로 분석되었어요.",
+                    description = "전면 어깨 라인과 옆면 실루엣을 함께 확인한 결과, 어깨와 상체 라인이 비교적 강조되는 체형으로 분석되었어요.",
                     recommendMessage = "하의에 볼륨감을 주고 상체는 단정하게 정리하는 스타일을 추천해요."
                 )
             }
@@ -208,7 +253,7 @@ class DiagnosisViewModel {
                 BodyAnalysisResult(
                     bodyType = "PEAR",
                     title = "${userName}님의 체형은\n배형에 가까워요.",
-                    description = "하체 라인이 비교적 안정감 있게 보이는 체형으로 분석되었어요.",
+                    description = "전면 하체 라인과 옆면 실루엣을 함께 확인한 결과, 하체 라인이 비교적 안정감 있게 보이는 체형으로 분석되었어요.",
                     recommendMessage = "상체에 포인트를 주고 하의는 자연스럽게 떨어지는 핏을 추천해요."
                 )
             }
@@ -217,7 +262,7 @@ class DiagnosisViewModel {
                 BodyAnalysisResult(
                     bodyType = "HOUR_GLASS",
                     title = "${userName}님의 체형은\n모래시계형에 가까워요.",
-                    description = "상체와 하체의 균형이 좋고 허리 라인이 비교적 살아나는 체형으로 분석되었어요.",
+                    description = "전면과 옆면 균형을 함께 확인한 결과, 상체와 하체의 균형이 좋고 허리 라인이 비교적 살아나는 체형으로 분석되었어요.",
                     recommendMessage = "허리선을 살릴 수 있는 상의와 자연스럽게 라인을 잡아주는 스타일을 추천해요."
                 )
             }
@@ -226,7 +271,7 @@ class DiagnosisViewModel {
                 BodyAnalysisResult(
                     bodyType = "RECTANGLE",
                     title = "${userName}님의 체형은\n직사각형에 가까워요.",
-                    description = "상체와 하체의 폭이 비교적 일정한 직선형 실루엣으로 분석되었어요.",
+                    description = "전면과 옆면 이미지를 함께 확인한 결과, 상체와 하체의 폭이 비교적 일정한 직선형 실루엣으로 분석되었어요.",
                     recommendMessage = "허리선이나 어깨선에 포인트를 주는 스타일을 추천해요."
                 )
             }
@@ -235,7 +280,8 @@ class DiagnosisViewModel {
 
     private fun estimateBodyType(
         state: DiagnosisUiState,
-        bitmap: Bitmap
+        frontBitmap: Bitmap,
+        sideBitmap: Bitmap
     ): BodyType {
         val heightMeter = ((state.selectedHeightCm ?: 170) / 100.0)
             .coerceAtLeast(1.0)
@@ -243,7 +289,12 @@ class DiagnosisViewModel {
         val weightKg = state.selectedWeightKg ?: 60
         val bmi = weightKg / heightMeter.pow(2.0)
 
-        val imageProfile = estimateImageProfile(bitmap)
+        val frontProfile = estimateImageProfile(frontBitmap)
+        val sideProfile = estimateImageProfile(sideBitmap)
+        val imageProfile = combineBodyImageProfile(
+            frontProfile = frontProfile,
+            sideProfile = sideProfile
+        )
         val gender = state.selectedGender
 
         return when {
@@ -389,8 +440,19 @@ class DiagnosisViewModel {
         }
     }
 
+    private fun combineBodyImageProfile(
+        frontProfile: BodyImageProfile,
+        sideProfile: BodyImageProfile
+    ): BodyImageProfile {
+        return BodyImageProfile(
+            upperContrast = (frontProfile.upperContrast + sideProfile.upperContrast) / 2.0,
+            centerContrast = (frontProfile.centerContrast + sideProfile.centerContrast) / 2.0,
+            lowerContrast = (frontProfile.lowerContrast + sideProfile.lowerContrast) / 2.0,
+            isBrightCenter = frontProfile.isBrightCenter || sideProfile.isBrightCenter
+        )
+    }
+
     private fun estimateImageProfile(bitmap: Bitmap): BodyImageProfile {
-        val safeWidth = bitmap.width.coerceAtLeast(1)
         val safeHeight = bitmap.height.coerceAtLeast(1)
 
         val upperStartY = (safeHeight * 0.25).toInt()

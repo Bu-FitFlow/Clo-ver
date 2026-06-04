@@ -10,7 +10,8 @@ data class DiagnosisUiState(
     val selectedHeightCm: Int? = null,
     val selectedWeightKg: Int? = null,
 
-    val bodyPhotoBitmap: Bitmap? = null,
+    val frontBodyPhotoBitmap: Bitmap? = null,
+    val sideBodyPhotoBitmap: Bitmap? = null,
     val isBodyAnalyzing: Boolean = false,
     val bodyResult: BodyAnalysisResult? = null,
     val bodyAnalysisErrorMessage: String? = null,
@@ -20,11 +21,19 @@ data class DiagnosisUiState(
     val personalColorResult: PersonalColorResultUiModel? = null,
     val personalColorAnalysisErrorMessage: String? = null
 ) {
+    val bodyPhotoBitmap: Bitmap?
+        get() = frontBodyPhotoBitmap ?: sideBodyPhotoBitmap
+
     val isInfoCompleted: Boolean
         get() {
             return selectedGender != null &&
                     selectedHeightCm != null &&
                     selectedWeightKg != null
+        }
+
+    val isBodyPhotoCompleted: Boolean
+        get() {
+            return frontBodyPhotoBitmap != null && sideBodyPhotoBitmap != null
         }
 
     val isBodyResultReady: Boolean
