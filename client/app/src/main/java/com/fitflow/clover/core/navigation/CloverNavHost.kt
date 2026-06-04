@@ -28,7 +28,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.fitflow.clover.domain.usecase.Search
 import com.fitflow.clover.mypage.setup.MyPageNavHost
+import com.fitflow.clover.mypage.setup.NotificationPush
 import com.fitflow.clover.presentation.auth.*
 import com.fitflow.clover.presentation.chat.ChatScreen
 import com.fitflow.clover.presentation.chat.ChatViewModel
@@ -49,6 +51,7 @@ import com.fitflow.clover.presentation.product.ProductEditScreen
 import com.fitflow.clover.presentation.product.ProductListScreen
 import com.fitflow.clover.presentation.product.ProductViewModel
 import com.fitflow.clover.presentation.splash.SplashScreen
+
 
 @Composable
 fun CloverNavHost(
@@ -221,7 +224,7 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.Main.route)
                 },
                 onClickNotification = {
-                    navigateSingleTop(ScreenRoute.Notification.route)
+                    navigateSingleTop("notification_push")
                 },
                 onClickChat = {
                     chatViewModel.backToChatList()
@@ -260,9 +263,13 @@ fun CloverNavHost(
                 },
                 onClickCarbonBanner = {
                     navigateSingleTop(ScreenRoute.CarbonPoint.route)
+                },
+                onClickSearch = {
+                    navigateSingleTop("search_screen")
                 }
             )
         }
+
 
         composable(ScreenRoute.ProductList.route) {
             ProductListRouteContent(
@@ -533,12 +540,18 @@ fun CloverNavHost(
             )
         }
 
-        composable(ScreenRoute.Notification.route) {
-            MainPlaceholderScreen(
-                title = "알림",
-                description = "알림 설정 또는 알림 목록 화면으로 연결될 예정입니다.",
-                onBackToMain = {
-                    navigateSingleTop(ScreenRoute.Main.route)
+        composable("notification_push") {
+            NotificationPush(
+                navController = navController
+            )
+        }
+
+        composable("search_screen") {
+            // 💡 별명(MySearchScreen)도 쓰지 마세요! 컴퓨터가 헷갈려하니까
+            // 질문자님 파일 맨 위에 적혀있던 package 주소와 함수 이름을 마침표(.)로 직접 다 이어 붙여줍니다.
+            com.fitflow.clover.domain.usecase.Search( // 👈 주소 이름 전체를 직접 입력합니다.
+                onBackClick = {
+                    popBackOrMain()
                 }
             )
         }
@@ -620,6 +633,7 @@ fun CloverNavHost(
         }
     }
 }
+
 
 @Composable
 private fun ProductListRouteContent(
