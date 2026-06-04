@@ -37,6 +37,7 @@ import com.fitflow.clover.presentation.community.CommunityListScreen
 import com.fitflow.clover.presentation.community.CommunityViewModel
 import com.fitflow.clover.presentation.community.CommunityWriteScreen
 import com.fitflow.clover.presentation.diagnosis.BodyAnalysisScreen
+import com.fitflow.clover.presentation.diagnosis.DiagnosisSummaryScreen
 import com.fitflow.clover.presentation.diagnosis.DiagnosisViewModel
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorResultScreen
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorResultUiModel
@@ -48,6 +49,8 @@ import com.fitflow.clover.presentation.product.ProductEditScreen
 import com.fitflow.clover.presentation.product.ProductListScreen
 import com.fitflow.clover.presentation.product.ProductViewModel
 import com.fitflow.clover.presentation.splash.SplashScreen
+
+private const val DIAGNOSIS_SUMMARY_ROUTE = "diagnosis_summary"
 
 @Composable
 fun CloverNavHost(
@@ -162,7 +165,12 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
                 },
                 onMoveToMain = {
-                    navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
+                    navController.navigate(ScreenRoute.Main.route) {
+                        popUpTo(ScreenRoute.BodyAnalysis.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -174,13 +182,30 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.BodyAnalysis.route)
                 },
                 onMoveToResult = {
-                    navigateSingleTop(ScreenRoute.PersonalColorResult.route)
+                    navigateSingleTop(DIAGNOSIS_SUMMARY_ROUTE)
                 },
                 onMoveToRetry = {
                     navigateSingleTop(ScreenRoute.PersonalColorRetry.route)
                 },
                 onMoveToMain = {
-                    navigateSingleTop(ScreenRoute.Main.route)
+                    navigateSingleTop(DIAGNOSIS_SUMMARY_ROUTE)
+                }
+            )
+        }
+
+        composable(DIAGNOSIS_SUMMARY_ROUTE) {
+            DiagnosisSummaryScreen(
+                viewModel = diagnosisViewModel,
+                onBack = {
+                    navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
+                },
+                onMoveToMain = {
+                    navController.navigate(ScreenRoute.Main.route) {
+                        popUpTo(ScreenRoute.BodyAnalysis.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -208,7 +233,7 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
                 },
                 onMoveToMain = {
-                    navigateSingleTop(ScreenRoute.Main.route)
+                    navigateSingleTop(DIAGNOSIS_SUMMARY_ROUTE)
                 }
             )
         }
