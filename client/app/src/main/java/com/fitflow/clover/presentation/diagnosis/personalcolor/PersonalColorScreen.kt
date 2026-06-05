@@ -49,9 +49,7 @@ import kotlinx.coroutines.delay
 fun PersonalColorScreen(
     viewModel: DiagnosisViewModel,
     onBack: () -> Unit,
-    onMoveToResult: () -> Unit,
-    onMoveToRetry: () -> Unit,
-    onMoveToMain: () -> Unit
+    onMoveToResult: () -> Unit
 ) {
     val uiState by viewModel.uiState
 
@@ -139,8 +137,6 @@ fun PersonalColorScreen(
 
             if (success) {
                 onMoveToResult()
-            } else {
-                onMoveToRetry()
             }
         }
     }
@@ -152,8 +148,7 @@ fun PersonalColorScreen(
             .systemBarsPadding()
     ) {
         PersonalColorHeader(
-            onBack = onBack,
-            onSkip = onMoveToResult
+            onBack = onBack
         )
 
         Text(
@@ -210,8 +205,7 @@ fun PersonalColorScreen(
 
 @Composable
 private fun PersonalColorHeader(
-    onBack: () -> Unit,
-    onSkip: () -> Unit
+    onBack: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -236,19 +230,7 @@ private fun PersonalColorHeader(
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
-        )
-
-        Text(
-            text = "건너뛰기",
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .clickable(onClick = onSkip),
-            color = Color.Black,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center
-        )
-    }
+        )    }
 }
 
 @Composable

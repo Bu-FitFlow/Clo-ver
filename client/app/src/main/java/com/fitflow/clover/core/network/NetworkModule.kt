@@ -7,6 +7,7 @@ import com.fitflow.clover.data.local.TokenDataStore
 import com.fitflow.clover.data.remote.api.AuthApi
 import com.fitflow.clover.data.remote.api.ChatApi
 import com.fitflow.clover.data.remote.api.CommunityApi
+import com.fitflow.clover.data.remote.api.DiagnosisApi
 import com.fitflow.clover.data.remote.api.HealthApi
 import com.fitflow.clover.data.remote.api.ProductApi
 import com.google.gson.Gson
@@ -45,10 +46,7 @@ class NetworkModule(
             val request = chain.request()
 
             if (isDebuggable) {
-                Log.d(
-                    NETWORK_LOG_TAG,
-                    "--> ${request.method} ${request.url}"
-                )
+                Log.d(NETWORK_LOG_TAG, "--> ${request.method} ${request.url}")
             }
 
             val startedAt = System.currentTimeMillis()
@@ -56,10 +54,7 @@ class NetworkModule(
             val elapsedMs = System.currentTimeMillis() - startedAt
 
             if (isDebuggable) {
-                Log.d(
-                    NETWORK_LOG_TAG,
-                    "<-- ${response.code} ${request.method} ${request.url} (${elapsedMs}ms)"
-                )
+                Log.d(NETWORK_LOG_TAG, "<-- ${response.code} ${request.method} ${request.url} (${elapsedMs}ms)")
             }
 
             response
@@ -102,6 +97,10 @@ class NetworkModule(
 
     val productApi: ProductApi by lazy {
         retrofit.create(ProductApi::class.java)
+    }
+
+    val diagnosisApi: DiagnosisApi by lazy {
+        retrofit.create(DiagnosisApi::class.java)
     }
 
     companion object {

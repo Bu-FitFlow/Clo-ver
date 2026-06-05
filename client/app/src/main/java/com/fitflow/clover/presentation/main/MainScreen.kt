@@ -15,10 +15,11 @@ fun MainScreen(
     onClickWrite: () -> Unit = {},
     onClickProductMore: () -> Unit = {},
     onClickBodyProductMore: () -> Unit = {},
+    onClickDiagnosisStart: () -> Unit = {},
     onClickProductDetail: (Long) -> Unit = {},
     onClickCommunityMore: () -> Unit = {},
-  
-  onClickCommunityPost: (Long) -> Unit = {},
+
+    onClickCommunityPost: (Long) -> Unit = {},
     onClickCarbonBanner: () -> Unit = {},
     onClickSearch: () -> Unit
 
@@ -35,6 +36,7 @@ fun MainScreen(
         onClickWrite = onClickWrite,
         onClickProductMore = onClickProductMore,
         onClickBodyProductMore = onClickBodyProductMore,
+        onClickDiagnosisStart = onClickDiagnosisStart,
         onClickProductDetail = onClickProductDetail,
         onClickCommunityMore = onClickCommunityMore,
         onClickCommunityPost = onClickCommunityPost,

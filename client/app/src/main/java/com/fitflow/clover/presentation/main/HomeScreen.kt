@@ -81,6 +81,7 @@ fun HomeScreen(
     onClickWrite: () -> Unit,
     onClickProductMore: () -> Unit,
     onClickBodyProductMore: () -> Unit,
+    onClickDiagnosisStart: () -> Unit,
     onClickProductDetail: (Long) -> Unit,
     onClickCommunityMore: () -> Unit,
     onClickCommunityPost: (Long) -> Unit = {},
@@ -136,14 +137,26 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(18.dp))
 
                 ProductSection(
-                    title = "최근 등록",
-                    products = mainUiState.recentProducts,
-                    emptyMessage = if (mainUiState.isLoading) {
-                        "최근 상품을 불러오는 중입니다."
-                    } else {
-                        "최근 등록된 상품이 없습니다."
+                    title = "내 체형에 추천",
+                    products = mainUiState.bodyRecommendProducts,
+                    emptyMessage = when {
+                        mainUiState.isLoading -> {
+                            "체형 추천 상품을 불러오는 중입니다."
+                        }
+                        !mainUiState.hasBodyDiagnosis -> {
+                            "체형 진단을 완료하면\n내 체형에 맞는 추천 상품 9개를 확인할 수 있어요."
+                        }
+                        else -> {
+                            "추천 상품이 없습니다."
+                        }
                     },
-                    onClickMore = onClickProductMore,
+                    emptyActionText = if (!mainUiState.hasBodyDiagnosis && !mainUiState.isLoading) {
+                        "체형 진단하러 가기"
+                    } else {
+                        null
+                    },
+                    onClickEmptyAction = onClickDiagnosisStart,
+                    onClickMore = onClickBodyProductMore,
                     onClickProduct = { product ->
                         onClickProductDetail(product.productId)
                     }
@@ -152,14 +165,14 @@ fun HomeScreen(
                 MainDivider()
 
                 ProductSection(
-                    title = "내 체형에 추천",
-                    products = mainUiState.bodyRecommendProducts,
+                    title = "최근 등록",
+                    products = mainUiState.recentProducts,
                     emptyMessage = if (mainUiState.isLoading) {
-                        "체형 추천 상품을 불러오는 중입니다."
+                        "최근 상품을 불러오는 중입니다."
                     } else {
-                        "추천 상품이 없습니다."
+                        "최근 등록된 상품이 없습니다."
                     },
-                    onClickMore = onClickBodyProductMore,
+                    onClickMore = onClickProductMore,
                     onClickProduct = { product ->
                         onClickProductDetail(product.productId)
                     }
@@ -484,6 +497,8 @@ private fun ProductSection(
     title: String,
     products: List<ProductSummaryModel>,
     emptyMessage: String,
+    emptyActionText: String? = null,
+    onClickEmptyAction: (() -> Unit)? = null,
     onClickMore: () -> Unit,
     onClickProduct: (ProductSummaryModel) -> Unit
 ) {
@@ -514,18 +529,39 @@ private fun ProductSection(
     Spacer(modifier = Modifier.height(8.dp))
 
     if (carouselProducts.isEmpty()) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(205.dp),
-            contentAlignment = Alignment.Center
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Text(
                 text = emptyMessage,
                 color = Color(0xFF777777),
                 fontSize = 12.sp,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                lineHeight = 18.sp
             )
+
+            if (emptyActionText != null && onClickEmptyAction != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = emptyActionText,
+                    color = Color.Black,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .border(
+                            width = 1.dp,
+                            color = Color.Black,
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        .clickable(onClick = onClickEmptyAction)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
         }
         return
     }
