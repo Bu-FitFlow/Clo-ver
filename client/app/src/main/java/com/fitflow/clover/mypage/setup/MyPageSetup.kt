@@ -69,6 +69,7 @@ object MyPageDestinations {
 @Composable
 fun MyPageNavHost(onExitMyPage: () -> Unit,
                   onNavigateToLogin: () -> Unit,
+                  onGoodsClick: () -> Unit,
                   viewModel: MyPageViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val navController = rememberNavController()
@@ -89,9 +90,7 @@ fun MyPageNavHost(onExitMyPage: () -> Unit,
                     // 🎯 내 글 보기 행을 누르면 MYWRITING 화면으로 이동합니다.
                     navController.navigate(MyPageDestinations.MY_WRITING)
                 },
-                onGoodsClick = {
-
-                },
+                onGoodsClick = onGoodsClick,
                 onBackClick = onExitMyPage
 
             )
@@ -443,5 +442,6 @@ fun SettingTextItem(text: String, onClick: () -> Unit) {
 fun MyPageSetupPreview() {
     // 미리보기에서도 전체 화면 흐름을 안전하게 볼 수 있도록 Host를 띄워줍니다.
     MyPageNavHost(onExitMyPage = {},
-        onNavigateToLogin = {})
+        onNavigateToLogin = {},
+        onGoodsClick = {})
 }

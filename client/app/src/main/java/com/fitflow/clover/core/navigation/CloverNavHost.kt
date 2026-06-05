@@ -633,6 +633,11 @@ fun CloverNavHost(
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
+                },
+                onGoodsClick = {
+                    // 지금은 임시로 메인 화면으로 가게 하거나 비워둘 수 있습니다.
+                    // 다른 사람이 이 파일을 열면 이 블록 내부를 본인들이 만든 화면 주소로 바꿀 거예요!
+                    navigateSingleTop(ScreenRoute.Main.route)
                 }
             )
         }
