@@ -1,6 +1,7 @@
 package com.fitflow.clover.domain.product.dto.response;
 
 import com.fitflow.clover.domain.product.entity.Product;
+import com.fitflow.clover.domain.product.entity.ProductSize;
 import com.fitflow.clover.domain.product.entity.ProductStatus;
 
 import java.time.LocalDateTime;
@@ -14,7 +15,7 @@ public record ProductDetailResponse(
         String name,
         Integer price,
         String content,
-        String size,
+        ProductSize size,
         String grade,
         String tradingArea,
         String recommendedType,

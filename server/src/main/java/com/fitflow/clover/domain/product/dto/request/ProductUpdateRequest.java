@@ -1,5 +1,6 @@
 package com.fitflow.clover.domain.product.dto.request;
 
+import com.fitflow.clover.domain.product.entity.ProductSize;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -22,7 +23,7 @@ public record ProductUpdateRequest(
         String content,
 
         @NotBlank(message = "사이즈를 입력해 주세요.")
-        String size,
+        ProductSize size,
 
         @NotBlank(message = "상품 상태(급)을 입력해 주세요.")
         String grade,

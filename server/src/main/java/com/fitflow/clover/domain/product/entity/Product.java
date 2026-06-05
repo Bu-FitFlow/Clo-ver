@@ -39,8 +39,9 @@ public class Product extends BaseTimeEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private String size;
+    private ProductSize size;
 
     @Column(nullable = false, length = 20)
     private String grade;
