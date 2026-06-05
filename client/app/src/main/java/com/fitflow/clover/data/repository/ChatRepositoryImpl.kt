@@ -12,24 +12,14 @@ class ChatRepositoryImpl(
     private val chatApi: ChatApi
 ) : ChatRepository {
 
-    override suspend fun getChatRooms(
-        filter: String?
-    ): List<ChatRoomModel> {
-        return chatApi.getChatRooms(
-            filter = filter
-        ).map { response ->
-            response.toDomain()
-        }
+    override suspend fun getChatRooms(filter: String?): List<ChatRoomModel> {
+        return chatApi.getChatRooms(filter = filter)
+            .map { response -> response.toDomain() }
     }
 
-    override suspend fun getChatMessages(
-        chatRoomId: Long
-    ): List<ChatMessageModel> {
-        return chatApi.getChatMessages(
-            chatRoomId = chatRoomId
-        ).map { response ->
-            response.toDomain()
-        }
+    override suspend fun getChatMessages(chatRoomId: Long): List<ChatMessageModel> {
+        return chatApi.getChatMessages(chatRoomId = chatRoomId)
+            .map { response -> response.toDomain() }
     }
 
     override suspend fun createOrGetProductChatRoom(

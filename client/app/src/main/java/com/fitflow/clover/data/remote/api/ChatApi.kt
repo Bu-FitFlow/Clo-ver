@@ -11,7 +11,6 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ChatApi {
-
     @GET("api/chat/rooms")
     suspend fun getChatRooms(
         @Query("filter") filter: String? = null
