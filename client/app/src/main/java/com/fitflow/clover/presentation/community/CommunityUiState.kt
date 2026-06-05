@@ -15,7 +15,12 @@ data class CommunityListUiState(
     val selectedCategory: CommunityCategory = CommunityCategory.ALL,
     val searchQuery: String = "",
     val isWriteMenuExpanded: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    // 목록에서 ... 버튼으로 열리는 게시글별 팝업 메뉴
+    // null이면 닫힘, Long 값이면 해당 postId의 메뉴가 열림
+    val openedPostMenuId: Long? = null,
+    // 열린 메뉴가 내 글인지 여부 (내 글이면 수정/삭제, 아니면 신고/차단)
+    val openedPostMenuIsMyPost: Boolean = false
 )
 
 // ─────────────────────────────────────────
@@ -29,7 +34,13 @@ data class CommunityDetailUiState(
     val errorMessage: String? = null,
     // 대댓글: 현재 답글을 달 대상 댓글 ID (null이면 입력창 숨김)
     val replyTargetCommentId: Long? = null,
-    val replyInput: String = ""
+    val replyInput: String = "",
+    // 댓글 수정: 현재 수정 중인 댓글 ID (null이면 수정 모드 아님)
+    val editingCommentId: Long? = null,
+    val editingCommentInput: String = "",
+    // 대댓글 수정: 현재 수정 중인 대댓글 ID
+    val editingReplyId: Long? = null,
+    val editingReplyInput: String = ""
 )
 
 // ─────────────────────────────────────────

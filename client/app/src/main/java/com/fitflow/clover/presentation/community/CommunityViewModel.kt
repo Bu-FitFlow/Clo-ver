@@ -69,7 +69,6 @@ class CommunityViewModel(
 
             runCatching {
                 val category = _listUiState.value.selectedCategory
-                    .takeIf { it != CommunityCategory.ALL }?.name
                 communityUseCase.getPosts(category = category)
             }.onSuccess { posts ->
                 allPosts = posts
@@ -131,6 +130,26 @@ class CommunityViewModel(
         }
     }
 
+    fun onListPostMenuClick(postId: Long, isMyPost: Boolean) {
+        _listUiState.update { current ->
+            val nextId = if (current.openedPostMenuId == postId) null else postId
+            current.copy(
+                openedPostMenuId = nextId,
+                openedPostMenuIsMyPost = isMyPost
+            )
+        }
+    }
+
+    // postDetails에서 isMyPost를 자동 판단하는 오버로드 (NavHost에서 사용)
+    fun onListPostMenuClick(postId: Long) {
+        val isMyPost = postDetails[postId]?.isMyPost ?: false
+        onListPostMenuClick(postId, isMyPost)
+    }
+
+    fun closeListPostMenu() {
+        _listUiState.update { it.copy(openedPostMenuId = null, openedPostMenuIsMyPost = false) }
+    }
+
     // ─────────────────────────────────────────────────────────
     // 3. 상세 화면 이벤트
     // ─────────────────────────────────────────────────────────
@@ -146,7 +165,10 @@ class CommunityViewModel(
             }
 
             runCatching {
-                communityUseCase.getPostDetail(postId)
+                val category = _detailUiState.value.post?.category
+                    ?: _listUiState.value.posts.find { it.postId == postId }?.category
+                    ?: CommunityCategory.FREE
+                communityUseCase.getPostDetail(postId, category)
             }.onSuccess { post ->
                 postDetails = postDetails + (post.postId to post)
                 _detailUiState.update {
@@ -176,8 +198,7 @@ class CommunityViewModel(
         val post = _detailUiState.value.post ?: return
         viewModelScope.launch {
             runCatching {
-                if (post.isLiked) communityUseCase.unlikePost(post.postId)
-                else communityUseCase.likePost(post.postId)
+                communityUseCase.likePost(post.postId, post.category)
             }.onSuccess {
                 val nextPost = post.copy(
                     isLiked = !post.isLiked,
@@ -213,8 +234,8 @@ class CommunityViewModel(
 
         viewModelScope.launch {
             runCatching {
-                communityUseCase.createComment(postId = post.postId, content = input)
-                communityUseCase.getPostDetail(post.postId)
+                communityUseCase.createComment(communityId = post.postId, content = input)
+                communityUseCase.getPostDetail(post.postId, post.category)
             }.onSuccess { updatedPost ->
                 postDetails = postDetails + (updatedPost.postId to updatedPost)
                 updatePostSummaryCommentCount(updatedPost)
@@ -264,8 +285,8 @@ class CommunityViewModel(
 
         viewModelScope.launch {
             runCatching {
-                communityUseCase.createReply(postId = post.postId, commentId = targetCommentId, content = input)
-                communityUseCase.getPostDetail(post.postId)
+                communityUseCase.createReply(communityId = post.postId, parentId = targetCommentId, content = input)
+                communityUseCase.getPostDetail(post.postId, post.category)
             }.onSuccess { updatedPost ->
                 postDetails = postDetails + (updatedPost.postId to updatedPost)
                 _detailUiState.update { it.copy(post = updatedPost, replyInput = "", replyTargetCommentId = null) }
@@ -290,12 +311,126 @@ class CommunityViewModel(
         }
     }
 
+    // 댓글 수정 시작
+    fun onCommentEditStart(commentId: Long, currentContent: String) {
+        _detailUiState.update { current ->
+            current.copy(
+                editingCommentId = commentId,
+                editingCommentInput = currentContent,
+                editingReplyId = null,
+                editingReplyInput = ""
+            )
+        }
+    }
+
+    fun onCommentEditInputChange(input: String) {
+        _detailUiState.update { it.copy(editingCommentInput = input) }
+    }
+
+    fun onCommentEditSubmit() {
+        val current = _detailUiState.value
+        val post = current.post ?: return
+        val commentId = current.editingCommentId ?: return
+        val input = current.editingCommentInput.trim()
+        if (input.isEmpty()) return
+
+        viewModelScope.launch {
+            runCatching {
+                communityUseCase.updateComment(communityId = post.postId, commentId = commentId, content = input)
+                communityUseCase.getPostDetail(post.postId, post.category)
+            }.onSuccess { updatedPost ->
+                postDetails = postDetails + (updatedPost.postId to updatedPost)
+                _detailUiState.update { it.copy(post = updatedPost, editingCommentId = null, editingCommentInput = "") }
+            }.onFailure {
+                // API 실패 시 로컬에서만 반영
+                val nextPost = post.copy(
+                    comments = post.comments.map { c ->
+                        if (c.commentId == commentId) c.copy(content = input) else c
+                    }
+                )
+                postDetails = postDetails + (nextPost.postId to nextPost)
+                _detailUiState.update { it.copy(post = nextPost, editingCommentId = null, editingCommentInput = "") }
+            }
+        }
+    }
+
+    fun onCommentEditCancel() {
+        _detailUiState.update { it.copy(editingCommentId = null, editingCommentInput = "") }
+    }
+
+    // 대댓글 수정 시작
+    fun onReplyEditStart(replyId: Long, currentContent: String) {
+        _detailUiState.update { current ->
+            current.copy(
+                editingReplyId = replyId,
+                editingReplyInput = currentContent,
+                editingCommentId = null,
+                editingCommentInput = ""
+            )
+        }
+    }
+
+    fun onReplyEditInputChange(input: String) {
+        _detailUiState.update { it.copy(editingReplyInput = input) }
+    }
+
+    fun onReplyEditSubmit(commentId: Long) {
+        val current = _detailUiState.value
+        val post = current.post ?: return
+        val replyId = current.editingReplyId ?: return
+        val input = current.editingReplyInput.trim()
+        if (input.isEmpty()) return
+
+        viewModelScope.launch {
+            // 대댓글 수정 API 없음 - 로컬에서만 반영
+            val nextPost = post.copy(
+                comments = post.comments.map { c ->
+                    if (c.commentId == commentId) c.copy(
+                        replies = c.replies.map { r ->
+                            if (r.replyId == replyId) r.copy(content = input) else r
+                        }
+                    ) else c
+                }
+            )
+            postDetails = postDetails + (nextPost.postId to nextPost)
+            _detailUiState.update { it.copy(post = nextPost, editingReplyId = null, editingReplyInput = "") }
+        }
+    }
+
+    fun onReplyEditCancel() {
+        _detailUiState.update { it.copy(editingReplyId = null, editingReplyInput = "") }
+    }
+
+    // 대댓글 삭제
+    fun onReplyDeleteClick(commentId: Long, replyId: Long) {
+        val post = _detailUiState.value.post ?: return
+        viewModelScope.launch {
+            runCatching {
+                communityUseCase.deleteReply(communityId = post.postId, parentId = commentId, commentId = replyId)
+                communityUseCase.getPostDetail(post.postId, post.category)
+            }.onSuccess { updatedPost ->
+                postDetails = postDetails + (updatedPost.postId to updatedPost)
+                _detailUiState.update { it.copy(post = updatedPost) }
+            }.onFailure {
+                val nextPost = post.copy(
+                    comments = post.comments.map { c ->
+                        if (c.commentId == commentId) c.copy(
+                            replies = c.replies.filterNot { it.replyId == replyId }
+                        ) else c
+                    }
+                )
+                postDetails = postDetails + (nextPost.postId to nextPost)
+                _detailUiState.update { it.copy(post = nextPost) }
+            }
+        }
+    }
+
     fun onCommentDeleteClick(commentId: Long) {
         val post = _detailUiState.value.post ?: return
         viewModelScope.launch {
             runCatching {
-                communityUseCase.deleteComment(postId = post.postId, commentId = commentId)
-                communityUseCase.getPostDetail(post.postId)
+                communityUseCase.deleteComment(communityId = post.postId, commentId = commentId)
+                communityUseCase.getPostDetail(post.postId, post.category)
             }.onSuccess { updatedPost ->
                 postDetails = postDetails + (updatedPost.postId to updatedPost)
                 updatePostSummaryCommentCount(updatedPost)
@@ -400,7 +535,7 @@ class CommunityViewModel(
                     .joinToString("\n") { it.text }
                     .ifBlank { "내용을 입력해 주세요." }
                 communityUseCase.createPost(
-                    category = normalizeWriteCategory(current.selectedCategory).name,
+                    category = normalizeWriteCategory(current.selectedCategory),
                     title = title,
                     content = content,
                     imageUrl = finalImageUri?.toString()
@@ -567,8 +702,8 @@ class CommunityViewModel(
                     .joinToString("\n") { it.text }
                     .ifBlank { "내용을 입력해 주세요." }
                 communityUseCase.updatePost(
-                    postId = postId,
-                    category = normalizeWriteCategory(current.selectedCategory).name,
+                    communityId = postId,
+                    category = normalizeWriteCategory(current.selectedCategory),
                     title = title,
                     content = content,
                     imageUrl = finalImageUri?.toString()
@@ -621,7 +756,7 @@ class CommunityViewModel(
         val post = _detailUiState.value.post ?: return
         viewModelScope.launch {
             runCatching {
-                communityUseCase.deletePost(post.postId)
+                communityUseCase.deletePost(post.postId, post.category)
             }.onSuccess {
                 allPosts = allPosts.filterNot { it.postId == post.postId }
                 postDetails = postDetails - post.postId
@@ -652,6 +787,26 @@ class CommunityViewModel(
                 closeDetailMenu()
             }.onFailure {
                 closeDetailMenu()
+            }
+        }
+    }
+
+    // 목록 화면에서 ... 메뉴를 통한 신고
+    fun onListReportClick(postId: Long) {
+        closeListPostMenu()
+        // TODO: 신고 화면 이동 또는 다이얼로그 처리
+    }
+
+    // 목록 화면에서 ... 메뉴를 통한 차단
+    fun onListBlockClick(postId: Long) {
+        val nickname = postDetails[postId]?.authorNickname?.takeIf { it.isNotBlank() } ?: return
+        viewModelScope.launch {
+            runCatching {
+                communityUseCase.blockUser(nickname)
+            }.onSuccess {
+                closeListPostMenu()
+            }.onFailure {
+                closeListPostMenu()
             }
         }
     }
@@ -816,10 +971,10 @@ class CommunityViewModel(
         return posts.associate { summary ->
             summary.postId to CommunityPost(
                 postId = summary.postId,
+                authorNickname = summary.authorNickname,
                 category = summary.category,
                 title = summary.title,
                 contentBlocks = when (summary.postId) {
-                    // 이미지 있는 글
                     1L -> listOf(
                         CommunityContentBlock.TextBlock(summary.contentPreview),
                         CommunityContentBlock.ImageBlock(imageUrl = "", description = "이미지"),
@@ -830,13 +985,11 @@ class CommunityViewModel(
                         CommunityContentBlock.ImageBlock(imageUrl = "", description = "상품 이미지"),
                         CommunityContentBlock.TextBlock("사이즈 표랑 실제 착용감이 좀 달랐어요.")
                     )
-                    // 이미지 없는 글
                     else -> listOf(
                         CommunityContentBlock.TextBlock(summary.contentPreview),
                         CommunityContentBlock.TextBlock("거래 경험이나 코디에 대한 의견을 자유롭게 나눠 주세요.")
                     )
                 },
-                authorNickname = summary.authorNickname,
                 authorProfileImageUrl = summary.authorProfileImageUrl,
                 likeCount = summary.likeCount,
                 isLiked = false,

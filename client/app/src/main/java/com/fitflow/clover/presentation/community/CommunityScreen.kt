@@ -52,6 +52,11 @@ fun CommunityListScreen(
     onCategorySelect: (CommunityCategory) -> Unit = {},
     onSearchQueryChange: (String) -> Unit = {},
     onMenuClick: (Long) -> Unit = {},
+    onMenuDismiss: () -> Unit = {},
+    onListEditClick: (Long) -> Unit = {},
+    onListDeleteClick: (Long) -> Unit = {},
+    onListReportClick: (Long) -> Unit = {},
+    onListBlockClick: (Long) -> Unit = {},
     onBackClick: () -> Unit = {},
     onLogoClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
@@ -143,7 +148,18 @@ fun CommunityListScreen(
                     else -> {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
                             items(uiState.posts) { post ->
-                                PostItem(post = post, onPostClick = onPostClick, onMenuClick = onMenuClick)
+                                PostItem(
+                                    post = post,
+                                    onPostClick = onPostClick,
+                                    onMenuClick = onMenuClick,
+                                    isMenuExpanded = uiState.openedPostMenuId == post.postId,
+                                    isMyPost = uiState.openedPostMenuIsMyPost,
+                                    onMenuDismiss = onMenuDismiss,
+                                    onEditClick = onListEditClick,
+                                    onDeleteClick = onListDeleteClick,
+                                    onReportClick = onListReportClick,
+                                    onBlockClick = onListBlockClick
+                                )
                             }
                         }
                     }
@@ -286,6 +302,15 @@ fun CommunityDetailScreen(
     onReplyInputChange: (String) -> Unit = {},
     onReplySubmit: () -> Unit = {},
     onCommentDeleteClick: (Long) -> Unit = {},
+    onCommentEditStart: (Long, String) -> Unit = { _, _ -> },
+    onCommentEditInputChange: (String) -> Unit = {},
+    onCommentEditSubmit: () -> Unit = {},
+    onCommentEditCancel: () -> Unit = {},
+    onReplyDeleteClick: (Long, Long) -> Unit = { _, _ -> },
+    onReplyEditStart: (Long, String) -> Unit = { _, _ -> },
+    onReplyEditInputChange: (String) -> Unit = {},
+    onReplyEditSubmit: (Long) -> Unit = {},
+    onReplyEditCancel: () -> Unit = {},
     onMenuClick: () -> Unit = {},
     onMenuDismiss: () -> Unit = {},
     onEditClick: () -> Unit = {},
@@ -400,23 +425,26 @@ fun CommunityDetailScreen(
                                             onClick = onLikeClick
                                         )
 
-                                        Box {
-                                            IconButton(onClick = onMenuClick) {
-                                                Icon(
-                                                    imageVector = Icons.Default.MoreVert,
-                                                    contentDescription = "더보기",
-                                                    tint = Color.Gray
-                                                )
-                                            }
-                                            if (uiState.isMenuExpanded) {
-                                                PostMenuPopup(
-                                                    isMyPost = post.isMyPost,
-                                                    onEditClick = onEditClick,
-                                                    onDeleteClick = onDeleteClick,
-                                                    onReportClick = onReportClick,
-                                                    onBlockClick = onBlockClick,
-                                                    onDismiss = onMenuDismiss
-                                                )
+                                        // 내 글일 때만 ... 버튼 표시
+                                        if (post.isMyPost) {
+                                            Box {
+                                                IconButton(onClick = onMenuClick) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.MoreVert,
+                                                        contentDescription = "더보기",
+                                                        tint = Color.Gray
+                                                    )
+                                                }
+                                                if (uiState.isMenuExpanded) {
+                                                    PostMenuPopup(
+                                                        isMyPost = post.isMyPost,
+                                                        onEditClick = onEditClick,
+                                                        onDeleteClick = onDeleteClick,
+                                                        onReportClick = onReportClick,
+                                                        onBlockClick = onBlockClick,
+                                                        onDismiss = onMenuDismiss
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -462,7 +490,20 @@ fun CommunityDetailScreen(
                                         CommentItem(
                                             comment = comment,
                                             onReplyClick = onReplyClick,
-                                            onDeleteClick = onCommentDeleteClick
+                                            onDeleteClick = onCommentDeleteClick,
+                                            onEditClick = onCommentEditStart,
+                                            isEditing = uiState.editingCommentId == comment.commentId,
+                                            editingInput = if (uiState.editingCommentId == comment.commentId) uiState.editingCommentInput else "",
+                                            onEditInputChange = onCommentEditInputChange,
+                                            onEditSubmit = onCommentEditSubmit,
+                                            onEditCancel = onCommentEditCancel,
+                                            onReplyDeleteClick = onReplyDeleteClick,
+                                            onReplyEditClick = onReplyEditStart,
+                                            isEditingReplyId = uiState.editingReplyId,
+                                            editingReplyInput = uiState.editingReplyInput,
+                                            onReplyEditInputChange = onReplyEditInputChange,
+                                            onReplyEditSubmit = onReplyEditSubmit,
+                                            onReplyEditCancel = onReplyEditCancel
                                         )
                                         // 대댓글 입력창: 해당 댓글의 "답글" 버튼을 눌렀을 때만 표시
                                         if (uiState.replyTargetCommentId == comment.commentId) {

@@ -1,52 +1,50 @@
 package com.fitflow.clover.domain.repository
 
+import com.fitflow.clover.domain.modal.CommunityCategory
 import com.fitflow.clover.domain.modal.CommunityPost
 import com.fitflow.clover.domain.modal.CommunityPostSummary
 
 interface CommunityRepository {
 
-    suspend fun getPosts(
-        category: String? = null,
-        page: Int = 0,
-        size: Int = 20
-    ): List<CommunityPostSummary>
+    // 카테고리별 목록 조회
+    suspend fun getPosts(category: CommunityCategory): List<CommunityPostSummary>
 
-    suspend fun getPostDetail(postId: Long): CommunityPost
+    // 카테고리별 상세 조회
+    suspend fun getPostDetail(communityId: Long, category: CommunityCategory): CommunityPost
 
+    // 카테고리별 작성
     suspend fun createPost(
-        category: String,
+        category: CommunityCategory,
         title: String,
         content: String,
         imageUrl: String? = null
     ): CommunityPost
 
+    // 카테고리별 수정
     suspend fun updatePost(
-        postId: Long,
-        category: String,
+        communityId: Long,
+        category: CommunityCategory,
         title: String,
         content: String,
         imageUrl: String? = null
     ): CommunityPost
 
-    suspend fun deletePost(postId: Long)
+    // 카테고리별 삭제
+    suspend fun deletePost(communityId: Long, category: CommunityCategory)
 
-    suspend fun likePost(postId: Long)
+    // 카테고리별 좋아요
+    suspend fun likePost(communityId: Long, category: CommunityCategory)
 
-    suspend fun unlikePost(postId: Long)
+    // 댓글
+    suspend fun createComment(communityId: Long, content: String)
+    suspend fun updateComment(communityId: Long, commentId: Long, content: String)
+    suspend fun deleteComment(communityId: Long, commentId: Long)
 
-    suspend fun createComment(postId: Long, content: String)
+    // 대댓글
+    suspend fun createReply(communityId: Long, parentId: Long, content: String)
+    suspend fun deleteReply(communityId: Long, parentId: Long, commentId: Long)
 
-    suspend fun updateComment(postId: Long, commentId: Long, content: String)
-
-    suspend fun deleteComment(postId: Long, commentId: Long)
-
-    suspend fun createReply(postId: Long, commentId: Long, content: String)
-
-    suspend fun updateReply(postId: Long, commentId: Long, replyId: Long, content: String)
-
-    suspend fun deleteReply(postId: Long, commentId: Long, replyId: Long)
-
-    suspend fun reportPost(postId: Long, reason: String)
-
-    suspend fun blockUser(userId: Long)
+    // 차단
+    suspend fun blockUser(nickname: String)
+    suspend fun unblockUser(nickname: String)
 }

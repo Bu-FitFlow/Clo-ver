@@ -8,10 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.lifecycleScope
 import com.fitflow.clover.core.navigation.CloverNavHost
-import com.fitflow.clover.core.network.BackendConnectionTester
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,12 +16,13 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
-        lifecycleScope.launch {
-            BackendConnectionTester(this@MainActivity).run(
-                loginId = "test01",
-                password = "1234"
-            )
-        }
+        // 백엔드 연결 테스트 (백엔드 연결 시 주석 해제)
+//        lifecycleScope.launch {
+//            BackendConnectionTester(this@MainActivity).run(
+//                loginId = "test01",
+//                password = "1234"
+//            )
+//        }
 
         setContent {
             MaterialTheme {

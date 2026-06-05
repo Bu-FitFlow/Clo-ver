@@ -41,7 +41,15 @@ private val CloverGreenLight = Color(0xFFE8F8E0)
 fun PostItem(
     post: CommunityPostSummary,
     onPostClick: (Long) -> Unit,
+    // postId를 전달, Screen에서 isMyPost 판단
     onMenuClick: (Long) -> Unit,
+    isMenuExpanded: Boolean = false,
+    isMyPost: Boolean = false,
+    onMenuDismiss: () -> Unit = {},
+    onEditClick: (Long) -> Unit = {},
+    onDeleteClick: (Long) -> Unit = {},
+    onReportClick: (Long) -> Unit = {},
+    onBlockClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -98,16 +106,28 @@ fun PostItem(
                 }
             }
 
-            IconButton(
-                onClick = { onMenuClick(post.postId) },
-                modifier = Modifier.size(32.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "더보기",
-                    tint = Color.LightGray,
-                    modifier = Modifier.size(18.dp)
-                )
+            Box {
+                IconButton(
+                    onClick = { onMenuClick(post.postId) },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "더보기",
+                        tint = Color.LightGray,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                if (isMenuExpanded) {
+                    ListPostMenuPopup(
+                        isMyPost = isMyPost,
+                        onEditClick = { onEditClick(post.postId) },
+                        onDeleteClick = { onDeleteClick(post.postId) },
+                        onReportClick = { onReportClick(post.postId) },
+                        onBlockClick = { onBlockClick(post.postId) },
+                        onDismiss = onMenuDismiss
+                    )
+                }
             }
         }
 
@@ -206,6 +226,21 @@ fun CommentItem(
     comment: CommunityComment,
     onReplyClick: (Long) -> Unit,
     onDeleteClick: (Long) -> Unit,
+    onEditClick: (Long, String) -> Unit,
+    // 수정 모드 관련
+    isEditing: Boolean = false,
+    editingInput: String = "",
+    onEditInputChange: (String) -> Unit = {},
+    onEditSubmit: () -> Unit = {},
+    onEditCancel: () -> Unit = {},
+    // 대댓글 수정/삭제 콜백
+    onReplyDeleteClick: (Long, Long) -> Unit = { _, _ -> },
+    onReplyEditClick: (Long, String) -> Unit = { _, _ -> },
+    isEditingReplyId: Long? = null,
+    editingReplyInput: String = "",
+    onReplyEditInputChange: (String) -> Unit = {},
+    onReplyEditSubmit: (Long) -> Unit = {},
+    onReplyEditCancel: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -218,28 +253,82 @@ fun CommentItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "${comment.authorNickname} 님",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.Black
-            )
-            TextButton(onClick = { onReplyClick(comment.commentId) }) {
-                Text("답글", fontSize = 11.sp, color = Color.Gray)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "${comment.authorNickname} 님",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black
+                )
+                Text(
+                    text = comment.createdAt,
+                    fontSize = 10.sp,
+                    color = Color.LightGray
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { onReplyClick(comment.commentId) }) {
+                    Text("답글", fontSize = 11.sp, color = Color.Gray)
+                }
+                if (comment.isMyComment) {
+                    TextButton(onClick = { onEditClick(comment.commentId, comment.content) }) {
+                        Text("수정", fontSize = 11.sp, color = Color.Gray)
+                    }
+                    TextButton(onClick = { onDeleteClick(comment.commentId) }) {
+                        Text("삭제", fontSize = 11.sp, color = Color.Red)
+                    }
+                }
             }
         }
 
-        Text(
-            text = comment.content,
-            fontSize = 11.sp,
-            color = Color.DarkGray,
-            lineHeight = 17.sp
-        )
+        if (isEditing) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp, bottom = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = editingInput,
+                    onValueChange = onEditInputChange,
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("댓글 수정...", fontSize = 11.sp) },
+                    shape = RoundedCornerShape(8.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color.LightGray,
+                        focusedBorderColor = CloverGreen,
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White
+                    )
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                TextButton(onClick = onEditSubmit) {
+                    Text("완료", color = CloverGreen, fontSize = 11.sp)
+                }
+                TextButton(onClick = onEditCancel) {
+                    Text("취소", color = Color.Gray, fontSize = 11.sp)
+                }
+            }
+        } else {
+            Text(
+                text = comment.content,
+                fontSize = 11.sp,
+                color = Color.DarkGray,
+                lineHeight = 17.sp
+            )
+        }
 
         comment.replies.forEach { reply ->
             ReplyItem(
                 reply = reply,
-                onDeleteClick = onDeleteClick,
+                commentId = comment.commentId,
+                onDeleteClick = onReplyDeleteClick,
+                onEditClick = onReplyEditClick,
+                isEditing = isEditingReplyId == reply.replyId,
+                editingInput = if (isEditingReplyId == reply.replyId) editingReplyInput else "",
+                onEditInputChange = onReplyEditInputChange,
+                onEditSubmit = { onReplyEditSubmit(comment.commentId) },
+                onEditCancel = onReplyEditCancel,
                 modifier = Modifier.padding(start = 16.dp, top = 6.dp)
             )
         }
@@ -258,7 +347,14 @@ fun CommentItem(
 @Composable
 fun ReplyItem(
     reply: CommunityReply,
-    onDeleteClick: (Long) -> Unit,
+    commentId: Long,
+    onDeleteClick: (Long, Long) -> Unit,
+    onEditClick: (Long, String) -> Unit,
+    isEditing: Boolean = false,
+    editingInput: String = "",
+    onEditInputChange: (String) -> Unit = {},
+    onEditSubmit: () -> Unit = {},
+    onEditCancel: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -273,18 +369,69 @@ fun ReplyItem(
         )
 
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "답변: ${reply.authorNickname} 님",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.Gray
-            )
-            Text(
-                text = reply.content,
-                fontSize = 11.sp,
-                color = Color.DarkGray,
-                lineHeight = 17.sp
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "${reply.authorNickname} 님",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = reply.createdAt,
+                        fontSize = 10.sp,
+                        color = Color.LightGray
+                    )
+                }
+                if (reply.isMyReply) {
+                    Row {
+                        TextButton(onClick = { onEditClick(reply.replyId, reply.content) }) {
+                            Text("수정", fontSize = 10.sp, color = Color.Gray)
+                        }
+                        TextButton(onClick = { onDeleteClick(commentId, reply.replyId) }) {
+                            Text("삭제", fontSize = 10.sp, color = Color.Red)
+                        }
+                    }
+                }
+            }
+
+            if (isEditing) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = editingInput,
+                        onValueChange = onEditInputChange,
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("대댓글 수정...", fontSize = 11.sp) },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedBorderColor = CloverGreen,
+                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = Color.White
+                        )
+                    )
+                    TextButton(onClick = onEditSubmit) {
+                        Text("완료", color = CloverGreen, fontSize = 10.sp)
+                    }
+                    TextButton(onClick = onEditCancel) {
+                        Text("취소", color = Color.Gray, fontSize = 10.sp)
+                    }
+                }
+            } else {
+                Text(
+                    text = reply.content,
+                    fontSize = 11.sp,
+                    color = Color.DarkGray,
+                    lineHeight = 17.sp
+                )
+            }
         }
     }
 }
@@ -405,6 +552,77 @@ fun PostMenuPopup(
                     onBlockClick()
                     onDismiss()
                 }
+            )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────
+// 7-1. 목록 화면 게시글 ... 팝업 메뉴 (신고/차단 or 수정/삭제)
+// ─────────────────────────────────────────────────────────
+@Composable
+fun ListPostMenuPopup(
+    isMyPost: Boolean,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    onReportClick: () -> Unit,
+    onBlockClick: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    DropdownMenu(
+        expanded = true,
+        onDismissRequest = onDismiss,
+        containerColor = Color.White
+    ) {
+        if (isMyPost) {
+            DropdownMenuItem(
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = Color.DarkGray,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                text = { Text("수정하기", fontSize = 14.sp) },
+                onClick = { onEditClick(); onDismiss() }
+            )
+            DropdownMenuItem(
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        tint = Color.Red,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                text = { Text("삭제하기", fontSize = 14.sp, color = Color.Red) },
+                onClick = { onDeleteClick(); onDismiss() }
+            )
+        } else {
+            DropdownMenuItem(
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Block,
+                        contentDescription = null,
+                        tint = Color.Red,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                text = { Text("신고하기", fontSize = 14.sp) },
+                onClick = { onReportClick(); onDismiss() }
+            )
+            DropdownMenuItem(
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.PersonOff,
+                        contentDescription = null,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                text = { Text("차단하기", fontSize = 14.sp) },
+                onClick = { onBlockClick(); onDismiss() }
             )
         }
     }
