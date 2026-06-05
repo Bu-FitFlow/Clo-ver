@@ -58,6 +58,7 @@ fun MyWriting(navController: NavHostController) {
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally // 가운데 정렬
         ) {
+            MyWritingTopBar()
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -188,6 +189,17 @@ fun MyWriting(navController: NavHostController) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MyWritingTopBar() {
+    Box(
+        modifier = Modifier
+            .width(393.dp)  // 가로 사이즈
+            .height(57.dp) // 세로 사이즈
+            .background(Color.White) // 배경을 흰색으로 채움
+    ) {
     }
 }
 

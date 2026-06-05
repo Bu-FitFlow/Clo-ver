@@ -1,5 +1,13 @@
 package com.fitflow.clover.presentation.main
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -52,6 +61,8 @@ import com.fitflow.clover.R
 import com.fitflow.clover.domain.modal.ProductSummaryModel
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.compose.ui.text.style.TextOverflow
+import coil.compose.AsyncImage
 
 private val MainGreen = Color(0xFF99DE81)
 private val HeaderGreen = Color(0x3399DE81)
@@ -72,6 +83,7 @@ fun HomeScreen(
     onClickBodyProductMore: () -> Unit,
     onClickProductDetail: (Long) -> Unit,
     onClickCommunityMore: () -> Unit,
+    onClickCommunityPost: (Long) -> Unit = {},
     onClickCarbonBanner: () -> Unit
 ) {
     val mainViewModel = remember {
@@ -158,7 +170,8 @@ fun HomeScreen(
                 CommunitySection(
                     title = "커뮤니티 최신글",
                     posts = mainViewModel.latestCommunityPosts,
-                    onClickMore = onClickCommunityMore
+                    onClickMore = onClickCommunityMore,
+                    onClickPost = onClickCommunityPost
                 )
 
                 Spacer(modifier = Modifier.height(18.dp))
@@ -166,7 +179,8 @@ fun HomeScreen(
                 CommunitySection(
                     title = "커뮤니티 인기글",
                     posts = mainViewModel.popularCommunityPosts,
-                    onClickMore = onClickCommunityMore
+                    onClickMore = onClickCommunityMore,
+                    onClickPost = onClickCommunityPost
                 )
 
                 Spacer(modifier = Modifier.height(26.dp))
@@ -474,14 +488,23 @@ private fun ProductSection(
     onClickProduct: (ProductSummaryModel) -> Unit
 ) {
     val pageSize = 3
-    val pageCount = ((products.size + pageSize - 1) / pageSize).coerceAtLeast(1)
-    var currentPage by remember(products) {
+
+    val carouselProducts = products
+        .distinctBy { product ->
+            product.productId
+        }
+        .take(9)
+
+    val pageCount = ((carouselProducts.size + pageSize - 1) / pageSize)
+        .coerceAtLeast(1)
+
+    var currentPage by remember(carouselProducts) {
         mutableIntStateOf(0)
     }
 
-    val visibleProducts = products
-        .drop(currentPage * pageSize)
-        .take(pageSize)
+    var slideDirection by remember(carouselProducts) {
+        mutableIntStateOf(1)
+    }
 
     SectionHeader(
         title = title,
@@ -490,7 +513,7 @@ private fun ProductSection(
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    if (products.isEmpty()) {
+    if (carouselProducts.isEmpty()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -511,48 +534,93 @@ private fun ProductSection(
         modifier = Modifier
             .fillMaxWidth()
             .height(205.dp)
+            .clipToBounds()
     ) {
-        Row(
+        AnimatedContent(
+            targetState = currentPage,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 23.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            visibleProducts.forEach { product ->
-                ProductCard(
-                    product = product,
-                    onClick = {
-                        onClickProduct(product)
-                    }
+                .clipToBounds(),
+            transitionSpec = {
+                val direction = slideDirection
+
+                val enterTransition = slideInHorizontally(
+                    animationSpec = tween(durationMillis = 280)
+                ) { fullWidth ->
+                    direction * fullWidth
+                } + fadeIn(
+                    animationSpec = tween(durationMillis = 120)
                 )
+
+                val exitTransition = slideOutHorizontally(
+                    animationSpec = tween(durationMillis = 280)
+                ) { fullWidth ->
+                    -direction * fullWidth
+                } + fadeOut(
+                    animationSpec = tween(durationMillis = 120)
+                )
+
+                enterTransition togetherWith exitTransition using SizeTransform(
+                    clip = true
+                )
+            },
+            label = "ProductSectionPageSlide"
+        ) { animatedPage ->
+            val visibleProducts = carouselProducts
+                .drop(animatedPage * pageSize)
+                .take(pageSize)
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 23.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                visibleProducts.forEach { product ->
+                    ProductCard(
+                        product = product,
+                        onClick = {
+                            onClickProduct(product)
+                        }
+                    )
+                }
+
+                repeat(pageSize - visibleProducts.size) {
+                    Spacer(modifier = Modifier.width(103.dp))
+                }
             }
         }
 
-        ChevronButton(
-            isLeft = true,
-            onClick = {
-                currentPage = if (currentPage == 0) {
-                    pageCount - 1
-                } else {
-                    currentPage - 1
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = 4.dp)
-        )
+        if (carouselProducts.size > pageSize) {
+            ChevronButton(
+                isLeft = true,
+                onClick = {
+                    slideDirection = -1
+                    currentPage = if (currentPage == 0) {
+                        pageCount - 1
+                    } else {
+                        currentPage - 1
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 4.dp)
+            )
 
-        ChevronButton(
-            isLeft = false,
-            onClick = {
-                currentPage = (currentPage + 1) % pageCount
-            },
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = 4.dp)
-        )
+            ChevronButton(
+                isLeft = false,
+                onClick = {
+                    slideDirection = 1
+                    currentPage = (currentPage + 1) % pageCount
+                },
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 4.dp)
+            )
+        }
     }
 }
+
 
 @Composable
 private fun SectionHeader(
@@ -594,24 +662,48 @@ private fun ProductCard(
             .width(103.dp)
             .clickable(onClick = onClick)
     ) {
-        ProductImagePlaceholder(
+        Box(
             modifier = Modifier
                 .width(103.dp)
                 .height(150.dp)
-        )
+                .clip(RoundedCornerShape(0.dp))
+                .background(Color(0xFFD9D9D9)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (!product.thumbnailImageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = product.thumbnailImageUrl,
+                    contentDescription = product.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                ProductImagePlaceholder(
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "${product.name}\n${product.grade}\n${formatMainPrice(product.price)}",
+            text = buildString {
+                append(product.name)
+                append("\n")
+                append(product.grade.ifBlank { "브랜드" })
+                append("\n")
+                append(formatMainPrice(product.price))
+            },
             color = Color.Black,
             fontSize = 10.sp,
             lineHeight = 12.sp,
             fontWeight = FontWeight.Normal,
-            maxLines = 3
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
+
 
 @Composable
 private fun ProductImagePlaceholder(
@@ -621,21 +713,21 @@ private fun ProductImagePlaceholder(
         modifier = modifier.background(Color(0xFFD9D9D9))
     ) {
         drawRect(
-            color = Color(0xFFBFC7CC),
+            color = Color(0xFFD9D9D9),
             size = size
         )
 
         drawRoundRect(
-            color = Color(0xFFE7EEF2),
-            topLeft = Offset(size.width * 0.28f, size.height * 0.05f),
-            size = Size(size.width * 0.45f, size.height * 0.42f),
+            color = Color(0xFFEFEFEF),
+            topLeft = Offset(size.width * 0.22f, size.height * 0.10f),
+            size = Size(size.width * 0.56f, size.height * 0.42f),
             cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
         )
 
         drawRoundRect(
-            color = Color(0xFF1F1F1F),
-            topLeft = Offset(size.width * 0.38f, size.height * 0.37f),
-            size = Size(size.width * 0.30f, size.height * 0.58f),
+            color = Color(0xFF222222),
+            topLeft = Offset(size.width * 0.34f, size.height * 0.38f),
+            size = Size(size.width * 0.34f, size.height * 0.50f),
             cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
         )
     }
@@ -692,7 +784,8 @@ private fun MainDivider() {
 private fun CommunitySection(
     title: String,
     posts: List<MainCommunityPostUiModel>,
-    onClickMore: () -> Unit
+    onClickMore: () -> Unit,
+    onClickPost: (Long) -> Unit = {}
 ) {
     SectionHeader(
         title = title,
@@ -706,20 +799,25 @@ private fun CommunitySection(
         verticalArrangement = Arrangement.spacedBy(11.dp)
     ) {
         posts.forEach { post ->
-            CommunityPostRow(post = post)
+            CommunityPostRow(
+                post = post,
+                onClickPost = onClickPost
+            )
         }
     }
 }
 
 @Composable
 private fun CommunityPostRow(
-    post: MainCommunityPostUiModel
+    post: MainCommunityPostUiModel,
+    onClickPost: (Long) -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(37.dp)
-            .border(1.dp, Color.Black),
+            .border(1.dp, Color.Black)
+            .clickable { onClickPost(post.id) },
         verticalAlignment = Alignment.CenterVertically
     ) {
         CommunityThumb()

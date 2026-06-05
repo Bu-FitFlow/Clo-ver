@@ -41,14 +41,20 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,6 +82,7 @@ import com.fitflow.clover.domain.modal.ProductSubCategory
 private val CloverGreen = Color(0xFF99DE81)
 private const val MaxProductImageCount = 5
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductEditScreen(
     uiState: ProductEditUiState = ProductEditUiState(),
@@ -288,23 +295,157 @@ fun ProductEditScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                var showMainCategorySheet by remember { mutableStateOf(false) }
+                var showSubCategorySheet by remember { mutableStateOf(false) }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    ProductMainCategoryDropdown(
-                        modifier = Modifier.weight(1f),
-                        uiState = uiState,
-                        onMainCategorySelect = onMainCategorySelect,
-                        onMainCategoryExpandChange = onMainCategoryExpandChange
-                    )
+                    // 카테고리(목록) 버튼
+                    Surface(
+                        onClick = { showMainCategorySheet = true },
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color.LightGray),
+                        color = Color.White,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = uiState.selectedMainCategory?.displayName ?: "카테고리(목록)",
+                                fontSize = 13.sp,
+                                color = if (uiState.selectedMainCategory != null) Color.Black else Color.Gray
+                            )
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint = Color.Black,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
 
-                    ProductSubCategoryDropdown(
-                        modifier = Modifier.weight(1f),
-                        uiState = uiState,
-                        onSubCategorySelect = onSubCategorySelect,
-                        onSubCategoryExpandChange = onSubCategoryExpandChange
-                    )
+                    // 카테고리(상세) 버튼
+                    Surface(
+                        onClick = {
+                            if (uiState.selectedMainCategory != null) {
+                                showSubCategorySheet = true
+                            }
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(
+                            1.dp,
+                            if (uiState.selectedMainCategory != null) Color.LightGray else Color(0xFFDDDDDD)
+                        ),
+                        color = Color.White,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = uiState.selectedSubCategory?.displayName ?: "카테고리(상세)",
+                                fontSize = 13.sp,
+                                color = if (uiState.selectedSubCategory != null) Color.Black else Color.Gray
+                            )
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint = if (uiState.selectedMainCategory != null) Color.Black else Color.LightGray,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+
+                // 카테고리(목록) 바텀시트
+                if (showMainCategorySheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { showMainCategorySheet = false },
+                        containerColor = Color.White
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .navigationBarsPadding()
+                        ) {
+                            Text(
+                                text = "카테고리 선택",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
+                            )
+                            HorizontalDivider(color = Color.LightGray, thickness = 0.5.dp)
+                            ProductMainCategory.entries
+                                .filter { it != ProductMainCategory.ALL }
+                                .forEach { category ->
+                                    Text(
+                                        text = category.displayName,
+                                        fontSize = 15.sp,
+                                        color = if (uiState.selectedMainCategory == category) Color(0xFF5DB846) else Color.Black,
+                                        fontWeight = if (uiState.selectedMainCategory == category) FontWeight.Bold else FontWeight.Normal,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                onMainCategorySelect(category)
+                                                showMainCategorySheet = false
+                                            }
+                                            .padding(horizontal = 20.dp, vertical = 16.dp)
+                                    )
+                                    HorizontalDivider(color = Color(0xFFF0F0F0), thickness = 0.5.dp)
+                                }
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
+                }
+
+                // 카테고리(상세) 바텀시트
+                if (showSubCategorySheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { showSubCategorySheet = false },
+                        containerColor = Color.White
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .navigationBarsPadding()
+                        ) {
+                            Text(
+                                text = "상세 카테고리 선택",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
+                            )
+                            HorizontalDivider(color = Color.LightGray, thickness = 0.5.dp)
+                            uiState.subCategoryList.forEach { subCategory ->
+                                Text(
+                                    text = subCategory.displayName,
+                                    fontSize = 15.sp,
+                                    color = if (uiState.selectedSubCategory == subCategory) Color(0xFF5DB846) else Color.Black,
+                                    fontWeight = if (uiState.selectedSubCategory == subCategory) FontWeight.Bold else FontWeight.Normal,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            onSubCategorySelect(subCategory)
+                                            showSubCategorySheet = false
+                                        }
+                                        .padding(horizontal = 20.dp, vertical = 16.dp)
+                                )
+                                HorizontalDivider(color = Color(0xFFF0F0F0), thickness = 0.5.dp)
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -747,149 +888,6 @@ private fun ProductImageThumbnail(
                 tint = Color.White,
                 modifier = Modifier.padding(4.dp)
             )
-        }
-    }
-}
-
-@Composable
-private fun ProductMainCategoryDropdown(
-    modifier: Modifier = Modifier,
-    uiState: ProductEditUiState,
-    onMainCategorySelect: (ProductMainCategory) -> Unit,
-    onMainCategoryExpandChange: (Boolean) -> Unit
-) {
-    Box(modifier = modifier) {
-        Surface(
-            onClick = {
-                onMainCategoryExpandChange(!uiState.isMainCategoryExpanded)
-            },
-            shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(1.dp, Color.LightGray),
-            color = Color.White,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = uiState.selectedMainCategory?.displayName ?: "카테고리(목록)",
-                    fontSize = 13.sp,
-                    color = if (uiState.selectedMainCategory != null) Color.Black else Color.Gray
-                )
-
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = Color.Black,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        }
-
-        DropdownMenu(
-            expanded = uiState.isMainCategoryExpanded,
-            onDismissRequest = {
-                onMainCategoryExpandChange(false)
-            },
-            containerColor = Color.White
-        ) {
-            ProductMainCategory.entries
-                .filter { category ->
-                    category != ProductMainCategory.ALL
-                }
-                .forEach { category ->
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = category.displayName,
-                                fontSize = 14.sp,
-                                color = Color.Black
-                            )
-                        },
-                        onClick = {
-                            onMainCategorySelect(category)
-                            onMainCategoryExpandChange(false)
-                        }
-                    )
-                }
-        }
-    }
-}
-
-@Composable
-private fun ProductSubCategoryDropdown(
-    modifier: Modifier = Modifier,
-    uiState: ProductEditUiState,
-    onSubCategorySelect: (ProductSubCategory) -> Unit,
-    onSubCategoryExpandChange: (Boolean) -> Unit
-) {
-    Box(modifier = modifier) {
-        Surface(
-            onClick = {
-                if (uiState.selectedMainCategory != null) {
-                    onSubCategoryExpandChange(!uiState.isSubCategoryExpanded)
-                }
-            },
-            shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(
-                width = 1.dp,
-                color = if (uiState.selectedMainCategory != null) {
-                    Color.LightGray
-                } else {
-                    Color(0xFFDDDDDD)
-                }
-            ),
-            color = Color.White,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = uiState.selectedSubCategory?.displayName ?: "카테고리(상세)",
-                    fontSize = 13.sp,
-                    color = if (uiState.selectedSubCategory != null) Color.Black else Color.Gray
-                )
-
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = if (uiState.selectedMainCategory != null) Color.Black else Color.LightGray,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        }
-
-        DropdownMenu(
-            expanded = uiState.isSubCategoryExpanded,
-            onDismissRequest = {
-                onSubCategoryExpandChange(false)
-            },
-            containerColor = Color.White
-        ) {
-            uiState.subCategoryList.forEach { subCategory ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = subCategory.displayName,
-                            fontSize = 14.sp,
-                            color = Color.Black
-                        )
-                    },
-                    onClick = {
-                        onSubCategorySelect(subCategory)
-                        onSubCategoryExpandChange(false)
-                    }
-                )
-            }
         }
     }
 }

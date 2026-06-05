@@ -1,6 +1,12 @@
 package com.fitflow.clover.presentation.diagnosis
 
+import android.Manifest
+import android.content.ContentValues
 import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -45,6 +51,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -53,7 +60,8 @@ import kotlinx.coroutines.delay
 
 private enum class BodyAnalysisStep {
     USER_INFO,
-    BODY_CAMERA,
+    BODY_FRONT_CAMERA,
+    BODY_SIDE_CAMERA,
     BODY_RETRY,
     BODY_RESULT
 }
@@ -70,8 +78,16 @@ fun BodyAnalysisScreen(
         mutableStateOf(BodyAnalysisStep.USER_INFO)
     }
 
-    LaunchedEffect(uiState.isBodyAnalyzing, uiState.bodyPhotoBitmap) {
-        if (uiState.isBodyAnalyzing && uiState.bodyPhotoBitmap != null) {
+    LaunchedEffect(
+        uiState.isBodyAnalyzing,
+        uiState.frontBodyPhotoBitmap,
+        uiState.sideBodyPhotoBitmap
+    ) {
+        if (
+            uiState.isBodyAnalyzing &&
+            uiState.frontBodyPhotoBitmap != null &&
+            uiState.sideBodyPhotoBitmap != null
+        ) {
             delay(900)
 
             val success = viewModel.completeBodyAnalysis()
@@ -94,19 +110,47 @@ fun BodyAnalysisScreen(
                 onSelectHeight = viewModel::selectHeight,
                 onSelectWeight = viewModel::selectWeight,
                 onNext = {
-                    currentStep = BodyAnalysisStep.BODY_CAMERA
+                    currentStep = BodyAnalysisStep.BODY_FRONT_CAMERA
                 },
                 onBack = onMoveToMain,
                 onSkip = onMoveToPersonalColor
             )
         }
 
-        BodyAnalysisStep.BODY_CAMERA -> {
+        BodyAnalysisStep.BODY_FRONT_CAMERA -> {
             BodyCameraContent(
                 uiState = uiState,
-                onPhotoCaptured = viewModel::onBodyPhotoCaptured,
+                headerTitle = "체형분석",
+                guideMessage = "전면으로 보고 사진을 찍어주세요.\n전신이 화면 중앙에 보여야 정확하게 분석할 수 있습니다.",
+                progressText = "1/2 전면 촬영",
+                bitmap = uiState.frontBodyPhotoBitmap,
+                isLoading = false,
+                onPhotoCaptured = { bitmap ->
+                    viewModel.onFrontBodyPhotoCaptured(bitmap)
+                    if (bitmap != null) {
+                        currentStep = BodyAnalysisStep.BODY_SIDE_CAMERA
+                    }
+                },
                 onBack = {
                     currentStep = BodyAnalysisStep.USER_INFO
+                },
+                onSkip = onMoveToPersonalColor
+            )
+        }
+
+        BodyAnalysisStep.BODY_SIDE_CAMERA -> {
+            BodyCameraContent(
+                uiState = uiState,
+                headerTitle = "체형분석",
+                guideMessage = "옆면으로 서서 사진을 한 번 더 찍어주세요.\n전면 사진과 옆면 사진을 함께 분석합니다.",
+                progressText = "2/2 옆면 촬영",
+                bitmap = uiState.sideBodyPhotoBitmap,
+                isLoading = uiState.isBodyAnalyzing,
+                onPhotoCaptured = { bitmap ->
+                    viewModel.onSideBodyPhotoCaptured(bitmap)
+                },
+                onBack = {
+                    currentStep = BodyAnalysisStep.BODY_FRONT_CAMERA
                 },
                 onSkip = onMoveToPersonalColor
             )
@@ -117,8 +161,8 @@ fun BodyAnalysisScreen(
                 message = uiState.bodyAnalysisErrorMessage
                     ?: "체형을 인식할 수 없어요. 다시 촬영해 주세요.",
                 onRetry = {
-                    viewModel.resetBodyPhoto()
-                    currentStep = BodyAnalysisStep.BODY_CAMERA
+                    viewModel.resetBodyPhotos()
+                    currentStep = BodyAnalysisStep.BODY_FRONT_CAMERA
                 },
                 onMoveToMain = onMoveToMain
             )
@@ -128,7 +172,7 @@ fun BodyAnalysisScreen(
             BodyResultContent(
                 uiState = uiState,
                 onBack = {
-                    currentStep = BodyAnalysisStep.BODY_CAMERA
+                    currentStep = BodyAnalysisStep.BODY_SIDE_CAMERA
                 },
                 onMoveToPersonalColor = onMoveToPersonalColor
             )
@@ -152,8 +196,8 @@ private fun BodyUserInfoContent(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .systemBarsPadding() // 핸드폰 상태 표시줄 및 네비게이션 바 침범 방지
-            .padding(bottom = 30.dp), // 다음 버튼을 위로 살짝 올려줌
+            .systemBarsPadding()
+            .padding(bottom = 30.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         DiagnosisHeader(
@@ -225,7 +269,6 @@ private fun BodyUserInfoContent(
             onSelect = onSelectWeight
         )
 
-        // 기기 크기에 상관없이 버튼을 항상 아래로 밀어줌
         Spacer(modifier = Modifier.weight(1f))
 
         FigmaBottomButton(
@@ -242,14 +285,89 @@ private fun BodyUserInfoContent(
 @Composable
 private fun BodyCameraContent(
     uiState: DiagnosisUiState,
+    headerTitle: String,
+    guideMessage: String,
+    progressText: String,
+    bitmap: Bitmap?,
+    isLoading: Boolean,
     onPhotoCaptured: (Bitmap?) -> Unit,
     onBack: () -> Unit,
     onSkip: () -> Unit
 ) {
+    val context = LocalContext.current
+
+    var pendingCameraUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
+
     val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap ->
-        onPhotoCaptured(bitmap)
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            val uri = pendingCameraUri
+
+            if (success && uri != null) {
+                val capturedBitmap = runCatching {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        val source = ImageDecoder.createSource(
+                            context.contentResolver,
+                            uri
+                        )
+
+                        ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
+                            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                        }
+                    } else {
+                        @Suppress("DEPRECATION")
+                        MediaStore.Images.Media.getBitmap(
+                            context.contentResolver,
+                            uri
+                        )
+                    }
+                }.getOrNull()
+
+                onPhotoCaptured(capturedBitmap)
+            } else {
+                onPhotoCaptured(null)
+            }
+
+            pendingCameraUri = null
+        }
+    )
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            if (granted) {
+                val values = ContentValues().apply {
+                    put(
+                        MediaStore.Images.Media.DISPLAY_NAME,
+                        "body_${System.currentTimeMillis()}.jpg"
+                    )
+                    put(
+                        MediaStore.Images.Media.MIME_TYPE,
+                        "image/jpeg"
+                    )
+                }
+
+                val uri = context.contentResolver.insert(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    values
+                )
+
+                if (uri != null) {
+                    pendingCameraUri = uri
+                    cameraLauncher.launch(uri)
+                } else {
+                    onPhotoCaptured(null)
+                }
+            } else {
+                onPhotoCaptured(null)
+            }
+        }
+    )
+
+    fun openCameraSafely() {
+        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
     Column(
@@ -261,43 +379,56 @@ private fun BodyCameraContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         DiagnosisHeader(
-            title = "체형분석",
+            title = headerTitle,
             onBack = onBack,
             onSkip = onSkip
         )
 
-        Spacer(modifier = Modifier.height(50.dp))
+        Spacer(modifier = Modifier.height(30.dp))
 
         Text(
-            text = "전면으로 보고 사진을 찍어주세요.\n아닐 시 정확하지 않을 수 있습니다.",
+            text = progressText,
+            color = Color.Black,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        Text(
+            text = guideMessage,
             color = Color(0xFFF23636),
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center,
-            lineHeight = 22.sp
+            lineHeight = 22.sp,
+            modifier = Modifier.padding(horizontal = 28.dp)
         )
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(34.dp))
 
         PhotoCaptureBox(
             modifier = Modifier
                 .fillMaxWidth(0.6f)
                 .aspectRatio(0.7f),
-            bitmap = uiState.bodyPhotoBitmap,
-            isLoading = uiState.isBodyAnalyzing,
+            bitmap = bitmap,
+            isLoading = isLoading,
             onClick = {
-                cameraLauncher.launch(null)
+                openCameraSafely()
             }
         )
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(26.dp))
 
-        if (uiState.isBodyAnalyzing) {
+        if (isLoading) {
             Text(
-                text = "체형 데이터를 분석하고 있어요.",
+                text = "전면과 옆면 체형 데이터를 분석하고 있어요.",
                 color = Color.Black,
                 fontSize = 14.sp,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(horizontal = 40.dp)
             )
         }
 
@@ -404,7 +535,7 @@ private fun BodyResultContent(
             onSkip = onMoveToPersonalColor
         )
 
-        Spacer(modifier = Modifier.height(60.dp))
+        Spacer(modifier = Modifier.height(50.dp))
 
         Text(
             text = result?.title ?: "체형 분석이 완료되었습니다.",
@@ -416,7 +547,7 @@ private fun BodyResultContent(
             modifier = Modifier.padding(horizontal = 40.dp)
         )
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(34.dp))
 
         Text(
             text = result?.description ?: "추천 스타일 데이터를 준비했어요.",
@@ -537,7 +668,7 @@ private fun GenderSelectButton(
                 color = if (isSelected) lightBgColor else Color.Transparent,
                 shape = RoundedCornerShape(8.dp)
             )
-            .then( // 선택 시에만 테두리를 그려주어, 평소엔 투명하게 만듦
+            .then(
                 if (isSelected) Modifier.border(2.dp, baseColor, RoundedCornerShape(8.dp))
                 else Modifier
             )
@@ -568,7 +699,6 @@ private fun GenderSelectButton(
     }
 }
 
-
 @Composable
 private fun GenderAvatar(
     gender: DiagnosisGender,
@@ -581,10 +711,8 @@ private fun GenderAvatar(
         val h = size.height
         val w = size.width
 
-
         val headRadius = h / 9f
         val headCenterY = headRadius
-
 
         drawCircle(
             color = drawColor,

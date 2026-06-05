@@ -24,6 +24,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -79,6 +81,7 @@ fun ProductListScreen(
     onFilterClick: () -> Unit = {},
     onSearchClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
+    onLogoClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onChatClick: () -> Unit = {},
     onProductListClick: () -> Unit = {},
@@ -99,7 +102,10 @@ fun ProductListScreen(
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    ProductTopBar(onBackClick = onBackClick)
+                    ProductTopBar(
+                        onBackClick = onBackClick,
+                        onLogoClick = onLogoClick
+                    )
 
                     Row(
                         modifier = Modifier
@@ -229,55 +235,72 @@ fun ProductListScreen(
                     Column(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(end = 16.dp, bottom = 80.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                            .padding(end = 10.dp, bottom = 60.dp),
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = Color.White,
-                            shadowElevation = 4.dp,
-                            modifier = Modifier.width(140.dp)
+                        // 상단 메뉴 박스
+                        Column(
+                            modifier = Modifier
+                                .width(134.dp)
+                                .shadow(
+                                    elevation = 6.dp,
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color.White),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                                ProductMenuItem("알림") {
-                                    isFabMenuExpanded = false
-                                    onNotificationClick()
-                                }
-                                ProductMenuItem("채팅방") {
-                                    isFabMenuExpanded = false
-                                    onChatClick()
-                                }
-                                ProductMenuItem("판매글") {
-                                    isFabMenuExpanded = false
-                                    onProductListClick()
-                                }
-                                ProductMenuItem("커뮤니티") {
-                                    isFabMenuExpanded = false
-                                    onCommunityClick()
-                                }
-                                ProductMenuItem("마이페이지") {
-                                    isFabMenuExpanded = false
-                                    onMyPageClick()
-                                }
+                            listOf(
+                                "알림" to { isFabMenuExpanded = false; onNotificationClick() },
+                                "채팅방" to { isFabMenuExpanded = false; onChatClick() },
+                                "판매글" to { isFabMenuExpanded = false; onProductListClick() },
+                                "커뮤니티" to { isFabMenuExpanded = false; onCommunityClick() },
+                                "마이페이지" to { isFabMenuExpanded = false; onMyPageClick() }
+                            ).forEach { (label, action) ->
+                                Text(
+                                    text = label,
+                                    color = Color.Black,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable(onClick = action)
+                                        .padding(vertical = 10.dp)
+                                )
                             }
                         }
 
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = Color.White,
-                            shadowElevation = 4.dp,
-                            modifier = Modifier.width(140.dp)
+                        // 하단 메뉴 박스
+                        Column(
+                            modifier = Modifier
+                                .width(134.dp)
+                                .shadow(
+                                    elevation = 6.dp,
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color.White),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                                ProductMenuItem("판매") {
-                                    isFabMenuExpanded = false
-                                    onSellClick()
-                                }
-                                ProductMenuItem("글쓰기") {
-                                    isFabMenuExpanded = false
-                                    onCommunityWriteClick()
-                                }
+                            listOf(
+                                "판매" to { isFabMenuExpanded = false; onSellClick() },
+                                "글쓰기" to { isFabMenuExpanded = false; onCommunityWriteClick() }
+                            ).forEach { (label, action) ->
+                                Text(
+                                    text = label,
+                                    color = Color.Black,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable(onClick = action)
+                                        .padding(vertical = 10.dp)
+                                )
                             }
                         }
                     }
@@ -289,8 +312,8 @@ fun ProductListScreen(
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(end = 16.dp, bottom = 16.dp)
-                        .size(56.dp)
+                        .padding(end = 10.dp, bottom = 10.dp)
+                        .size(40.dp)
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
@@ -489,7 +512,7 @@ private fun SubCategoryDropdown(
 
     Box {
         CategoryChip(
-            text = selectedSubCategory?.displayName ?: "스타일",
+            text = selectedSubCategory?.displayName ?: "종류",
             isExpanded = isExpanded,
             enabled = enabled,
             onClick = {
@@ -558,6 +581,7 @@ private fun CategoryChip(
                 color = if (enabled) Color.Black else Color.Gray,
                 fontWeight = FontWeight.Medium
             )
+
             Icon(
                 imageVector = if (isExpanded) {
                     Icons.Default.KeyboardArrowUp
@@ -571,7 +595,6 @@ private fun CategoryChip(
         }
     }
 }
-
 @Composable
 fun ProductGridCard(
     product: ProductSummary,
@@ -636,7 +659,7 @@ fun ProductGridCard(
             Spacer(modifier = Modifier.height(2.dp))
 
             Text(
-                text = formatPrice(product.price),
+                text = formatProductListPrice(product.price),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -668,6 +691,7 @@ fun ProductGridCard(
                         tint = Color.Red,
                         modifier = Modifier.size(11.dp)
                     )
+
                     Text(
                         text = "${product.likeCount}",
                         fontSize = 11.sp,
@@ -740,7 +764,7 @@ private fun ProductSummaryModelCard(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = formatPrice(product.price),
+                    text = formatProductListPrice(product.price),
                     color = Color.Black,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
@@ -773,7 +797,8 @@ private fun ProductSummaryModelCard(
 
 @Composable
 fun ProductTopBar(
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onLogoClick: () -> Unit = {}
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Spacer(
@@ -819,7 +844,13 @@ fun ProductTopBar(
                         contentDescription = "Clo-ver 로고",
                         modifier = Modifier
                             .width(80.dp)
-                            .height(62.dp),
+                            .height(62.dp)
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
+                                onLogoClick()
+                            },
                         contentScale = ContentScale.Fit
                     )
                 }
@@ -887,7 +918,7 @@ private fun ProductListErrorContent(
     }
 }
 
-private fun formatPrice(price: Int): String {
+private fun formatProductListPrice(price: Int): String {
     return "%,d원".format(price)
 }
 

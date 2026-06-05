@@ -29,6 +29,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.fitflow.clover.mypage.mainscreen.MyPageScreen
+import com.fitflow.clover.mypage.mainscreen.NotificationScreen
+import com.fitflow.clover.mypage.mainscreen.SearchBar
+import com.fitflow.clover.mypage.mainscreen.UserPageScreen
+import com.fitflow.clover.mypage.setup.MyPageNavHost
+import com.fitflow.clover.mypage.setup.NotificationPush
 import com.fitflow.clover.presentation.auth.*
 import com.fitflow.clover.presentation.chat.ChatScreen
 import com.fitflow.clover.presentation.chat.ChatViewModel
@@ -38,6 +43,7 @@ import com.fitflow.clover.presentation.community.CommunityListScreen
 import com.fitflow.clover.presentation.community.CommunityViewModel
 import com.fitflow.clover.presentation.community.CommunityWriteScreen
 import com.fitflow.clover.presentation.diagnosis.BodyAnalysisScreen
+import com.fitflow.clover.presentation.diagnosis.DiagnosisSummaryScreen
 import com.fitflow.clover.presentation.diagnosis.DiagnosisViewModel
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorResultScreen
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorResultUiModel
@@ -49,6 +55,11 @@ import com.fitflow.clover.presentation.product.ProductEditScreen
 import com.fitflow.clover.presentation.product.ProductListScreen
 import com.fitflow.clover.presentation.product.ProductViewModel
 import com.fitflow.clover.presentation.splash.SplashScreen
+import com.fitflow.clover.presentation.report.ReportScreen
+
+
+private const val DIAGNOSIS_SUMMARY_ROUTE = "diagnosis_summary"
+
 
 @Composable
 fun CloverNavHost(
@@ -121,11 +132,11 @@ fun CloverNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = startDestination,
+        startDestination = "splash",
         modifier = modifier
     ) {
         composable("splash") {
-            SplashScreen(navController)
+            SplashScreen(navController = navController)
         }
 
         composable("login") {
@@ -163,7 +174,12 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
                 },
                 onMoveToMain = {
-                    navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
+                    navController.navigate(ScreenRoute.Main.route) {
+                        popUpTo(ScreenRoute.BodyAnalysis.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -172,16 +188,33 @@ fun CloverNavHost(
             PersonalColorScreen(
                 viewModel = diagnosisViewModel,
                 onBack = {
-                    currentScreen.value = ScreenRoute.BodyAnalysis
+                    navigateSingleTop(ScreenRoute.BodyAnalysis.route)
                 },
                 onMoveToResult = {
-                    navigateSingleTop(ScreenRoute.PersonalColorResult.route)
+                    navigateSingleTop(DIAGNOSIS_SUMMARY_ROUTE)
                 },
                 onMoveToRetry = {
                     navigateSingleTop(ScreenRoute.PersonalColorRetry.route)
                 },
                 onMoveToMain = {
-                    navigateSingleTop(ScreenRoute.Main.route)
+                    navigateSingleTop(DIAGNOSIS_SUMMARY_ROUTE)
+                }
+            )
+        }
+
+        composable(DIAGNOSIS_SUMMARY_ROUTE) {
+            DiagnosisSummaryScreen(
+                viewModel = diagnosisViewModel,
+                onBack = {
+                    navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
+                },
+                onMoveToMain = {
+                    navController.navigate(ScreenRoute.Main.route) {
+                        popUpTo(ScreenRoute.BodyAnalysis.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -209,7 +242,7 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
                 },
                 onMoveToMain = {
-                    navigateSingleTop(ScreenRoute.Main.route)
+                    navigateSingleTop(DIAGNOSIS_SUMMARY_ROUTE)
                 }
             )
         }
@@ -221,14 +254,14 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.Main.route)
                 },
                 onClickNotification = {
-                    navigateSingleTop(ScreenRoute.Notification.route)
+                    navigateSingleTop("notification_screen")
                 },
                 onClickChat = {
                     chatViewModel.backToChatList()
                     navigateSingleTop(ScreenRoute.Chat.route)
                 },
                 onClickTradePost = {
-                    navigateSingleTop(ScreenRoute.TradePost.route)
+                    navigateSingleTop(ScreenRoute.ProductList.route)
                 },
                 onClickCommunity = {
                     navigateSingleTop(ScreenRoute.CommunityList.route)
@@ -258,11 +291,20 @@ fun CloverNavHost(
                 onClickCommunityMore = {
                     navigateSingleTop(ScreenRoute.CommunityList.route)
                 },
+                onClickCommunityPost = { postId ->
+                    navController.navigate(
+                        ScreenRoute.CommunityDetail.createRoute(postId)
+                    )
+                },
                 onClickCarbonBanner = {
                     navigateSingleTop(ScreenRoute.CarbonPoint.route)
+                },
+                onClickSearch = {
+                    navigateSingleTop("search_bar")
                 }
             )
         }
+
 
         composable(ScreenRoute.ProductList.route) {
             ProductListRouteContent(
@@ -287,12 +329,19 @@ fun CloverNavHost(
 
             ProductDetailScreen(
                 productId = productId,
+                productViewModel = productViewModel,
                 onBack = {
                     popBackOrMain()
                 },
+                onClickLogo = {
+                    navController.navigate(ScreenRoute.Main.route) {
+                        launchSingleTop = true
+                        popUpTo(ScreenRoute.Main.route) {
+                            inclusive = false
+                        }
+                    }
+                },
                 onOpenChat = { selectedProductId, sellerId ->
-                    chatViewModel.backToChatList()
-
                     navController.navigate(
                         ScreenRoute.ChatRoom.createRoute(
                             productId = selectedProductId,
@@ -359,6 +408,9 @@ fun CloverNavHost(
                 onBackClick = {
                     popBackOrMain()
                 },
+                onLogoClick = {
+                    navigateSingleTop(ScreenRoute.Main.route)
+                },
                 onTitleChange = communityViewModel::onWriteTitleChange,
                 onCategorySelect = communityViewModel::onWriteCategorySelect,
                 onCategoryDropdownToggle = communityViewModel::onWriteCategoryDropdownToggle,
@@ -396,6 +448,9 @@ fun CloverNavHost(
                 onBackClick = {
                     popBackOrMain()
                 },
+                onLogoClick = {
+                    navigateSingleTop(ScreenRoute.Main.route)
+                },
                 onLikeClick = communityViewModel::onLikeClick,
                 onCommentInputChange = communityViewModel::onCommentInputChange,
                 onCommentSubmit = communityViewModel::onCommentSubmit,
@@ -404,7 +459,9 @@ fun CloverNavHost(
                 onReplySubmit = communityViewModel::onReplySubmit,
                 onCommentDeleteClick = communityViewModel::onCommentDeleteClick,
                 onMenuClick = communityViewModel::onDetailMenuClick,
+                onMenuDismiss = communityViewModel::closeDetailMenu,
                 onEditClick = {
+                    communityViewModel.closeDetailMenu()
                     navController.navigate(
                         ScreenRoute.CommunityEdit.createRoute(postId)
                     )
@@ -414,7 +471,15 @@ fun CloverNavHost(
                         popBackOrMain()
                     }
                 },
-                onReportClick = communityViewModel::onReportClick,
+                onReportClick = {
+                    communityViewModel.closeDetailMenu()
+                    navController.navigate(
+                        ScreenRoute.Report.createRoute(
+                            targetType = "POST",
+                            targetId = postId
+                        )
+                    )
+                },
                 onBlockClick = communityViewModel::onBlockClick
             )
         }
@@ -438,6 +503,9 @@ fun CloverNavHost(
                 uiState = editUiState,
                 onBackClick = {
                     popBackOrMain()
+                },
+                onLogoClick = {
+                    navigateSingleTop(ScreenRoute.Main.route)
                 },
                 onTitleChange = communityViewModel::onEditTitleChange,
                 onCategorySelect = communityViewModel::onEditCategorySelect,
@@ -507,32 +575,41 @@ fun CloverNavHost(
                 onBackClick = {
                     chatViewModel.backToChatList()
 
-                    if (productId != null) {
-                        navController.navigate(
-                            ScreenRoute.ProductDetail.createRoute(productId)
-                        ) {
-                            launchSingleTop = true
-                        }
-                    } else {
+                    val popped = navController.popBackStack()
+
+                    if (!popped) {
                         navigateSingleTop(ScreenRoute.Main.route)
                     }
                 },
                 onLogoClick = {
                     chatViewModel.backToChatList()
-                    navigateSingleTop(ScreenRoute.Main.route)
+
+                    navController.navigate(ScreenRoute.Main.route) {
+                        launchSingleTop = true
+                        popUpTo(ScreenRoute.Main.route) {
+                            inclusive = false
+                        }
+                    }
                 }
             )
         }
 
-        composable(ScreenRoute.Notification.route) {
-            MainPlaceholderScreen(
-                title = "알림",
-                description = "알림 설정 또는 알림 목록 화면으로 연결될 예정입니다.",
-                onBackToMain = {
-                    navigateSingleTop(ScreenRoute.Main.route)
+
+        composable("notification_screen") {
+            NotificationScreen(
+                onBackClick = {
+                    // 알림창에서 뒤로가기 누르면 메인 화면으로 돌아옵니다.
+                    navController.popBackStack()
                 }
             )
         }
+
+        composable(ScreenRoute.SearchBar.route) {
+            SearchBar(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
 
         composable(ScreenRoute.TradePost.route) {
             MainPlaceholderScreen(
@@ -545,15 +622,15 @@ fun CloverNavHost(
         }
 
         composable(ScreenRoute.MyPage.route) {
-            MyPageScreen(
-                onSettingsClick = {
+            MyPageNavHost(
+                onExitMyPage = {
+                    // 🎯 마이페이지 메인 화면에서 '뒤로가기'를 누르면 전체 앱의 메인 화면으로 이동!
                     navigateSingleTop(ScreenRoute.Main.route)
-                },
-                onMyWritingClick = {
-                    navigateSingleTop(ScreenRoute.CommunityList.route)
                 }
             )
         }
+
+
 
         composable(
             route = ScreenRoute.Report.route,
@@ -574,14 +651,14 @@ fun CloverNavHost(
                 ?.toLongOrNull()
                 ?: 0L
 
-            MainPlaceholderScreen(
-                title = "신고",
-                description = "$targetType $targetId 신고 화면으로 연결될 예정입니다.",
-                onBackToMain = {
-                    popBackOrMain()
-                }
+            // 🌟 [틀린 부분 수정] 가짜 화면을 지우고 진짜 내가 만든 ReportScreen을 연결합니다!
+            ReportScreen(
+                navController = navController,
+                targetUserName = "$targetType (ID: $targetId)" // 신고 대상 표시용 (필요에 따라 조절)
             )
         }
+
+
 
         composable(
             route = ScreenRoute.SellerProfile.route,
@@ -614,6 +691,8 @@ fun CloverNavHost(
     }
 }
 
+
+
 @Composable
 private fun ProductListRouteContent(
     navController: NavHostController,
@@ -629,6 +708,11 @@ private fun ProductListRouteContent(
             navController.navigate(
                 ScreenRoute.ProductDetail.createRoute(productId)
             )
+        },
+        onLogoClick = {
+            navController.navigate(ScreenRoute.Main.route) {
+                launchSingleTop = true
+            }
         },
         onMainCategorySelect = productViewModel::onMainCategorySelect,
         onMainCategoryExpandChange = productViewModel::onMainCategoryExpandChange,
@@ -716,6 +800,11 @@ private fun CommunityListRouteContent(
         onWriteClick = {
             communityViewModel.resetWriteState()
             navController.navigate(ScreenRoute.CommunityWrite.route)
+        },
+        onLogoClick = {
+            navController.navigate(ScreenRoute.Main.route) {
+                launchSingleTop = true
+            }
         },
         onCategorySelect = communityViewModel::onCategorySelect,
         onSearchQueryChange = communityViewModel::onSearchQueryChange,

@@ -1,6 +1,12 @@
 package com.fitflow.clover.presentation.diagnosis.personalcolor
 
+import android.Manifest
+import android.content.ContentValues
 import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -21,6 +27,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -28,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -45,10 +55,80 @@ fun PersonalColorScreen(
 ) {
     val uiState by viewModel.uiState
 
+    val context = LocalContext.current
+
+    var pendingCameraUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
+
     val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap ->
-        viewModel.onPersonalColorPhotoCaptured(bitmap)
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            val uri = pendingCameraUri
+
+            if (success && uri != null) {
+                val bitmap = runCatching {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        val source = ImageDecoder.createSource(
+                            context.contentResolver,
+                            uri
+                        )
+
+                        ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
+                            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                        }
+                    } else {
+                        @Suppress("DEPRECATION")
+                        MediaStore.Images.Media.getBitmap(
+                            context.contentResolver,
+                            uri
+                        )
+                    }
+                }.getOrNull()
+
+                viewModel.onPersonalColorPhotoCaptured(bitmap)
+            } else {
+                viewModel.onPersonalColorPhotoCaptured(null)
+            }
+
+            pendingCameraUri = null
+        }
+    )
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            if (granted) {
+                val values = ContentValues().apply {
+                    put(
+                        MediaStore.Images.Media.DISPLAY_NAME,
+                        "personal_color_${System.currentTimeMillis()}.jpg"
+                    )
+                    put(
+                        MediaStore.Images.Media.MIME_TYPE,
+                        "image/jpeg"
+                    )
+                }
+
+                val uri = context.contentResolver.insert(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    values
+                )
+
+                if (uri != null) {
+                    pendingCameraUri = uri
+                    cameraLauncher.launch(uri)
+                } else {
+                    viewModel.onPersonalColorPhotoCaptured(null)
+                }
+            } else {
+                viewModel.onPersonalColorPhotoCaptured(null)
+            }
+        }
+    )
+
+    fun openCameraSafely() {
+        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
     LaunchedEffect(uiState.isPersonalColorAnalyzing, uiState.personalColorPhotoBitmap) {
@@ -69,14 +149,13 @@ fun PersonalColorScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .systemBarsPadding() // 핸드폰 상단 배터리/시계 영역 침범 방지 (핵심!)
+            .systemBarsPadding()
     ) {
         PersonalColorHeader(
             onBack = onBack,
-            onSkip = onMoveToMain
+            onSkip = onMoveToResult
         )
 
-        // offset 대신 상단 중앙을 기준으로 여백(padding)을 주어 반응형으로 배치
         Text(
             text = "전면으로 보고 사진을 찍어주세요.\n아닐 시 정확하지 않을 수 있습니다.",
             modifier = Modifier
@@ -93,12 +172,12 @@ fun PersonalColorScreen(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 260.dp)
-                .fillMaxWidth(0.6f) // 너비는 화면의 60% 사용
-                .aspectRatio(228f / 325f), // 원본 디자인 비율 유지
+                .fillMaxWidth(0.6f)
+                .aspectRatio(228f / 325f),
             bitmap = uiState.personalColorPhotoBitmap,
             isLoading = uiState.isPersonalColorAnalyzing,
             onClick = {
-                cameraLauncher.launch(null)
+                openCameraSafely()
             }
         )
 

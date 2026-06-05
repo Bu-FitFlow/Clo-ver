@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +51,8 @@ fun MyPageAccountProfile(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            MyPageAccountProfileTopBar()
             // 1. 상단 타이틀 영역 (기존 화면과 디자인 통일)
             Box(
                 modifier = Modifier
@@ -86,6 +90,17 @@ fun MyPageAccountProfile(
                 InfoRowItem(label = "이메일", value = userData?.email ?: "-")
             }
         }
+    }
+}
+
+@Composable
+fun MyPageAccountProfileTopBar() {
+    Box(
+        modifier = Modifier
+            .width(393.dp)  // 가로 사이즈
+            .height(57.dp) // 세로 사이즈
+            .background(Color.White) // 배경을 흰색으로 채움
+    ) {
     }
 }
 

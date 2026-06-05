@@ -3,6 +3,7 @@ package com.fitflow.clover.mypage.setup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable // 🎯 클릭 기능을 위해 필수 추가
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -22,14 +24,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -37,19 +38,21 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable // 🎯 composable 인식을 위해 필수 추가
 import androidx.navigation.compose.rememberNavController
 import com.fitflow.clover.R
 import com.fitflow.clover.mypage.mainscreen.MyPageScreen
 import com.fitflow.clover.mypage.mainscreen.MyWriting
+import com.fitflow.clover.mypage.MyPageViewModel
 
 
 // 💡 화면들의 이동 주소 정의
 object MyPageDestinations {
     const val MYPAGE_SCREEN = "mypage_screen"
     const val MY_WRITING = "my_writing"
+
+    const val GOODS = "goods"
     const val SETUP = "setup"
     const val ACCOUNT_PROFILE = "account_profile"
     const val ACCOUNT_PASSWORD = "account_password"
@@ -58,17 +61,24 @@ object MyPageDestinations {
     const val NOTIFICATION_PUSH = "notification_push"
 
     const val PERSONAL_INFORMATION= "personal_information"
+
 }
 
 // 💡 마이페이지 화면 이동을 총괄하는 네비게이션 호스트
 @Composable
-fun MyPageNavHost() {
+fun MyPageNavHost(onExitMyPage: () -> Unit,
+                  viewModel: MyPageViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
     val navController = rememberNavController()
+
+    // 🎯 DB에서 변경되는 진행률 값을 실시간 감시하는 레이더를 켭니다!
+    val cloverProgress by viewModel.cloverProgress.collectAsState()
 
     NavHost(navController = navController, startDestination = MyPageDestinations.MYPAGE_SCREEN) {
         // 🎯 1. 마이페이지 메인 화면 등록
         composable(MyPageDestinations.MYPAGE_SCREEN) {
             MyPageScreen(
+                cloverProgress = cloverProgress,
                 onSettingsClick = {
                     // 아이콘을 누르면 SETUP(설정창)으로 이동합니다.
                     navController.navigate(MyPageDestinations.SETUP)
@@ -76,7 +86,11 @@ fun MyPageNavHost() {
                 onMyWritingClick = {
                     // 🎯 내 글 보기 행을 누르면 MYWRITING 화면으로 이동합니다.
                     navController.navigate(MyPageDestinations.MY_WRITING)
-                }
+                },
+                onGoodsClick = {
+
+                },
+                onBackClick = onExitMyPage
 
             )
         }
@@ -104,9 +118,11 @@ fun MyPageNavHost() {
         composable(MyPageDestinations.NOTIFICATION_PUSH) {
             NotificationPush(navController = navController)
         }
+
         composable(MyPageDestinations.PERSONAL_INFORMATION) {
             PersonalInformation(navController = navController)
         }
+
     }
 }
 
@@ -135,7 +151,7 @@ fun MyPageSetup(navController: NavController) { // 🎯 1. 괄호 안에 navCont
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 상단바
-            //SetupTopBar()
+            SetupTopBar()
 
             Column(
                 modifier = Modifier
@@ -329,28 +345,18 @@ fun MyPageSetup(navController: NavController) { // 🎯 1. 괄호 안에 navCont
 
 } // fun MyPageSetup {}
 
-/*
-// 상단바 상세 설정
 @Composable
 fun SetupTopBar() {
     Box(
         modifier = Modifier
-            .width(393.dp)
-            .height(63.dp)
-            .background(Color.White)
-            .drawBehind {
-                drawLine(
-                    color = Color.LightGray,
-                    start = Offset(0f, size.height),
-                    end = Offset(size.width, size.height),
-                    strokeWidth = 1.dp.toPx()
-                )
-            },
-        contentAlignment = Alignment.Center
+            .width(393.dp)  // 가로 사이즈
+            .height(57.dp) // 세로 사이즈
+            .background(Color.White) // 배경을 흰색으로 채움
     ) {
     }
 }
- */
+
+
 
 // 누를 수 없는 대분류 타이틀 전용 컴포넌트
 @Composable
@@ -427,5 +433,5 @@ fun SettingTextItem(text: String, onClick: () -> Unit) {
 @Composable
 fun MyPageSetupPreview() {
     // 미리보기에서도 전체 화면 흐름을 안전하게 볼 수 있도록 Host를 띄워줍니다.
-    MyPageNavHost()
+    MyPageNavHost(onExitMyPage = {})
 }

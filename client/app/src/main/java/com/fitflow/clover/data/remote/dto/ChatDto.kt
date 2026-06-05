@@ -7,62 +7,62 @@ import com.fitflow.clover.domain.modal.ChatRoomModel
 import com.google.gson.annotations.SerializedName
 
 data class ChatRoomResponse(
-    @SerializedName("chat_room_id")
+    @SerializedName(value = "chat_room_id", alternate = ["chatRoomId"])
     val chatRoomId: Long? = null,
 
-    @SerializedName("product_id")
+    @SerializedName(value = "product_id", alternate = ["productId"])
     val productId: Long? = null,
 
-    @SerializedName("buyer_id")
+    @SerializedName(value = "buyer_id", alternate = ["buyerId"])
     val buyerId: Long? = null,
 
-    @SerializedName("seller_id")
+    @SerializedName(value = "seller_id", alternate = ["sellerId"])
     val sellerId: Long? = null,
 
-    @SerializedName("created_at")
+    @SerializedName(value = "created_at", alternate = ["createdAt"])
     val createdAt: String? = null,
 
-    @SerializedName("updated_at")
+    @SerializedName(value = "updated_at", alternate = ["updatedAt"])
     val updatedAt: String? = null
 )
 
 data class ChatMessageResponse(
-    @SerializedName("message_id")
+    @SerializedName(value = "message_id", alternate = ["messageId"])
     val messageId: Long? = null,
 
-    @SerializedName("chat_room_id")
+    @SerializedName(value = "chat_room_id", alternate = ["chatRoomId"])
     val chatRoomId: Long? = null,
 
-    @SerializedName("sender_id")
+    @SerializedName(value = "sender_id", alternate = ["senderId"])
     val senderId: Long? = null,
 
     @SerializedName("content")
     val content: String? = null,
 
-    @SerializedName("message_type")
+    @SerializedName(value = "message_type", alternate = ["messageType"])
     val messageType: String? = null,
 
-    @SerializedName("created_at")
+    @SerializedName(value = "created_at", alternate = ["createdAt"])
     val createdAt: String? = null
 )
 
 data class ChatImageResponse(
-    @SerializedName("image_id")
+    @SerializedName(value = "image_id", alternate = ["imageId"])
     val imageId: Long? = null,
 
-    @SerializedName("image_url")
+    @SerializedName(value = "image_url", alternate = ["imageUrl"])
     val imageUrl: String? = null,
 
-    @SerializedName("reference_type")
+    @SerializedName(value = "reference_type", alternate = ["referenceType"])
     val referenceType: String? = null,
 
-    @SerializedName("reference_id")
+    @SerializedName(value = "reference_id", alternate = ["referenceId"])
     val referenceId: Long? = null,
 
-    @SerializedName("sort_order")
+    @SerializedName(value = "sort_order", alternate = ["sortOrder"])
     val sortOrder: Int? = null,
 
-    @SerializedName("created_at")
+    @SerializedName(value = "created_at", alternate = ["createdAt"])
     val createdAt: String? = null
 )
 

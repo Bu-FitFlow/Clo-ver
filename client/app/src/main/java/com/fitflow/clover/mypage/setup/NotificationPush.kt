@@ -65,7 +65,7 @@ fun NotificationPush(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally // 가운데 정렬
 
         ) {
-            //PushTopBar()
+            PushTopBar()
 
             // 위에서 아래로 요소를 배치 (Groovy의 LinearLayout vertical 느낌)
             Column(
@@ -158,6 +158,17 @@ fun NotificationPush(navController: NavController) {
 }
 
 @Composable
+fun PushTopBar() {
+    Box(
+        modifier = Modifier
+            .width(393.dp)  // 가로 사이즈
+            .height(57.dp) // 세로 사이즈
+            .background(Color.White) // 배경을 흰색으로 채움
+    ) {
+    }
+}
+
+@Composable
 fun NotificationToggleItem(title: String,
                            subtitle: String? = null, // 서브타이틀은 없을 수도 있으므로 null 허용 및 기본값 지정
                            checked: Boolean,
@@ -206,6 +217,8 @@ fun NotificationToggleItem(title: String,
         )
     }
 }
+
+
 
 
 @Preview(showBackground = true, device = "spec:width=393dp,height=852dp")
