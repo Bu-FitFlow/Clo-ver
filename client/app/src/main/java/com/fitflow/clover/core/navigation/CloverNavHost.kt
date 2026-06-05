@@ -130,6 +130,8 @@ fun CloverNavHost(
             SplashScreen(navController = navController)
         }
 
+
+
         composable("login") {
             LoginMain(navController)
         }
@@ -323,7 +325,12 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.CarbonPoint.route)
                 },
                 onClickSearch = {
+                    navController.navigate(ScreenRoute.SearchBar.route) {
+                        launchSingleTop = true
+                    }
+                    /*
                     navigateSingleTop("search_bar")
+                     */
                 }
             )
         }
@@ -629,7 +636,10 @@ fun CloverNavHost(
 
         composable(ScreenRoute.SearchBar.route) {
             SearchBar(
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onSearchExecute = { query ->
+                    // 검색 실행 로직 (예: 검색 결과 화면으로 이동 등)
+                }
             )
         }
 

@@ -62,7 +62,9 @@ import com.fitflow.clover.domain.modal.ProductSummaryModel
 import java.text.NumberFormat
 import java.util.Locale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import coil.compose.AsyncImage
+import com.fitflow.clover.mypage.mainscreen.SearchBar
 
 private val MainGreen = Color(0xFF99DE81)
 private val HeaderGreen = Color(0x3399DE81)
@@ -85,8 +87,12 @@ fun HomeScreen(
     onClickProductDetail: (Long) -> Unit,
     onClickCommunityMore: () -> Unit,
     onClickCommunityPost: (Long) -> Unit = {},
-    onClickCarbonBanner: () -> Unit
+    onClickCarbonBanner: () -> Unit,
+    onClickSearch:() -> Unit
 ) {
+    MainSearchBar(
+        onClickSearch = onClickSearch // 전달받은 함수 연결
+    )
     val mainViewModel = remember {
         MainViewModel()
     }
@@ -125,7 +131,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 MainSearchBar(
-                    onClickSearch = onClickProductMore
+                    onClickSearch = onClickSearch
                 )
 
                 Spacer(modifier = Modifier.height(22.dp))

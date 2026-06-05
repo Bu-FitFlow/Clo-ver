@@ -40,6 +40,7 @@ fun MainScreen(
         onClickProductDetail = onClickProductDetail,
         onClickCommunityMore = onClickCommunityMore,
         onClickCommunityPost = onClickCommunityPost,
-        onClickCarbonBanner = onClickCarbonBanner
+        onClickCarbonBanner = onClickCarbonBanner,
+        onClickSearch = onClickSearch
     )
 }
