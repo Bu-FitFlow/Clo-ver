@@ -177,6 +177,10 @@ class CommunityViewModel : ViewModel() {
         }
     }
 
+    fun closeDetailMenu() {
+        _detailUiState.update { it.copy(isMenuExpanded = false) }
+    }
+
     fun onLikeClick() {
         _detailUiState.update { current ->
             val post = current.post ?: return@update current
