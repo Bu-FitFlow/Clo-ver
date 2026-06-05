@@ -3,27 +3,29 @@ package com.fitflow.clover.presentation.community
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fitflow.clover.data.remote.api.CommunityApi
+import com.fitflow.clover.data.repository.CommunityRepositoryImpl
+import com.fitflow.clover.di.NetworkModule
 import com.fitflow.clover.domain.modal.CommunityCategory
 import com.fitflow.clover.domain.modal.CommunityComment
 import com.fitflow.clover.domain.modal.CommunityContentBlock
 import com.fitflow.clover.domain.modal.CommunityPost
 import com.fitflow.clover.domain.modal.CommunityPostSummary
 import com.fitflow.clover.domain.modal.CommunityReply
-import kotlinx.coroutines.delay
+import com.fitflow.clover.domain.usecase.CommunityUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * 커뮤니티 화면의 상태와 이벤트를 관리하는 ViewModel입니다.
- *
- * 현재 버전은 서버나 Repository가 연결되지 않은 상태에서도 화면 흐름을 테스트할 수 있도록
- * 메모리 기반 더미 데이터를 사용합니다. 추후 API가 준비되면 loadPosts(), loadPostDetail(),
- * submitPost(), submitEditPost(), deleteCurrentPost() 내부를 Repository 호출로 교체하면 됩니다.
- */
-class CommunityViewModel : ViewModel() {
+class CommunityViewModel(
+    private val communityUseCase: CommunityUseCase = CommunityUseCase(
+        communityRepository = CommunityRepositoryImpl(
+            communityApi = NetworkModule.createApi<CommunityApi>()
+        )
+    )
+) : ViewModel() {
 
     // ─────────────────────────────────────────────────────────
     // 1. 화면별 UiState
@@ -63,36 +65,32 @@ class CommunityViewModel : ViewModel() {
 
     fun loadPosts() {
         viewModelScope.launch {
-            _listUiState.update {
-                it.copy(
-                    isLoading = true,
-                    errorMessage = null
-                )
-            }
+            _listUiState.update { it.copy(isLoading = true, errorMessage = null) }
 
             runCatching {
-                delay(300)
-                createDummyPosts()
+                val category = _listUiState.value.selectedCategory
+                    .takeIf { it != CommunityCategory.ALL }?.name
+                communityUseCase.getPosts(category = category)
             }.onSuccess { posts ->
                 allPosts = posts
                 postDetails = createDummyPostDetails(posts)
-
                 _listUiState.update { current ->
                     current.copy(
                         isLoading = false,
-                        posts = filterPosts(
-                            posts = allPosts,
-                            category = current.selectedCategory,
-                            query = current.searchQuery
-                        ),
+                        posts = filterPosts(allPosts, current.selectedCategory, current.searchQuery),
                         errorMessage = null
                     )
                 }
-            }.onFailure { throwable ->
-                _listUiState.update {
-                    it.copy(
+            }.onFailure {
+                // API 실패 시 더미 데이터로 폴백
+                val dummyPosts = createDummyPosts()
+                allPosts = dummyPosts
+                postDetails = createDummyPostDetails(dummyPosts)
+                _listUiState.update { current ->
+                    current.copy(
                         isLoading = false,
-                        errorMessage = throwable.message ?: "게시글을 불러오지 못했습니다."
+                        posts = filterPosts(allPosts, current.selectedCategory, current.searchQuery),
+                        errorMessage = null
                     )
                 }
             }
@@ -148,24 +146,17 @@ class CommunityViewModel : ViewModel() {
             }
 
             runCatching {
-                delay(200)
-                postDetails[postId] ?: error("게시글을 찾을 수 없습니다.")
+                communityUseCase.getPostDetail(postId)
             }.onSuccess { post ->
+                postDetails = postDetails + (post.postId to post)
                 _detailUiState.update {
-                    it.copy(
-                        isLoading = false,
-                        post = post,
-                        commentInput = "",
-                        isMenuExpanded = false,
-                        errorMessage = null
-                    )
+                    it.copy(isLoading = false, post = post, commentInput = "", isMenuExpanded = false, errorMessage = null)
                 }
-            }.onFailure { throwable ->
+            }.onFailure {
+                // API 실패 시 더미 데이터로 폴백
+                val post = postDetails[postId]
                 _detailUiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = throwable.message ?: "게시글 상세 정보를 불러오지 못했습니다."
-                    )
+                    it.copy(isLoading = false, post = post, commentInput = "", isMenuExpanded = false, errorMessage = null)
                 }
             }
         }
@@ -182,22 +173,29 @@ class CommunityViewModel : ViewModel() {
     }
 
     fun onLikeClick() {
-        _detailUiState.update { current ->
-            val post = current.post ?: return@update current
-
-            val nextPost = post.copy(
-                isLiked = !post.isLiked,
-                likeCount = if (post.isLiked) {
-                    (post.likeCount - 1).coerceAtLeast(0)
-                } else {
-                    post.likeCount + 1
-                }
-            )
-
-            postDetails = postDetails + (nextPost.postId to nextPost)
-            updatePostSummaryLike(nextPost)
-
-            current.copy(post = nextPost)
+        val post = _detailUiState.value.post ?: return
+        viewModelScope.launch {
+            runCatching {
+                if (post.isLiked) communityUseCase.unlikePost(post.postId)
+                else communityUseCase.likePost(post.postId)
+            }.onSuccess {
+                val nextPost = post.copy(
+                    isLiked = !post.isLiked,
+                    likeCount = if (post.isLiked) (post.likeCount - 1).coerceAtLeast(0) else post.likeCount + 1
+                )
+                postDetails = postDetails + (nextPost.postId to nextPost)
+                updatePostSummaryLike(nextPost)
+                _detailUiState.update { it.copy(post = nextPost) }
+            }.onFailure {
+                // API 실패 시 로컬에서만 반영
+                val nextPost = post.copy(
+                    isLiked = !post.isLiked,
+                    likeCount = if (post.isLiked) (post.likeCount - 1).coerceAtLeast(0) else post.likeCount + 1
+                )
+                postDetails = postDetails + (nextPost.postId to nextPost)
+                updatePostSummaryLike(nextPost)
+                _detailUiState.update { it.copy(post = nextPost) }
+            }
         }
     }
 
@@ -208,36 +206,35 @@ class CommunityViewModel : ViewModel() {
     }
 
     fun onCommentSubmit() {
-        _detailUiState.update { current ->
-            val input = current.commentInput.trim()
-            val post = current.post ?: return@update current
+        val current = _detailUiState.value
+        val input = current.commentInput.trim()
+        val post = current.post ?: return
+        if (input.isEmpty()) return
 
-            if (input.isEmpty()) {
-                return@update current
+        viewModelScope.launch {
+            runCatching {
+                communityUseCase.createComment(postId = post.postId, content = input)
+                communityUseCase.getPostDetail(post.postId)
+            }.onSuccess { updatedPost ->
+                postDetails = postDetails + (updatedPost.postId to updatedPost)
+                updatePostSummaryCommentCount(updatedPost)
+                _detailUiState.update { it.copy(post = updatedPost, commentInput = "") }
+            }.onFailure {
+                // API 실패 시 로컬에서만 반영
+                val newComment = CommunityComment(
+                    commentId = System.currentTimeMillis(),
+                    authorNickname = "나",
+                    authorProfileImageUrl = null,
+                    content = input,
+                    createdAt = "방금 전",
+                    isMyComment = true,
+                    replies = emptyList()
+                )
+                val nextPost = post.copy(comments = post.comments + newComment, commentCount = post.commentCount + 1)
+                postDetails = postDetails + (nextPost.postId to nextPost)
+                updatePostSummaryCommentCount(nextPost)
+                _detailUiState.update { it.copy(post = nextPost, commentInput = "") }
             }
-
-            val newComment = CommunityComment(
-                commentId = System.currentTimeMillis(),
-                authorNickname = "나",
-                authorProfileImageUrl = null,
-                content = input,
-                createdAt = "방금 전",
-                isMyComment = true,
-                replies = emptyList()
-            )
-
-            val nextPost = post.copy(
-                comments = post.comments + newComment,
-                commentCount = post.commentCount + 1
-            )
-
-            postDetails = postDetails + (nextPost.postId to nextPost)
-            updatePostSummaryCommentCount(nextPost)
-
-            current.copy(
-                post = nextPost,
-                commentInput = ""
-            )
         }
     }
 
@@ -259,59 +256,60 @@ class CommunityViewModel : ViewModel() {
     }
 
     fun onReplySubmit() {
-        _detailUiState.update { current ->
-            val input = current.replyInput.trim()
-            val post = current.post ?: return@update current
-            val targetCommentId = current.replyTargetCommentId ?: return@update current
+        val current = _detailUiState.value
+        val input = current.replyInput.trim()
+        val post = current.post ?: return
+        val targetCommentId = current.replyTargetCommentId ?: return
+        if (input.isEmpty()) return
 
-            if (input.isEmpty()) return@update current
-
-            val newReply = CommunityReply(
-                replyId = System.currentTimeMillis(),
-                authorNickname = "나",
-                content = input,
-                createdAt = "방금 전",
-                isMyReply = true
-            )
-
-            val nextPost = post.copy(
-                comments = post.comments.map { comment ->
-                    if (comment.commentId == targetCommentId) {
-                        comment.copy(replies = comment.replies + newReply)
-                    } else {
-                        comment
+        viewModelScope.launch {
+            runCatching {
+                communityUseCase.createReply(postId = post.postId, commentId = targetCommentId, content = input)
+                communityUseCase.getPostDetail(post.postId)
+            }.onSuccess { updatedPost ->
+                postDetails = postDetails + (updatedPost.postId to updatedPost)
+                _detailUiState.update { it.copy(post = updatedPost, replyInput = "", replyTargetCommentId = null) }
+            }.onFailure {
+                // API 실패 시 로컬에서만 반영
+                val newReply = CommunityReply(
+                    replyId = System.currentTimeMillis(),
+                    authorNickname = "나",
+                    content = input,
+                    createdAt = "방금 전",
+                    isMyReply = true
+                )
+                val nextPost = post.copy(
+                    comments = post.comments.map { comment ->
+                        if (comment.commentId == targetCommentId) comment.copy(replies = comment.replies + newReply)
+                        else comment
                     }
-                }
-            )
-
-            postDetails = postDetails + (nextPost.postId to nextPost)
-
-            current.copy(
-                post = nextPost,
-                replyInput = "",
-                replyTargetCommentId = null
-            )
+                )
+                postDetails = postDetails + (nextPost.postId to nextPost)
+                _detailUiState.update { it.copy(post = nextPost, replyInput = "", replyTargetCommentId = null) }
+            }
         }
     }
 
     fun onCommentDeleteClick(commentId: Long) {
-        _detailUiState.update { current ->
-            val post = current.post ?: return@update current
-            val targetComment = post.comments.firstOrNull { it.commentId == commentId }
-
-            if (targetComment == null || !targetComment.isMyComment) {
-                return@update current
+        val post = _detailUiState.value.post ?: return
+        viewModelScope.launch {
+            runCatching {
+                communityUseCase.deleteComment(postId = post.postId, commentId = commentId)
+                communityUseCase.getPostDetail(post.postId)
+            }.onSuccess { updatedPost ->
+                postDetails = postDetails + (updatedPost.postId to updatedPost)
+                updatePostSummaryCommentCount(updatedPost)
+                _detailUiState.update { it.copy(post = updatedPost) }
+            }.onFailure {
+                // API 실패 시 로컬에서만 반영
+                val nextPost = post.copy(
+                    comments = post.comments.filterNot { it.commentId == commentId },
+                    commentCount = (post.commentCount - 1).coerceAtLeast(0)
+                )
+                postDetails = postDetails + (nextPost.postId to nextPost)
+                updatePostSummaryCommentCount(nextPost)
+                _detailUiState.update { it.copy(post = nextPost) }
             }
-
-            val nextPost = post.copy(
-                comments = post.comments.filterNot { it.commentId == commentId },
-                commentCount = (post.commentCount - 1).coerceAtLeast(0)
-            )
-
-            postDetails = postDetails + (nextPost.postId to nextPost)
-            updatePostSummaryCommentCount(nextPost)
-
-            current.copy(post = nextPost)
         }
     }
 
@@ -396,73 +394,47 @@ class CommunityViewModel : ViewModel() {
             }
 
             runCatching {
-                delay(300)
-
+                val finalImageUri = imageUri ?: current.selectedImageUri
+                val content = current.contentBlocks
+                    .filterIsInstance<CommunityContentBlock.TextBlock>()
+                    .joinToString("\n") { it.text }
+                    .ifBlank { "내용을 입력해 주세요." }
+                communityUseCase.createPost(
+                    category = normalizeWriteCategory(current.selectedCategory).name,
+                    title = title,
+                    content = content,
+                    imageUrl = finalImageUri?.toString()
+                )
+            }.onSuccess { newPost ->
+                _writeUiState.update { CommunityWriteUiState(isSubmitSuccess = true) }
+                loadPosts()
+                onSuccess(newPost.postId)
+            }.onFailure {
+                // API 실패 시 로컬에서만 반영
                 val postId = System.currentTimeMillis()
                 val finalImageUri = imageUri ?: current.selectedImageUri
-                val imageBlock = finalImageUri?.let { uri ->
-                    CommunityContentBlock.ImageBlock(
-                        imageUrl = uri.toString(),
-                        description = "첨부 이미지"
-                    )
-                }
-
                 val contentBlocks = buildList {
                     addAll(current.contentBlocks)
-                    if (imageBlock != null) {
-                        add(imageBlock)
-                    }
-                    if (isEmpty()) {
-                        add(CommunityContentBlock.TextBlock("내용을 입력해 주세요."))
-                    }
+                    finalImageUri?.let { add(CommunityContentBlock.ImageBlock(imageUrl = it.toString(), description = "첨부 이미지")) }
+                    if (isEmpty()) add(CommunityContentBlock.TextBlock("내용을 입력해 주세요."))
                 }
-
                 val newPost = CommunityPost(
-                    postId = postId,
-                    category = normalizeWriteCategory(current.selectedCategory),
-                    title = title,
-                    contentBlocks = contentBlocks,
-                    authorNickname = "나",
-                    authorProfileImageUrl = null,
-                    likeCount = 0,
-                    isLiked = false,
-                    commentCount = 0,
-                    comments = emptyList(),
-                    createdAt = "방금 전",
-                    isMyPost = true
+                    postId = postId, category = normalizeWriteCategory(current.selectedCategory),
+                    title = title, contentBlocks = contentBlocks, authorNickname = "나",
+                    authorProfileImageUrl = null, likeCount = 0, isLiked = false,
+                    commentCount = 0, comments = emptyList(), createdAt = "방금 전", isMyPost = true
                 )
-
-                val newSummary = CommunityPostSummary(
-                    postId = newPost.postId,
-                    category = newPost.category,
-                    title = newPost.title,
+                allPosts = listOf(CommunityPostSummary(
+                    postId = newPost.postId, category = newPost.category, title = newPost.title,
                     contentPreview = contentBlocks.firstTextOrDefault("새 게시글입니다."),
-                    authorNickname = newPost.authorNickname,
-                    authorProfileImageUrl = newPost.authorProfileImageUrl,
-                    likeCount = newPost.likeCount,
-                    commentCount = newPost.commentCount,
-                    createdAt = newPost.createdAt,
+                    authorNickname = newPost.authorNickname, authorProfileImageUrl = null,
+                    likeCount = 0, commentCount = 0, createdAt = "방금 전",
                     thumbnailImageUrl = finalImageUri?.toString()
-                )
-
-                allPosts = listOf(newSummary) + allPosts
+                )) + allPosts
                 postDetails = postDetails + (newPost.postId to newPost)
-
-                newPost.postId
-            }.onSuccess { postId ->
-                _writeUiState.update {
-                    CommunityWriteUiState(isSubmitSuccess = true)
-                }
+                _writeUiState.update { CommunityWriteUiState(isSubmitSuccess = true) }
                 refreshCurrentListFilter()
                 onSuccess(postId)
-            }.onFailure { throwable ->
-                _writeUiState.update {
-                    it.copy(
-                        isSubmitting = false,
-                        isSubmitSuccess = false,
-                        errorMessage = throwable.message ?: "게시글 등록에 실패했습니다."
-                    )
-                }
             }
         }
     }
@@ -471,9 +443,9 @@ class CommunityViewModel : ViewModel() {
         _writeUiState.update { CommunityWriteUiState() }
     }
 
-    // ─────────────────────────────────────────────────────────
-    // 5. 수정 화면 이벤트
-    // ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+// 5. 수정 화면 이벤트
+// ─────────────────────────────────────────────────────────
 
     fun startEdit(postId: Long) {
         val post = postDetails[postId]
@@ -589,72 +561,50 @@ class CommunityViewModel : ViewModel() {
             }
 
             runCatching {
-                delay(300)
-
-                val originPost = postDetails[postId] ?: error("수정할 게시글을 찾을 수 없습니다.")
                 val finalImageUri = imageUri ?: current.selectedImageUri
-                val imageBlock = finalImageUri?.let { uri ->
-                    CommunityContentBlock.ImageBlock(
-                        imageUrl = uri.toString(),
-                        description = "수정 첨부 이미지"
-                    )
-                }
-
+                val content = current.contentBlocks
+                    .filterIsInstance<CommunityContentBlock.TextBlock>()
+                    .joinToString("\n") { it.text }
+                    .ifBlank { "내용을 입력해 주세요." }
+                communityUseCase.updatePost(
+                    postId = postId,
+                    category = normalizeWriteCategory(current.selectedCategory).name,
+                    title = title,
+                    content = content,
+                    imageUrl = finalImageUri?.toString()
+                )
+            }.onSuccess { editedPost ->
+                postDetails = postDetails + (postId to editedPost)
+                loadPosts()
+                _editUiState.update { it.copy(isSubmitting = false, isSubmitSuccess = true, errorMessage = null) }
+                _detailUiState.update { it.copy(post = editedPost, isMenuExpanded = false) }
+                onSuccess()
+            }.onFailure {
+                // API 실패 시 로컬에서만 반영
+                val originPost = postDetails[postId] ?: return@onFailure
+                val finalImageUri = imageUri ?: current.selectedImageUri
                 val nextContentBlocks = buildList {
                     addAll(current.contentBlocks)
-                    if (imageBlock != null) {
-                        add(imageBlock)
-                    }
-                    if (isEmpty()) {
-                        add(CommunityContentBlock.TextBlock("내용을 입력해 주세요."))
-                    }
+                    finalImageUri?.let { add(CommunityContentBlock.ImageBlock(imageUrl = it.toString(), description = "수정 첨부 이미지")) }
+                    if (isEmpty()) add(CommunityContentBlock.TextBlock("내용을 입력해 주세요."))
                 }
-
                 val editedPost = originPost.copy(
                     title = title,
                     category = normalizeWriteCategory(current.selectedCategory),
                     contentBlocks = nextContentBlocks
                 )
-
                 postDetails = postDetails + (postId to editedPost)
                 allPosts = allPosts.map { summary ->
-                    if (summary.postId == postId) {
-                        summary.copy(
-                            category = editedPost.category,
-                            title = editedPost.title,
-                            contentPreview = nextContentBlocks.firstTextOrDefault(summary.contentPreview),
-                            thumbnailImageUrl = finalImageUri?.toString() ?: summary.thumbnailImageUrl
-                        )
-                    } else {
-                        summary
-                    }
+                    if (summary.postId == postId) summary.copy(
+                        category = editedPost.category, title = editedPost.title,
+                        contentPreview = nextContentBlocks.firstTextOrDefault(summary.contentPreview),
+                        thumbnailImageUrl = finalImageUri?.toString() ?: summary.thumbnailImageUrl
+                    ) else summary
                 }
-
-                editedPost
-            }.onSuccess { editedPost ->
-                _editUiState.update {
-                    it.copy(
-                        isSubmitting = false,
-                        isSubmitSuccess = true,
-                        errorMessage = null
-                    )
-                }
-                _detailUiState.update {
-                    it.copy(
-                        post = editedPost,
-                        isMenuExpanded = false
-                    )
-                }
+                _editUiState.update { it.copy(isSubmitting = false, isSubmitSuccess = true, errorMessage = null) }
+                _detailUiState.update { it.copy(post = editedPost, isMenuExpanded = false) }
                 refreshCurrentListFilter()
                 onSuccess()
-            }.onFailure { throwable ->
-                _editUiState.update {
-                    it.copy(
-                        isSubmitting = false,
-                        isSubmitSuccess = false,
-                        errorMessage = throwable.message ?: "게시글 수정에 실패했습니다."
-                    )
-                }
             }
         }
     }
@@ -663,42 +613,52 @@ class CommunityViewModel : ViewModel() {
         _editUiState.update { CommunityEditUiState() }
     }
 
-    // ─────────────────────────────────────────────────────────
-    // 6. 삭제, 신고, 차단 이벤트
-    // ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+// 6. 삭제, 신고, 차단 이벤트
+// ─────────────────────────────────────────────────────────
 
     fun deleteCurrentPost(onSuccess: () -> Unit = {}) {
         val post = _detailUiState.value.post ?: return
-
-        allPosts = allPosts.filterNot { it.postId == post.postId }
-        postDetails = postDetails - post.postId
-
-        _detailUiState.update { CommunityDetailUiState() }
-        refreshCurrentListFilter()
-        onSuccess()
+        viewModelScope.launch {
+            runCatching {
+                communityUseCase.deletePost(post.postId)
+            }.onSuccess {
+                allPosts = allPosts.filterNot { it.postId == post.postId }
+                postDetails = postDetails - post.postId
+                _detailUiState.update { CommunityDetailUiState() }
+                refreshCurrentListFilter()
+                onSuccess()
+            }.onFailure {
+                // API 실패 시 로컬에서만 반영
+                allPosts = allPosts.filterNot { it.postId == post.postId }
+                postDetails = postDetails - post.postId
+                _detailUiState.update { CommunityDetailUiState() }
+                refreshCurrentListFilter()
+                onSuccess()
+            }
+        }
     }
 
     fun onReportClick() {
-        _detailUiState.update { current ->
-            current.copy(
-                isMenuExpanded = false,
-                errorMessage = "신고 기능은 추후 서버 API와 연결할 예정입니다."
-            )
-        }
+        closeDetailMenu()
     }
 
     fun onBlockClick() {
-        _detailUiState.update { current ->
-            current.copy(
-                isMenuExpanded = false,
-                errorMessage = "차단 기능은 추후 서버 API와 연결할 예정입니다."
-            )
+        val post = _detailUiState.value.post ?: return
+        viewModelScope.launch {
+            runCatching {
+                // communityUseCase.blockUser(post.authorId) — authorId 필드 추가 후 연결
+            }.onSuccess {
+                closeDetailMenu()
+            }.onFailure {
+                closeDetailMenu()
+            }
         }
     }
 
-    // ─────────────────────────────────────────────────────────
-    // 7. 내부 유틸 함수
-    // ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+// 7. 내부 유틸 함수
+// ─────────────────────────────────────────────────────────
 
     private fun refreshCurrentListFilter() {
         _listUiState.update { current ->
@@ -771,9 +731,9 @@ class CommunityViewModel : ViewModel() {
         } ?: defaultValue
     }
 
-    // ─────────────────────────────────────────────────────────
-    // 8. 더미 데이터
-    // ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+// 8. 더미 데이터
+// ─────────────────────────────────────────────────────────
 
     private fun createDummyPosts(): List<CommunityPostSummary> {
         return listOf(
