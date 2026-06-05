@@ -55,6 +55,7 @@ object MyPageDestinations {
     const val GOODS = "goods"
     const val SETUP = "setup"
     const val ACCOUNT_PROFILE = "account_profile"
+    const val ACCOUNT_PROFILE_MODIFY = "account_profile_modify"
     const val ACCOUNT_PASSWORD = "account_password"
     const val MYPROFILE = "myprofile"
     const val MYPROFILE_MODIFY = "myprofile_modify"
@@ -103,8 +104,11 @@ fun MyPageNavHost(onExitMyPage: () -> Unit,
         }
         composable(MyPageDestinations.ACCOUNT_PROFILE) {
             MyPageAccountProfile(
-                navController = navController,
-                    userData = null)
+                navController = navController)
+        }
+        composable(MyPageDestinations.ACCOUNT_PROFILE_MODIFY) {
+            MyPageAccountProfileModify(
+                navController = navController)
         }
         composable(MyPageDestinations.ACCOUNT_PASSWORD) {
             MyPageAccountPassword(navController = navController)
