@@ -145,7 +145,7 @@ fun ReportScreen(
                     )
 
                     Icon(
-                        painter = painterResource(id = R.drawable.chevron_left),
+                        painter = painterResource(id = R.drawable.chevron_left_icon),
                         contentDescription = "드롭다운 화살표",
                         tint = Color.Black,
                         modifier = Modifier

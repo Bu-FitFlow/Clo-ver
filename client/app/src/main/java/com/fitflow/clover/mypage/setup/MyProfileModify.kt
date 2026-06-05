@@ -1,6 +1,11 @@
 package com.fitflow.clover.mypage.setup
 
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,19 +40,51 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.rememberAsyncImagePainter
 import com.fitflow.clover.R
 
 
 @Composable
-fun MyProfileModify(navController: NavHostController) {
+fun MyProfileModify(navController: NavHostController,
+                    viewModel: MyProfileModifyViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
+    // 💡 기존의 remember 변수들을 뷰모델의 uiState 관찰 구조로 치환합니다!
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
+    // 💡 갤러리에서 사진을 골라왔을 때 실행할 치트키(런처)
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.onImageSelected(uri)
+        }
+
+        // 사용자가 사진을 고르면 uri에 주소가 담기고, 취소하면 null이 들어옵니다.
+        /*
+        if (uri != null) {
+            selectedImageUri = uri
+        }
+         */
+    }
+
+
+    // 💡 드롭다운 메뉴에 보여줄 리스트 데이터
+    val heightOptions = (140..190 step 3).map { "${it}cm" }
+    val weightOptions = (40..100 step 3).map { "${it}kg" }
+    val obesityOptions = listOf("상체 비만", "하체 비만", "평균")
+    val faceShapeOptions = listOf("계란형", "둥근형", "각진형", "역삼각형")
+
+   /*
     // 💡 각 드롭다운박스에서 "선택된 값"을 기억할 상태 장치들입니다.
     var selectedHeight by remember { mutableStateOf("키 선택") }
     var selectedWeight by remember { mutableStateOf("몸무게 선택") }
@@ -59,6 +96,7 @@ fun MyProfileModify(navController: NavHostController) {
     val weightOptions = (40..100 step 3).map { "${it}kg" }
     val obesityOptions = listOf("상체 비만", "하체 비만", "평균")
     val faceShapeOptions = listOf("계란형", "둥근형", "각진형", "역삼각형")
+    */
 
     // 전체 화면을 감싸는 도화지
     Surface(
@@ -132,9 +170,33 @@ fun MyProfileModify(navController: NavHostController) {
                     modifier = Modifier
                         .size(150.dp)
                         .background(Color(0xFFE0E0E0)) // 회색 배경
-                        .border(1.dp, Color.Gray),     // 테두리
+                        .border(1.dp, Color.Gray)     // 테두리
+                        .clickable {
+                            // 📸 박스를 누르면 시스템 갤러리 앱을 엽니다 (이미지 파일만 필터링)
+                            galleryLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
                     contentAlignment = Alignment.Center
                 ){
+                    if (uiState.imageUri == null) {
+                        // 사진이 없을 때는 기본 텍스트나 카메라 아이콘 띄우기
+                        Text(
+                            text = "사진 변경",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    } else {
+                        // 사진이 선택되었을 때 상자 크기에 맞게 이미지 그려주기
+                        // ※ Coil 라이브러리(AsyncImage)를 쓰면 편하지만, 없다면 아래 기본 방식으로 표현 가능합니다.
+                        val painter = rememberAsyncImagePainter(model = uiState.imageUri)
+                        Image(
+                            painter = painter,
+                            contentDescription = "프로필 사진",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop // 상자에 꽉 차게 자르기
+                        )
+                    }
 
                 }
 
@@ -165,16 +227,16 @@ fun MyProfileModify(navController: NavHostController) {
                     ) {
                         ProfileDropdownKeyBox(
                             label = "키",
-                            selectedValue = selectedHeight,
+                            selectedValue = uiState.height,
                             options = heightOptions,
-                            onOptionSelected = { selectedHeight = it },
+                            onOptionSelected = { viewModel.onHeightSelected(it) },
                             modifier = Modifier.weight(1f)
                         )
                         ProfileDropdownKeyBox(
                             label = "몸무게",
-                            selectedValue = selectedWeight,
+                            selectedValue = uiState.weight,
                             options = weightOptions,
-                            onOptionSelected = { selectedWeight = it },
+                            onOptionSelected = { viewModel.onWeightSelected(it) },
                             modifier = Modifier.weight(1f)
                         )
                        /*
@@ -187,18 +249,18 @@ fun MyProfileModify(navController: NavHostController) {
                     // 상하체 비만 박스
                     ProfileDropdownKeyBox(
                         label = "상하체 비만",
-                        selectedValue = selectedObesity,
+                        selectedValue = uiState.obesity,
                         options = obesityOptions,
-                        onOptionSelected = { selectedObesity = it },
+                        onOptionSelected = { viewModel.onObesitySelected(it) },
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     // 얼굴형 박스
                     ProfileDropdownKeyBox(
                         label = "얼굴형",
-                        selectedValue = selectedFaceShape,
+                        selectedValue = uiState.faceShape,
                         options = faceShapeOptions,
-                        onOptionSelected = { selectedFaceShape = it },
+                        onOptionSelected = { viewModel.onFaceShapeSelected(it) },
                         modifier = Modifier.fillMaxWidth()
                     )
 
