@@ -28,6 +28,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.fitflow.clover.mypage.mainscreen.MyPageScreen
+import com.fitflow.clover.mypage.mainscreen.NotificationScreen
+import com.fitflow.clover.mypage.mainscreen.SearchBar
+import com.fitflow.clover.mypage.mainscreen.UserPageScreen
+import com.fitflow.clover.mypage.setup.MyPageNavHost
+import com.fitflow.clover.mypage.setup.NotificationPush
 import com.fitflow.clover.presentation.auth.*
 import com.fitflow.clover.presentation.chat.ChatScreen
 import com.fitflow.clover.presentation.chat.ChatViewModel
@@ -51,7 +57,9 @@ import com.fitflow.clover.presentation.product.ProductViewModel
 import com.fitflow.clover.presentation.splash.SplashScreen
 import com.fitflow.clover.presentation.report.ReportScreen
 
+
 private const val DIAGNOSIS_SUMMARY_ROUTE = "diagnosis_summary"
+
 
 @Composable
 fun CloverNavHost(
@@ -246,7 +254,7 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.Main.route)
                 },
                 onClickNotification = {
-                    navigateSingleTop(ScreenRoute.Notification.route)
+                    navigateSingleTop("notification_screen")
                 },
                 onClickChat = {
                     chatViewModel.backToChatList()
@@ -290,9 +298,13 @@ fun CloverNavHost(
                 },
                 onClickCarbonBanner = {
                     navigateSingleTop(ScreenRoute.CarbonPoint.route)
+                },
+                onClickSearch = {
+                    navigateSingleTop("search_bar")
                 }
             )
         }
+
 
         composable(ScreenRoute.ProductList.route) {
             ProductListRouteContent(
@@ -582,15 +594,22 @@ fun CloverNavHost(
             )
         }
 
-        composable(ScreenRoute.Notification.route) {
-            MainPlaceholderScreen(
-                title = "알림",
-                description = "알림 설정 또는 알림 목록 화면으로 연결될 예정입니다.",
-                onBackToMain = {
-                    navigateSingleTop(ScreenRoute.Main.route)
+
+        composable("notification_screen") {
+            NotificationScreen(
+                onBackClick = {
+                    // 알림창에서 뒤로가기 누르면 메인 화면으로 돌아옵니다.
+                    navController.popBackStack()
                 }
             )
         }
+
+        composable(ScreenRoute.SearchBar.route) {
+            SearchBar(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
 
         composable(ScreenRoute.TradePost.route) {
             MainPlaceholderScreen(
@@ -603,14 +622,15 @@ fun CloverNavHost(
         }
 
         composable(ScreenRoute.MyPage.route) {
-            MainPlaceholderScreen(
-                title = "마이 페이지",
-                description = "마이페이지 화면으로 연결될 예정입니다.",
-                onBackToMain = {
+            MyPageNavHost(
+                onExitMyPage = {
+                    // 🎯 마이페이지 메인 화면에서 '뒤로가기'를 누르면 전체 앱의 메인 화면으로 이동!
                     navigateSingleTop(ScreenRoute.Main.route)
                 }
             )
         }
+
+
 
         composable(
             route = ScreenRoute.Report.route,
@@ -670,6 +690,8 @@ fun CloverNavHost(
         }
     }
 }
+
+
 
 @Composable
 private fun ProductListRouteContent(

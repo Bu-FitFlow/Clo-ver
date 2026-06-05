@@ -17,8 +17,11 @@ fun MainScreen(
     onClickBodyProductMore: () -> Unit = {},
     onClickProductDetail: (Long) -> Unit = {},
     onClickCommunityMore: () -> Unit = {},
-    onClickCommunityPost: (Long) -> Unit = {},
-    onClickCarbonBanner: () -> Unit = {}
+  
+  onClickCommunityPost: (Long) -> Unit = {},
+    onClickCarbonBanner: () -> Unit = {},
+    onClickSearch: () -> Unit
+
 ) {
     HomeScreen(
         bodyType = bodyType,

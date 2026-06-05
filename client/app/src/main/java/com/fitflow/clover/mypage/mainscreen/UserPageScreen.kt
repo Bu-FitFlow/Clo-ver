@@ -1,5 +1,6 @@
 package com.fitflow.clover.mypage.mainscreen
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,15 +16,24 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,8 +42,13 @@ import androidx.compose.ui.unit.sp
 import com.fitflow.clover.R
 
 @Composable
-fun MyPageScreen(onSettingsClick: () -> Unit,
-                 onMyWritingClick: () -> Unit) {
+fun UserPageScreen() {
+
+    val context = LocalContext.current
+
+    var mExpanded by remember { mutableStateOf(false) }
+
+    var showBlockDialog by remember { mutableStateOf(false) }
     // 전체 화면을 감싸는 도화지
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -44,7 +59,7 @@ fun MyPageScreen(onSettingsClick: () -> Unit,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 상단바
-            //MyPageScreenTopBar()
+            UserPageScreenTopBar()
 
             Box(
                 modifier = Modifier
@@ -63,23 +78,82 @@ fun MyPageScreen(onSettingsClick: () -> Unit,
 
                 )
                 Text(
-                    text = "마이페이지",
+                    text = "프로필",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.align(Alignment.Center)
                 )
-                // 3. 오른쪽: 새로 추가한 우측 아이콘 (CenterEnd)
-                Icon(
-                    // ⚠️ 사용할 아이콘 리소스 ID로 변경해주세요 (예: R.drawable.ic_settings)
-                    painter = painterResource(R.drawable.settings),
-                    contentDescription = "우측 설정 아이콘",
+
+                Box(
                     modifier = Modifier
-                        .padding(end = 16.dp) // 우측 레이아웃과의 여백 16dp
-                        .size(28.dp)
-                        .align(Alignment.CenterEnd) //🔥 Box 내부 오른쪽 중앙 정렬
-                        .clickable { onSettingsClick()},
-                    tint = Color.Unspecified
-                )
+                        .align(Alignment.CenterEnd) // 👈 이 상자 자체를 상단바 오른쪽 끝으로 정렬!
+                        .padding(end = 16.dp)       // 오른쪽 화면 벽에서 16dp 띄우기
+                ){
+                    // 3. 오른쪽: 새로 추가한 우측 아이콘 (CenterEnd)
+                    Icon(
+                        // ⚠️ 사용할 아이콘 리소스 ID로 변경해주세요 (예: R.drawable.ic_settings)
+                        painter = painterResource(R.drawable.threecirclebutton_icon),
+                        contentDescription = "우측 메뉴 아이콘",
+                        modifier = Modifier
+                            .padding(end = 16.dp) // 우측 레이아웃과의 여백 16dp
+                            .size(28.dp)
+                            .align(Alignment.CenterEnd)
+                            .clickable { mExpanded = true },// 🔥 Box 내부 오른쪽 중앙 정렬
+                        tint = Color.Unspecified
+                    )
+
+                    DropdownMenu(
+                        expanded = mExpanded,
+                        onDismissRequest = { mExpanded = false }, // 메뉴 바깥을 누르면 닫힘
+                        modifier = Modifier.background(Color.White)
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("채팅 하기", fontSize = 14.sp, fontWeight = FontWeight.Medium) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.chat_circle),
+                                    contentDescription = "채팅 아이콘",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = Color.Black
+                                )
+                            },
+                            onClick = {
+                                mExpanded = false // 토스트 없이 메뉴만 닫기
+                                // TODO: 나중에 여기에 채팅 화면 이동 로직(navController.navigate)을 넣으시면 됩니다!
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("신고 하기", fontSize = 14.sp, fontWeight = FontWeight.Medium) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.stop_sign), // ⚠️ 실제 아이콘 파일명으로 맞추기!
+                                    contentDescription = "신고 아이콘",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = Color.Black
+                                )
+                            },
+                            onClick = {
+                                mExpanded = false // 토스트 없이 메뉴만 닫기
+                                // TODO: 나중에 여기에 신고 화면 띄우는 로직을 넣으시면 됩니다!
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("차단 하기", fontSize = 14.sp, fontWeight = FontWeight.Medium) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.bell_off), // ⚠️ 실제 아이콘 파일명으로 맞추기!
+                                    contentDescription = "차단 아이콘",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = Color.Black
+                                )
+                            },
+                            onClick = {
+                                mExpanded = false       // 메뉴 창 닫고
+                                showBlockDialog = true  // 차단 확인 팝업창 켜기!
+                            }
+                        )
+                    }
+                }
             }
             // 150 150 프로필 사진
             Spacer(modifier = Modifier.height(20.dp))
@@ -132,7 +206,7 @@ fun MyPageScreen(onSettingsClick: () -> Unit,
                     contentAlignment = Alignment.CenterStart // 세로 중앙 정렬
                 ) {
                     Text(
-                        text = "나의 클로버",
+                        text = "클로버",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
@@ -191,13 +265,12 @@ fun MyPageScreen(onSettingsClick: () -> Unit,
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 31.dp)
-                    .clickable { onMyWritingClick() },
+                    .padding(horizontal = 31.dp),
                 horizontalArrangement = Arrangement.SpaceBetween, // 양 끝으로 배치
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "내 글 보기",
+                    text = "판매 물품",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
@@ -254,19 +327,66 @@ fun MyPageScreen(onSettingsClick: () -> Unit,
                     }
                 }
             }
-
-
         }
+    }
+
+    // 🎯 [팝업 코드 배치] 상태 변수가 true가 되면 화면에AlertDialog를 띄웁니다.
+    if (showBlockDialog) {
+        AlertDialog(
+            onDismissRequest = { showBlockDialog = false }, // 바깥 영역을 누르면 닫힘
+            title = {
+                Text(
+                    text = "사용자 차단",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            },
+            text = {
+                Text(
+                    text = "이 사용자를 차단하시겠습니까?\n차단 시 해당 사용자의 글과 채팅이 더 이상 보이지 않습니다.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showBlockDialog = false
+                        Toast.makeText(context, "차단이 완료되었습니다.", Toast.LENGTH_SHORT).show()
+                        /* TODO: 실제 차단 서버 통신 로직 및 화면 새로고침 수행 */
+                    }
+                ) {
+                    Text("차단", color = Color.Red) // 경고의 의미로 빨간색 처리
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showBlockDialog = false }
+                ) {
+                    Text("취소", color = Color.Black)
+                }
+            }
+        )
     }
 }
 
-/*
 @Composable
-fun MyPageScreenTopBar() {
+fun UserPageScreenTopBar() {
     Box(
         modifier = Modifier
             .width(393.dp)  // 가로 사이즈
-            .height(63.dp) // 세로 사이즈
+            .height(57.dp) // 세로 사이즈
+            .background(Color.White) // 배경을 흰색으로 채움
+    ) {
+    }
+}
+
+
+/*
+@Composable
+fun UserPageScreenTopBar() {
+    Box(
+        modifier = Modifier
+            .width(393.dp)  // 가로 사이즈
+            .height(57.dp) // 세로 사이즈
             .background(Color.White) // 배경을 흰색으로 채움
     ) {
     }
@@ -277,8 +397,7 @@ fun MyPageScreenTopBar() {
 //미리보기 도화지 설정창
 @Preview(showBackground = true, device = "spec:width=393dp,height=852dp")
 @Composable
-fun MyPageScreenPreview() {
+fun UserPageScreenPreview() {
 
-    MyPageScreen(onSettingsClick = {},
-        onMyWritingClick = {})
+    UserPageScreen()
 }

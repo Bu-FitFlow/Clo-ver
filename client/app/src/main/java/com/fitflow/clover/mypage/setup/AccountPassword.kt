@@ -73,7 +73,7 @@ fun MyPageAccountPassword(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally // 가운데 정렬
 
         ) {
-            //PasswordTopBar()
+            PasswordTopBar()
 
             // 위에서 아래로 요소를 배치 (Groovy의 LinearLayout vertical 느낌)
             Column(
@@ -202,6 +202,17 @@ fun MyPageAccountPassword(navController: NavHostController) {
                 }
             )
         }
+    }
+}
+
+@Composable
+fun PasswordTopBar() {
+    Box(
+        modifier = Modifier
+            .width(393.dp)  // 가로 사이즈
+            .height(57.dp) // 세로 사이즈
+            .background(Color.White) // 배경을 흰색으로 채움
+    ) {
     }
 }
 
