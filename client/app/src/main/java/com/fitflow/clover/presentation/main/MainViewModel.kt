@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 
 data class MainUiState(
     val isLoading: Boolean = false,
+    val hasBodyDiagnosis: Boolean = false,
     val recentProducts: List<ProductSummaryModel> = emptyList(),
     val bodyRecommendProducts: List<ProductSummaryModel> = emptyList(),
     val errorMessage: String? = null
@@ -107,11 +108,13 @@ class MainViewModel(
         bodyType: String?,
         size: Int = 9
     ) {
-        val recommendedType = normalizeBodyType(bodyType)
+        val recommendedType = normalizeBodyTypeOrNull(bodyType)
+        val hasBodyDiagnosis = recommendedType != null
 
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
+                hasBodyDiagnosis = hasBodyDiagnosis,
                 errorMessage = null
             )
 
@@ -120,10 +123,14 @@ class MainViewModel(
                     size = size
                 )
 
-                val bodyRecommendProducts = productUseCase.getBodyRecommendedProducts(
-                    recommendedType = recommendedType,
-                    size = size
-                )
+                val bodyRecommendProducts = if (recommendedType == null) {
+                    emptyList()
+                } else {
+                    productUseCase.getBodyRecommendedProducts(
+                        recommendedType = recommendedType,
+                        size = 9
+                    )
+                }
 
                 recentProducts to bodyRecommendProducts
             }.onSuccess { result ->
@@ -132,13 +139,19 @@ class MainViewModel(
                     fallback = mainSampleProducts
                 )
 
-                val bodyRecommendProducts = fillMainProducts(
-                    source = result.second,
-                    fallback = mainSampleProducts.reversed()
-                )
+                val bodyRecommendProducts = if (recommendedType == null) {
+                    emptyList()
+                } else {
+                    fillMainProducts(
+                        source = result.second,
+                        fallback = mainSampleProducts,
+                        preferredRecommendedType = recommendedType
+                    )
+                }
 
                 _uiState.value = MainUiState(
                     isLoading = false,
+                    hasBodyDiagnosis = hasBodyDiagnosis,
                     recentProducts = recentProducts,
                     bodyRecommendProducts = bodyRecommendProducts,
                     errorMessage = null
@@ -146,8 +159,17 @@ class MainViewModel(
             }.onFailure { throwable ->
                 _uiState.value = MainUiState(
                     isLoading = false,
+                    hasBodyDiagnosis = hasBodyDiagnosis,
                     recentProducts = mainSampleProducts,
-                    bodyRecommendProducts = mainSampleProducts.reversed(),
+                    bodyRecommendProducts = if (recommendedType == null) {
+                        emptyList()
+                    } else {
+                        fillMainProducts(
+                            source = emptyList(),
+                            fallback = mainSampleProducts,
+                            preferredRecommendedType = recommendedType
+                        )
+                    },
                     errorMessage = throwable.message
                 )
             }
@@ -160,20 +182,40 @@ class MainViewModel(
         )
     }
 
-    private fun normalizeBodyType(bodyType: String?): String {
-        return bodyType
-            ?.trim()
-            ?.uppercase()
-            ?.takeIf { it.isNotBlank() }
-            ?: "RECTANGLE"
+    private fun normalizeBodyTypeOrNull(bodyType: String?): String? {
+        return when (
+            bodyType
+                ?.trim()
+                ?.uppercase()
+                ?.replace("-", "_")
+                ?.replace(" ", "_")
+        ) {
+            "TRIANGLE", "PEAR", "A_LINE" -> "TRIANGLE"
+            "INVERTED_TRIANGLE", "INVERTED" -> "INVERTED_TRIANGLE"
+            "OVAL", "APPLE", "ROUND" -> "OVAL"
+            "HOURGLASS", "HOUR_GLASS" -> "HOURGLASS"
+            "RECTANGLE", "LEAN_COLUMN", "COLUMN", "STRAIGHT" -> "RECTANGLE"
+            else -> null
+        }
     }
 }
 
 private fun fillMainProducts(
     source: List<ProductSummaryModel>,
-    fallback: List<ProductSummaryModel>
+    fallback: List<ProductSummaryModel>,
+    preferredRecommendedType: String? = null
 ): List<ProductSummaryModel> {
-    return (source + fallback)
+    val normalizedPreferredType = preferredRecommendedType
+        ?.trim()
+        ?.uppercase()
+
+    val preferredFallback = fallback.filter { product ->
+        product.recommendedType
+            ?.trim()
+            ?.uppercase() == normalizedPreferredType
+    }
+
+    return (source + preferredFallback + fallback)
         .distinctBy { product ->
             product.productId
         }

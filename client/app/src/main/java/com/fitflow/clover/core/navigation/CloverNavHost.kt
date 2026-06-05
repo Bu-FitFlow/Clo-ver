@@ -44,10 +44,8 @@ import com.fitflow.clover.presentation.community.CommunityViewModel
 import com.fitflow.clover.presentation.community.CommunityWriteScreen
 import com.fitflow.clover.presentation.diagnosis.BodyAnalysisScreen
 import com.fitflow.clover.presentation.diagnosis.DiagnosisSummaryScreen
-import com.fitflow.clover.presentation.diagnosis.DiagnosisViewModel
+import com.fitflow.clover.presentation.diagnosis.rememberDiagnosisViewModel
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorResultScreen
-import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorResultUiModel
-import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorRetryScreen
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorScreen
 import com.fitflow.clover.presentation.main.MainScreen
 import com.fitflow.clover.presentation.product.ProductDetailScreen
@@ -59,6 +57,9 @@ import com.fitflow.clover.presentation.report.ReportScreen
 
 
 private const val DIAGNOSIS_SUMMARY_ROUTE = "diagnosis_summary"
+private const val PERSONAL_COLOR_SCAN_ROUTE = "personal_color_scan"
+private const val BODY_ANALYSIS_FROM_MAIN_ROUTE = "body_analysis_from_main"
+private const val JOIN_DETAIL_ROUTE = "join_detail"
 
 
 @Composable
@@ -82,9 +83,10 @@ fun CloverNavHost(
     val productViewModel: ProductViewModel = viewModel()
     val communityViewModel: CommunityViewModel = viewModel()
 
-    val diagnosisViewModel = remember {
-        DiagnosisViewModel()
-    }
+    val diagnosisViewModel = rememberDiagnosisViewModel(
+        memberId = null,
+        displayName = null
+    )
 
     val chatViewModel = remember {
         ChatViewModel()
@@ -106,11 +108,10 @@ fun CloverNavHost(
         }
     }
 
-    fun currentBodyType(): String {
+    fun currentBodyType(): String? {
         return diagnosisViewModel.uiState.value.bodyResult?.bodyType
             ?.trim()
             ?.takeIf { bodyType -> bodyType.isNotBlank() }
-            ?: "BALANCED"
     }
 
     fun currentUserDisplayName(): String {
@@ -120,19 +121,9 @@ fun CloverNavHost(
             ?: "사용자"
     }
 
-    fun fallbackPersonalColorResult(): PersonalColorResultUiModel {
-        val userName = currentUserDisplayName()
-
-        return PersonalColorResultUiModel(
-            personalColor = "WINTER_COOL",
-            resultTitle = "${userName}님은\n겨울 [쿨톤] 계열이\n잘 어울리는 타입이에요!",
-            resultRecommend = "선명한 색감, 차가운 톤, 대비감이 있는 스타일이 잘 어울려요."
-        )
-    }
-
     NavHost(
         navController = navController,
-        startDestination = "splash",
+        startDestination = startDestination,
         modifier = modifier
     ) {
         composable("splash") {
@@ -170,12 +161,42 @@ fun CloverNavHost(
         composable(ScreenRoute.BodyAnalysis.route) {
             BodyAnalysisScreen(
                 viewModel = diagnosisViewModel,
+                onBackToSignUp = {
+                    navController.navigate(JOIN_DETAIL_ROUTE) {
+                        launchSingleTop = true
+                    }
+                },
                 onMoveToPersonalColor = {
-                    navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
+                    navigateSingleTop(PERSONAL_COLOR_SCAN_ROUTE)
                 },
                 onMoveToMain = {
                     navController.navigate(ScreenRoute.Main.route) {
-                        popUpTo(ScreenRoute.BodyAnalysis.route) {
+                        popUpTo("splash") {
+                            inclusive = false
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(BODY_ANALYSIS_FROM_MAIN_ROUTE) {
+            BodyAnalysisScreen(
+                viewModel = diagnosisViewModel,
+                onBackToSignUp = {
+                    navController.navigate(ScreenRoute.Main.route) {
+                        popUpTo(BODY_ANALYSIS_FROM_MAIN_ROUTE) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                },
+                onMoveToPersonalColor = {
+                    navigateSingleTop(PERSONAL_COLOR_SCAN_ROUTE)
+                },
+                onMoveToMain = {
+                    navController.navigate(ScreenRoute.Main.route) {
+                        popUpTo(BODY_ANALYSIS_FROM_MAIN_ROUTE) {
                             inclusive = true
                         }
                         launchSingleTop = true
@@ -184,19 +205,17 @@ fun CloverNavHost(
             )
         }
 
-        composable(ScreenRoute.PersonalColorQuestion.route) {
+        composable(PERSONAL_COLOR_SCAN_ROUTE) {
             PersonalColorScreen(
                 viewModel = diagnosisViewModel,
                 onBack = {
-                    navigateSingleTop(ScreenRoute.BodyAnalysis.route)
+                    val popped = navController.popBackStack()
+
+                    if (!popped) {
+                        navigateSingleTop(ScreenRoute.BodyAnalysis.route)
+                    }
                 },
                 onMoveToResult = {
-                    navigateSingleTop(DIAGNOSIS_SUMMARY_ROUTE)
-                },
-                onMoveToRetry = {
-                    navigateSingleTop(ScreenRoute.PersonalColorRetry.route)
-                },
-                onMoveToMain = {
                     navigateSingleTop(DIAGNOSIS_SUMMARY_ROUTE)
                 }
             )
@@ -206,12 +225,16 @@ fun CloverNavHost(
             DiagnosisSummaryScreen(
                 viewModel = diagnosisViewModel,
                 onBack = {
-                    navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
+                    val popped = navController.popBackStack()
+
+                    if (!popped) {
+                        navigateSingleTop(PERSONAL_COLOR_SCAN_ROUTE)
+                    }
                 },
                 onMoveToMain = {
                     navController.navigate(ScreenRoute.Main.route) {
-                        popUpTo(ScreenRoute.BodyAnalysis.route) {
-                            inclusive = true
+                        popUpTo("splash") {
+                            inclusive = false
                         }
                         launchSingleTop = true
                     }
@@ -220,31 +243,28 @@ fun CloverNavHost(
         }
 
         composable(ScreenRoute.PersonalColorResult.route) {
-            PersonalColorResultScreen(
-                result = diagnosisViewModel.uiState.value.personalColorResult
-                    ?: fallbackPersonalColorResult(),
-                userDisplayName = currentUserDisplayName(),
-                onMoveToMain = {
-                    navController.navigate(ScreenRoute.Main.route) {
-                        popUpTo(ScreenRoute.BodyAnalysis.route) {
-                            inclusive = true
-                        }
-                        launchSingleTop = true
-                    }
-                }
-            )
-        }
+            val personalColorResult = diagnosisViewModel.uiState.value.personalColorResult
 
-        composable(ScreenRoute.PersonalColorRetry.route) {
-            PersonalColorRetryScreen(
-                onRetry = {
-                    diagnosisViewModel.resetPersonalColorPhoto()
-                    navigateSingleTop(ScreenRoute.PersonalColorQuestion.route)
-                },
-                onMoveToMain = {
+            LaunchedEffect(personalColorResult) {
+                if (personalColorResult == null) {
                     navigateSingleTop(DIAGNOSIS_SUMMARY_ROUTE)
                 }
-            )
+            }
+
+            if (personalColorResult != null) {
+                PersonalColorResultScreen(
+                    result = personalColorResult,
+                    userDisplayName = currentUserDisplayName(),
+                    onMoveToMain = {
+                        navController.navigate(ScreenRoute.Main.route) {
+                            popUpTo("splash") {
+                                inclusive = false
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
         }
 
         composable(ScreenRoute.Main.route) {
@@ -282,6 +302,9 @@ fun CloverNavHost(
                 },
                 onClickBodyProductMore = {
                     navigateSingleTop(ScreenRoute.ProductList.route)
+                },
+                onClickDiagnosisStart = {
+                    navigateSingleTop(BODY_ANALYSIS_FROM_MAIN_ROUTE)
                 },
                 onClickProductDetail = { productId ->
                     navController.navigate(

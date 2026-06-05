@@ -34,7 +34,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -69,6 +68,7 @@ private enum class BodyAnalysisStep {
 @Composable
 fun BodyAnalysisScreen(
     viewModel: DiagnosisViewModel,
+    onBackToSignUp: () -> Unit,
     onMoveToPersonalColor: () -> Unit,
     onMoveToMain: () -> Unit
 ) {
@@ -112,8 +112,7 @@ fun BodyAnalysisScreen(
                 onNext = {
                     currentStep = BodyAnalysisStep.BODY_FRONT_CAMERA
                 },
-                onBack = onMoveToMain,
-                onSkip = onMoveToPersonalColor
+                onBack = onBackToSignUp
             )
         }
 
@@ -133,8 +132,7 @@ fun BodyAnalysisScreen(
                 },
                 onBack = {
                     currentStep = BodyAnalysisStep.USER_INFO
-                },
-                onSkip = onMoveToPersonalColor
+                }
             )
         }
 
@@ -151,8 +149,7 @@ fun BodyAnalysisScreen(
                 },
                 onBack = {
                     currentStep = BodyAnalysisStep.BODY_FRONT_CAMERA
-                },
-                onSkip = onMoveToPersonalColor
+                }
             )
         }
 
@@ -163,8 +160,7 @@ fun BodyAnalysisScreen(
                 onRetry = {
                     viewModel.resetBodyPhotos()
                     currentStep = BodyAnalysisStep.BODY_FRONT_CAMERA
-                },
-                onMoveToMain = onMoveToMain
+                }
             )
         }
 
@@ -189,8 +185,7 @@ private fun BodyUserInfoContent(
     onSelectHeight: (Int) -> Unit,
     onSelectWeight: (Int) -> Unit,
     onNext: () -> Unit,
-    onBack: () -> Unit,
-    onSkip: () -> Unit
+    onBack: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -202,8 +197,7 @@ private fun BodyUserInfoContent(
     ) {
         DiagnosisHeader(
             title = "내 정보",
-            onBack = onBack,
-            onSkip = onSkip
+            onBack = onBack
         )
 
         Spacer(modifier = Modifier.height(40.dp))
@@ -291,8 +285,7 @@ private fun BodyCameraContent(
     bitmap: Bitmap?,
     isLoading: Boolean,
     onPhotoCaptured: (Bitmap?) -> Unit,
-    onBack: () -> Unit,
-    onSkip: () -> Unit
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -380,8 +373,7 @@ private fun BodyCameraContent(
     ) {
         DiagnosisHeader(
             title = headerTitle,
-            onBack = onBack,
-            onSkip = onSkip
+            onBack = onBack
         )
 
         Spacer(modifier = Modifier.height(30.dp))
@@ -450,8 +442,7 @@ private fun BodyCameraContent(
 @Composable
 private fun BodyRetryContent(
     message: String,
-    onRetry: () -> Unit,
-    onMoveToMain: () -> Unit
+    onRetry: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -496,20 +487,7 @@ private fun BodyRetryContent(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
-            }
-
-            Spacer(modifier = Modifier.height(22.dp))
-
-            TextButton(
-                onClick = onMoveToMain
-            ) {
-                Text(
-                    text = "메인으로",
-                    color = Color.Black,
-                    fontSize = 11.sp
-                )
-            }
-        }
+            }        }
     }
 }
 
@@ -531,8 +509,7 @@ private fun BodyResultContent(
     ) {
         DiagnosisHeader(
             title = "체형분석",
-            onBack = onBack,
-            onSkip = onMoveToPersonalColor
+            onBack = onBack
         )
 
         Spacer(modifier = Modifier.height(50.dp))
@@ -586,8 +563,7 @@ private fun BodyResultContent(
 @Composable
 private fun DiagnosisHeader(
     title: String,
-    onBack: () -> Unit,
-    onSkip: () -> Unit
+    onBack: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -612,20 +588,7 @@ private fun DiagnosisHeader(
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
-        )
-
-        Text(
-            text = "건너뛰기",
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = 8.dp)
-                .clickable(onClick = onSkip),
-            color = Color.Black,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center
-        )
-    }
+        )    }
 }
 
 @Composable

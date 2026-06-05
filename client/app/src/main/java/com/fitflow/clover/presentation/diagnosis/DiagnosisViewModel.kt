@@ -2,16 +2,29 @@ package com.fitflow.clover.presentation.diagnosis
 
 import android.graphics.Bitmap
 import androidx.compose.runtime.mutableStateOf
+import com.fitflow.clover.data.repository.DiagnosisRepositoryImpl
 import com.fitflow.clover.presentation.diagnosis.personalcolor.PersonalColorResultUiModel
 import kotlin.math.pow
 
-class DiagnosisViewModel {
+class DiagnosisViewModel(
+    private val diagnosisRepository: DiagnosisRepositoryImpl? = null
+) {
 
     var uiState = mutableStateOf(DiagnosisUiState())
         private set
 
+    private var memberId: Long? = null
+
     val heightOptions: List<Int> = (140..200 step 5).toList()
     val weightOptions: List<Int> = (40..120 step 2).toList()
+
+    fun setMemberProfile(
+        memberId: Long?,
+        displayName: String?
+    ) {
+        this.memberId = memberId?.takeIf { it > 0L }
+        setUserDisplayName(displayName)
+    }
 
     fun setUserDisplayName(displayName: String?) {
         val safeDisplayName = displayName
@@ -85,7 +98,7 @@ class DiagnosisViewModel {
         onFrontBodyPhotoCaptured(bitmap)
     }
 
-    fun completeBodyAnalysis(): Boolean {
+    suspend fun completeBodyAnalysis(): Boolean {
         val state = uiState.value
         val frontBitmap = state.frontBodyPhotoBitmap
         val sideBitmap = state.sideBodyPhotoBitmap
@@ -108,13 +121,33 @@ class DiagnosisViewModel {
             return false
         }
 
+        val fallbackResult = createBodyResult(
+            state = state,
+            frontBitmap = frontBitmap,
+            sideBitmap = sideBitmap
+        )
+
+        val apiResult = runCatching {
+            val safeMemberId = memberId ?: return@runCatching null
+            val gender = state.selectedGender ?: return@runCatching null
+            val heightCm = state.selectedHeightCm ?: return@runCatching null
+            val weightKg = state.selectedWeightKg ?: return@runCatching null
+            val repository = diagnosisRepository ?: return@runCatching null
+
+            repository.analyzeBody(
+                memberId = safeMemberId,
+                frontBitmap = frontBitmap,
+                sideBitmap = sideBitmap,
+                gender = gender,
+                heightCm = heightCm,
+                weightKg = weightKg,
+                userDisplayName = state.userDisplayName
+            )
+        }.getOrNull()
+
         uiState.value = state.copy(
             isBodyAnalyzing = false,
-            bodyResult = createBodyResult(
-                state = state,
-                frontBitmap = frontBitmap,
-                sideBitmap = sideBitmap
-            ),
+            bodyResult = apiResult ?: fallbackResult,
             bodyAnalysisErrorMessage = null
         )
 
@@ -163,7 +196,7 @@ class DiagnosisViewModel {
         )
     }
 
-    fun completePersonalColorAnalysis(): Boolean {
+    suspend fun completePersonalColorAnalysis(): Boolean {
         val state = uiState.value
         val bitmap = state.personalColorPhotoBitmap
 
@@ -185,12 +218,25 @@ class DiagnosisViewModel {
             return false
         }
 
-        uiState.value = state.copy(
-            isPersonalColorAnalyzing = false,
-            personalColorResult = createPersonalColorResult(
+        val fallbackResult = createPersonalColorResult(
+            bitmap = bitmap,
+            userDisplayName = state.userDisplayName
+        )
+
+        val apiResult = runCatching {
+            val safeMemberId = memberId ?: return@runCatching null
+            val repository = diagnosisRepository ?: return@runCatching null
+
+            repository.analyzePersonalColor(
+                memberId = safeMemberId,
                 bitmap = bitmap,
                 userDisplayName = state.userDisplayName
-            ),
+            )
+        }.getOrNull()
+
+        uiState.value = state.copy(
+            isPersonalColorAnalyzing = false,
+            personalColorResult = apiResult ?: fallbackResult,
             personalColorAnalysisErrorMessage = null
         )
 
