@@ -43,8 +43,9 @@ public class Product extends BaseTimeEntity {
     @Column(nullable = false, length = 50)
     private ProductSize size;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String grade;
+    private ProductGrade grade;
 
     @Column(name = "trading_area", nullable = false, length = 100)
     private String tradingArea;

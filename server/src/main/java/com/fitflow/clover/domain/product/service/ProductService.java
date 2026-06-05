@@ -116,25 +116,7 @@ public class ProductService {
 
     public Slice<ProductListResponse> getProductList(ProductSearchCondition condition, Pageable pageable) {
         Slice<Product> productSlice = productRepository.searchProducts(condition, pageable);
-
-        List<Product> products = productSlice.getContent();
-
-        List<Long> productIds = products.stream()
-                .map(Product::getProductId)
-                .toList();
-
-        Map<Long, List<String>> imageUrlMap = imageService.getImageUrlMap(Image.ReferenceType.PRODUCT, productIds);
-
-        List<ProductListResponse> content = products.stream()
-                .map(product -> {
-                    List<String> images = imageUrlMap.getOrDefault(product.getProductId(), Collections.emptyList());
-                    String thumbnail = images.isEmpty() ? null : images.getFirst();
-                    return ProductListResponse.from(product, thumbnail);
-                })
-                .toList();
-
-        return new SliceImpl<>(content, pageable, productSlice.hasNext());
-
+        return mapToProductListResponseSlice(productSlice, pageable);
     }
 
     @Transactional
@@ -224,6 +206,10 @@ public class ProductService {
             productSlice = productRepository.searchProducts(emptyCondition, pageable);
         }
 
+        return mapToProductListResponseSlice(productSlice, pageable);
+    }
+
+    private Slice<ProductListResponse> mapToProductListResponseSlice(Slice<Product> productSlice, Pageable pageable) {
         List<Product> products = productSlice.getContent();
         List<Long> productIds = products.stream().map(Product::getProductId).toList();
         Map<Long, List<String>> imageUrlMap = imageService.getImageUrlMap(Image.ReferenceType.PRODUCT, productIds);
