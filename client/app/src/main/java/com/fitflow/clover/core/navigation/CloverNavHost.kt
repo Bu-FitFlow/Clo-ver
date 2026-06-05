@@ -626,6 +626,13 @@ fun CloverNavHost(
                 onExitMyPage = {
                     // 🎯 마이페이지 메인 화면에서 '뒤로가기'를 누르면 전체 앱의 메인 화면으로 이동!
                     navigateSingleTop(ScreenRoute.Main.route)
+                },
+                onNavigateToLogin = {
+                    // 🚀 [여기 핵심!] 전체 앱을 주관하는 최상위 navController를 사용하여 로그인 창으로 튕겨버립니다.
+                    // 뒤로가기를 눌러서 마이페이지로 다시 들어올 수 없도록 백스택을 0번까지 싹 날립니다.
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }

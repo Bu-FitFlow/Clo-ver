@@ -68,6 +68,7 @@ object MyPageDestinations {
 // 💡 마이페이지 화면 이동을 총괄하는 네비게이션 호스트
 @Composable
 fun MyPageNavHost(onExitMyPage: () -> Unit,
+                  onNavigateToLogin: () -> Unit,
                   viewModel: MyPageViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val navController = rememberNavController()
@@ -100,7 +101,8 @@ fun MyPageNavHost(onExitMyPage: () -> Unit,
             MyWriting(navController = navController)
         }
         composable(MyPageDestinations.SETUP) {
-            MyPageSetup(navController = navController)
+            MyPageSetup(navController = navController,
+                onLogoutOrWithdraw = onNavigateToLogin)
         }
         composable(MyPageDestinations.ACCOUNT_PROFILE) {
             MyPageAccountProfile(
@@ -132,7 +134,8 @@ fun MyPageNavHost(onExitMyPage: () -> Unit,
 
 
 @Composable
-fun MyPageSetup(navController: NavController) { // 🎯 1. 괄호 안에 navController를 받도록 함
+fun MyPageSetup(navController: NavController,
+                onLogoutOrWithdraw: () -> Unit) { // 🎯 1. 괄호 안에 navController를 받도록 함
 
 
     @Suppress("AssignedValueIsNeverRead", "UnusedChangedValue") // 🔥 검사기 입 막기
@@ -248,6 +251,7 @@ fun MyPageSetup(navController: NavController) { // 🎯 1. 괄호 안에 navCont
                         // 💡 컴파일러에게 이 변수가 확실히 사용됨을 인지시키기 위해 로그 한 줄 추가
                         android.util.Log.d("UserPage", "회원 탈퇴 완료 상태: $showWithdrawDialog")
                         /* 실제 탈퇴 서버 통신 로직 수행 */
+                        onLogoutOrWithdraw()
                     }
                 ) {
                     Text("탈퇴", color = Color.Red)
@@ -284,6 +288,7 @@ fun MyPageSetup(navController: NavController) { // 🎯 1. 괄호 안에 navCont
                         // 💡 마찬가지로 변수 사용 인식을 위한 임시 로그 추가
                         android.util.Log.d("UserPage", "로그아웃 완료 상태: $showLogoutDialog")
                         /* 로그아웃 처리 후 로그인 화면 등으로 이동 */
+                        onLogoutOrWithdraw()
                     }
                 ) {
                     Text("로그아웃")
@@ -437,5 +442,6 @@ fun SettingTextItem(text: String, onClick: () -> Unit) {
 @Composable
 fun MyPageSetupPreview() {
     // 미리보기에서도 전체 화면 흐름을 안전하게 볼 수 있도록 Host를 띄워줍니다.
-    MyPageNavHost(onExitMyPage = {})
+    MyPageNavHost(onExitMyPage = {},
+        onNavigateToLogin = {})
 }
