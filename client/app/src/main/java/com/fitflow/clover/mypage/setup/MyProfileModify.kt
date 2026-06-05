@@ -81,8 +81,8 @@ fun MyProfileModify(navController: NavHostController,
     // 💡 드롭다운 메뉴에 보여줄 리스트 데이터
     val heightOptions = (140..190 step 3).map { "${it}cm" }
     val weightOptions = (40..100 step 3).map { "${it}kg" }
-    val obesityOptions = listOf("상체 비만", "하체 비만", "평균")
-    val faceShapeOptions = listOf("계란형", "둥근형", "각진형", "역삼각형")
+    val obesityOptions = listOf("봄 [웜톤]","여름 [쿨톤]","가을 [웜톤]","겨울[쿨톤]")
+    val faceShapeOptions = listOf("마른 직선형","사과형","역삼각형","배형","모래시계형","직사각형")
 
    /*
     // 💡 각 드롭다운박스에서 "선택된 값"을 기억할 상태 장치들입니다.
@@ -203,12 +203,6 @@ fun MyProfileModify(navController: NavHostController,
                 // 프로필 사진 아래 ID 표기
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text(
-                    text = "ID",
-                    fontSize = 16.sp,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Medium
-                )
 
                 // 키, 몸무게 가로배치
                 // 그 아래 상하체 비만 여부, 얼굴형 아래로 배치
@@ -246,18 +240,18 @@ fun MyProfileModify(navController: NavHostController,
                         ProfileModifyInfoBox(text = "몸무게", modifier = Modifier.weight(1f))
                         */
                     }
-                    // 상하체 비만 박스
+
                     ProfileDropdownKeyBox(
-                        label = "상하체 비만",
+                        label = "퍼스널 컬러",
                         selectedValue = uiState.obesity,
                         options = obesityOptions,
                         onOptionSelected = { viewModel.onObesitySelected(it) },
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    // 얼굴형 박스
+
                     ProfileDropdownKeyBox(
-                        label = "얼굴형",
+                        label = "체형",
                         selectedValue = uiState.faceShape,
                         options = faceShapeOptions,
                         onOptionSelected = { viewModel.onFaceShapeSelected(it) },
@@ -312,7 +306,7 @@ fun ProfileDropdownKeyBox(
         ) {
             // 선택된 값이 없으면(기본문구면) 원래 라벨을 띄우고, 선택됐으면 선택된 값을 보여줍니다.
             Text(
-                text = if (selectedValue.contains("선택")) "$label: $selectedValue" else selectedValue,
+                text = if (selectedValue.contains("선택")) "$label 선택" else selectedValue,
                 fontSize = 16.sp,
                 color = if (selectedValue.contains("선택")) Color.Gray else Color.Black
             )

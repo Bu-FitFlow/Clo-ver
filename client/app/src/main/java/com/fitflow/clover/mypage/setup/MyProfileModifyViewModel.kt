@@ -18,8 +18,8 @@ class MyProfileModifyViewModel : ViewModel() {
         val imageUri: Uri? = null,
         val height: String = "키 선택",
         val weight: String = "몸무게 선택",
-        val obesity: String = "상하체 비만 상태 선택",
-        val faceShape: String = "얼굴형 선택"
+        val obesity: String = "퍼스널 컬러 선택",
+        val faceShape: String = "체형 선택"
     )
 
     private val _uiState = MutableStateFlow(ProfileUiState())
