@@ -40,12 +40,12 @@ class MyProfileModifyViewModel : ViewModel() {
         _uiState.value = _uiState.value.copy(weight = weight)
     }
 
-    // 4. 상하체 비만 상태 선택 시 호출
+    // 4. 퍼스널컬러 선택 시 호출
     fun onObesitySelected(obesity: String) {
         _uiState.value = _uiState.value.copy(obesity = obesity)
     }
 
-    // 5. 얼굴형 선택 시 호출
+    // 5. 체형 호출
     fun onFaceShapeSelected(faceShape: String) {
         _uiState.value = _uiState.value.copy(faceShape = faceShape)
     }
@@ -83,6 +83,30 @@ class MyProfileModifyViewModel : ViewModel() {
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+
+    // MyProfileModifyViewModel.kt
+
+    // [수정된 저장 함수]
+    fun saveProfileChanges(context: Context): Boolean {
+        val currentState = _uiState.value
+        val uri = currentState.imageUri
+
+        return try {
+            // 1. 이미지가 선택되어 있다면 내부 저장소에 저장 시도
+            if (uri != null) {
+                val savedImageFile = saveImageToInternalStorage(context, uri)
+                if (savedImageFile == null) return false // 파일 저장 실패 시 false
+            }
+
+            // 2. [추가] 서버나 DB에 키, 몸무게 등 나머지 정보 저장 로직
+            // 예: repository.updateProfile(currentState)
+
+            true // 모든 과정이 성공하면 true 반환
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false // 오류 발생 시 false 반환
         }
     }
 }

@@ -3,7 +3,6 @@ package com.fitflow.clover.mypage.setup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable // 🎯 클릭 기능을 위해 필수 추가
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -37,7 +35,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable // 🎯 composable 인식을 위해 필수 추가
 import androidx.navigation.compose.rememberNavController
@@ -67,10 +67,13 @@ object MyPageDestinations {
 
 // 💡 마이페이지 화면 이동을 총괄하는 네비게이션 호스트
 @Composable
-fun MyPageNavHost(onExitMyPage: () -> Unit,
-                  onNavigateToLogin: () -> Unit,
-                  onGoodsClick: () -> Unit,
-                  viewModel: MyPageViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+fun MyPageNavHost(
+    onExitMyPage: () -> Unit,
+    onNavigateToLogin: () -> Unit,
+    onGoodsClick: () -> Unit,
+    viewModel: MyPageViewModel = viewModel(),
+    navController: NavHostController,
+    sharedViewModel: MyProfileModifyViewModel
 ) {
     val navController = rememberNavController()
 
@@ -115,10 +118,12 @@ fun MyPageNavHost(onExitMyPage: () -> Unit,
             MyPageAccountPassword(navController = navController)
         }
         composable(MyPageDestinations.MYPROFILE) {
-            MyProfile(navController = navController)
+            MyProfile(navController = navController,
+                sharedViewModel = sharedViewModel)
         }
         composable(MyPageDestinations.MYPROFILE_MODIFY) {
-            MyProfileModify(navController = navController)
+            MyProfileModify(navController = navController,
+                viewModel = sharedViewModel)
         }
         composable(MyPageDestinations.NOTIFICATION_PUSH) {
             NotificationPush(navController = navController)
@@ -441,7 +446,14 @@ fun SettingTextItem(text: String, onClick: () -> Unit) {
 @Composable
 fun MyPageSetupPreview() {
     // 미리보기에서도 전체 화면 흐름을 안전하게 볼 수 있도록 Host를 띄워줍니다.
-    MyPageNavHost(onExitMyPage = {},
+    // 1. 가짜 NavController 생성
+    val mockNavController = rememberNavController()
+    // 2. 프리뷰용으로 사용할 ViewModel 생성 (여기선 단순히 객체만 생성해서 넘김)
+    val mockViewModel: MyProfileModifyViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    MyPageNavHost(
+        navController = mockNavController,    // 💡 필수 파라미터 추가
+        sharedViewModel = mockViewModel,
+        onExitMyPage = {},
         onNavigateToLogin = {},
         onGoodsClick = {})
 }

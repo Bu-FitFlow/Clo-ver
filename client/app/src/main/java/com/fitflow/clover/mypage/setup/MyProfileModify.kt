@@ -2,6 +2,7 @@ package com.fitflow.clover.mypage.setup
 
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -55,7 +56,7 @@ import com.fitflow.clover.R
 
 @Composable
 fun MyProfileModify(navController: NavHostController,
-                    viewModel: MyProfileModifyViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                    viewModel: MyProfileModifyViewModel
 ) {
     // 💡 기존의 remember 변수들을 뷰모델의 uiState 관찰 구조로 치환합니다!
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -67,6 +68,7 @@ fun MyProfileModify(navController: NavHostController,
     ) { uri ->
         if (uri != null) {
             viewModel.onImageSelected(uri)
+            Log.d("PhotoPicker", "선택된 사진 URI: $uri")
         }
 
         // 사용자가 사진을 고르면 uri에 주소가 담기고, 취소하면 null이 들어옵니다.
@@ -140,19 +142,28 @@ fun MyProfileModify(navController: NavHostController,
                         modifier = Modifier.align(Alignment.Center)
                     )
 
-                    // 🎯 [여기치환] 기존 완료 버튼이 있던 자리를 이 코드로 쏙 교체합니다!
                     Button(
                         onClick = {
-                            // 완료 버튼을 누르면 "setup" 주소를 가진 MyPageSetup 화면으로 다이렉트 복귀!
-                            navController.popBackStack(
-                                route = MyPageDestinations.SETUP,
-                                inclusive = false
-                            )
+                            // ViewModel의 저장 함수를 실행하고 결과(isSuccess)를 받습니다.
+                            val isSuccess = viewModel.saveProfileChanges(context)
+
+                            if (isSuccess) {
+                                // 저장 성공 시에만 이전 화면으로 복귀!
+                                navController.popBackStack(
+
+                                )
+                            } else {
+                                // [옵션] 저장 실패 시 사용자에게 알림 띄우기 (예: 토스트 메시지)
+                                // Toast.makeText(context, "저장에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                            }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF99DE81)),
-                        shape = RoundedCornerShape(5.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                        modifier = Modifier.align(Alignment.CenterEnd)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF99DE81)
+                        ),
+                        shape = RoundedCornerShape(5.dp), // 살짝 각진 사각형 모양
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp), // 버튼 내 여백
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd) // 오른쪽 정렬 🎯
                     ) {
                         Text(
                             text = "완료",
@@ -390,6 +401,8 @@ fun MyProfileModifyTopBar() {
 @Composable
 //미리보기 상자의 이름
 fun MyProfileModifyPreview() {
+    val previewViewModel: MyProfileModifyViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     // 진짜 화면 불러오기
-    MyProfileModify(navController = rememberNavController())
+    MyProfileModify(navController = rememberNavController(),
+        viewModel = previewViewModel)
 }

@@ -102,24 +102,6 @@ fun MyPageScreen(cloverProgress: Float,
             // 프로필 사진 아래 ID 표기
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text(
-                text = "ID",
-                fontSize = 16.sp,
-                color = Color.Black,
-                fontWeight = FontWeight.Medium
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 길이 331짜리 선
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 31.dp) // 양옆 31dp 여백을 주면 화면 크기(393) 기준 자동으로 가로 331dp가 됩니다!
-                    .padding(top = 8.dp)          // 글씨 영역과의 위쪽 간격
-                    .height(1.dp)                 // 두께 (1dp)
-                    .background(Color.Black)      // 색상
-            )
 
             // 🔥 여기서부터 새로 추가할 '나의 클로버' & 게이지 바 영역
             // ----------------------------------------------------

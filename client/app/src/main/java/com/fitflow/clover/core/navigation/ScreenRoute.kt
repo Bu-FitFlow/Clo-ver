@@ -78,6 +78,10 @@ sealed class ScreenRoute(val route: String) {
 
     data object TradePost : ScreenRoute("trade_post")
     data object MyPage : ScreenRoute("my_page")
+
+    data object MyProfile : ScreenRoute("my_profile")
+
+    data object MyProfileModify : ScreenRoute("my_profile_modify")
     data object Sale : ScreenRoute("sale")
     data object SearchBar : ScreenRoute("searchbar")
 
@@ -97,4 +101,7 @@ sealed class ScreenRoute(val route: String) {
     }
 
     data object CarbonPoint : ScreenRoute("carbon_point")
+    companion object {
+        //val MyProfileModify: Any
+    }
 }

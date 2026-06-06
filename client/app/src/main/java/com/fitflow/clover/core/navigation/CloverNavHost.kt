@@ -28,12 +28,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.fitflow.clover.mypage.mainscreen.MyPageScreen
 import com.fitflow.clover.mypage.mainscreen.NotificationScreen
 import com.fitflow.clover.mypage.mainscreen.SearchBar
-import com.fitflow.clover.mypage.mainscreen.UserPageScreen
 import com.fitflow.clover.mypage.setup.MyPageNavHost
-import com.fitflow.clover.mypage.setup.NotificationPush
+import com.fitflow.clover.mypage.setup.MyProfile
+import com.fitflow.clover.mypage.setup.MyProfileModify
+import com.fitflow.clover.mypage.setup.MyProfileModifyViewModel
 import com.fitflow.clover.presentation.auth.*
 import com.fitflow.clover.presentation.chat.ChatScreen
 import com.fitflow.clover.presentation.chat.ChatViewModel
@@ -654,8 +654,34 @@ fun CloverNavHost(
             )
         }
 
-        composable(ScreenRoute.MyPage.route) {
+     /*
+        composable(ScreenRoute.MyProfile.route) { backStackEntry ->
+            // 💡 여기서 마이페이지 경로(backStackEntry)를 소유자로 하는 ViewModel을 생성합니다.
+            // 이렇게 해야 MyProfile과 MyProfileModify가 같은 객체를 공유합니다.
+            val sharedViewModel: MyProfileModifyViewModel = viewModel(
+                viewModelStoreOwner = backStackEntry
+            )
+
+            MyProfile(
+                navController = navController,
+                sharedViewModel = sharedViewModel // 💡 이제 null이 아닌 진짜 뷰모델이 전달됩니다!
+            )
+        }
+      */
+
+        composable(ScreenRoute.MyPage.route) { backStackEntry ->
+            // 마이페이지 전체에서 공유될 뷰모델입니다.
+            val viewModel: MyProfileModifyViewModel = viewModel()
+
+            val sharedViewModel: MyProfileModifyViewModel = viewModel(
+                viewModelStoreOwner = backStackEntry
+            )
+
+
             MyPageNavHost(
+                navController = navController,
+                sharedViewModel = sharedViewModel,
+
                 onExitMyPage = {
                     // 🎯 마이페이지 메인 화면에서 '뒤로가기'를 누르면 전체 앱의 메인 화면으로 이동!
                     navigateSingleTop(ScreenRoute.Main.route)
@@ -673,6 +699,20 @@ fun CloverNavHost(
                     navigateSingleTop(ScreenRoute.Main.route)
                 }
             )
+        }
+
+        // CloverNavHost.kt 파일
+        composable(ScreenRoute.MyProfile.route) { backStackEntry ->
+            val sharedViewModel: MyProfileModifyViewModel = viewModel(viewModelStoreOwner = backStackEntry)
+
+            MyProfile(navController = navController, sharedViewModel = sharedViewModel)
+        }
+
+        composable(ScreenRoute.MyProfileModify.route) { backStackEntry ->
+            // 💡 아까와 동일한 backStackEntry를 넣으면 같은 뷰모델 인스턴스를 공유합니다!
+            val sharedViewModel: MyProfileModifyViewModel = viewModel(viewModelStoreOwner = backStackEntry)
+
+            MyProfileModify(navController = navController, viewModel = sharedViewModel)
         }
 
 

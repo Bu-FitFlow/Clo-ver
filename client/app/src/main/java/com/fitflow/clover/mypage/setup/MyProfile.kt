@@ -1,6 +1,7 @@
 package com.fitflow.clover.mypage.setup
 
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,23 +25,31 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.rememberAsyncImagePainter
 import com.fitflow.clover.R
 
 
 @Composable
-fun MyProfile(navController: NavController) {
+fun MyProfile(navController: NavController,
+              sharedViewModel: MyProfileModifyViewModel // 💡 밖에서 넘겨준 것을 그대로 받으세요
+) {
+    val uiState by sharedViewModel.uiState.collectAsStateWithLifecycle()
+    android.util.Log.d("MyProfileCheck", "현재 URI: ${uiState.imageUri}")
     // 전체 화면을 감싸는 도화지
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -116,6 +125,20 @@ fun MyProfile(navController: NavController) {
                         .border(1.dp, Color.Gray),     // 테두리
                     contentAlignment = Alignment.Center
                 ){
+                    android.util.Log.d("MyProfile", "현재 사진 URI: ${uiState.imageUri}")
+                    if (uiState.imageUri != null) {
+                        // 🎯 사진이 있으면 보여줍니다!
+                        val painter = rememberAsyncImagePainter(model = uiState.imageUri)
+                        Image(
+                            painter = painter,
+                            contentDescription = "프로필 사진",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        // 사진이 없으면 기본 텍스트
+                        Text("사진 없음", color = Color.Gray)
+                    }
 
                 }
 
@@ -148,6 +171,15 @@ fun MyProfile(navController: NavController) {
 
                     // [얼굴형] 박스
                     ProfileInfoBox(text = "체형", modifier = Modifier.fillMaxWidth())
+
+                    /*
+
+                    // ... (아래 키, 몸무게 정보도 uiState에서 가져오세요)
+    ProfileInfoBox(text = uiState.height, modifier = Modifier.weight(1f))
+    ProfileInfoBox(text = uiState.weight, modifier = Modifier.weight(1f))
+    ProfileInfoBox(text = uiState.obesity, modifier = Modifier.fillMaxWidth())
+    ProfileInfoBox(text = uiState.faceShape, modifier = Modifier.fillMaxWidth())
+                     */
                 }
             }
         }
@@ -214,5 +246,7 @@ fun MyProfileTopBar() {
 @Composable
 //미리보기 상자의 이름
 fun MyProfilePreview() {
-    MyProfile(navController = rememberNavController())
+    val mockViewModel: MyProfileModifyViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    MyProfile(navController = rememberNavController(),
+        sharedViewModel = mockViewModel)
 }
