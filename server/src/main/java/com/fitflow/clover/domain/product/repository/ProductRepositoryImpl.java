@@ -83,7 +83,9 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     }
 
     private BooleanExpression containsKeyword(String keyword) {
-        return StringUtils.hasText(keyword) ? product.name.containsIgnoreCase(keyword) : null;
+        if (!StringUtils.hasText(keyword)) return null;
+        return product.name.containsIgnoreCase(keyword)
+                .or(product.content.containsIgnoreCase(keyword));
     }
 
     private BooleanExpression isActiveOrEqStatus(ProductStatus status) {
