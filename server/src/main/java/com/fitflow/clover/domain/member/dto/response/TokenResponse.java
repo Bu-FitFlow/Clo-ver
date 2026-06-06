@@ -2,6 +2,7 @@ package com.fitflow.clover.domain.member.dto.response;
 
 public record TokenResponse(
         String accessToken,
-        String refreshToken
+        String refreshToken,
+        boolean isFirstLogin
 ) {
 }

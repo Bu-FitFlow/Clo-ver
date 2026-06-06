@@ -18,14 +18,14 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthService authService;
 
-    @Operation(summary = "로그인", description = "사용자의 아이디와 비밀번호를 검증하고, 성공 시 Access Token과 Refresh Token을 발급합니다. (만약 2차 인증(TOTP)이 설정된 계정이라면 추가 인증 요구 상태를 반환합니다.)")
+    @Operation(summary = "로그인", description = "사용자의 아이디와 비밀번호를 검증하고, 성공 시 토큰을 발급합니다. 응답의 `isFirstLogin` 값이 `true`이면 가입 후 최초 로그인, `false`이면 기존 로그인입니다. 프론트엔드는 이를 바탕으로 온보딩 화면 라우팅을 처리할 수 있습니다. (2차 인증 설정 계정은 추가 인증 상태 반환)")
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest request) {
         TokenResponse tokenResponse = authService.login(request);
         return ResponseEntity.ok(tokenResponse);
     }
 
-    @Operation(summary = "토큰 재발급", description = "만료된 Access Token을 헤더의 Refresh Token을 이용해 재발급 받습니다.")
+    @Operation(summary = "토큰 재발급", description = "만료된 Access Token을 헤더의 Refresh Token을 이용해 재발급 받습니다. (토큰 재발급은 이미 인증된 상태이므로 응답의 `isFirstLogin`은 항상 `false`로 반환됩니다.)")
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponse> refresh(@RequestHeader("Authorization-Refresh") String refreshToken) {
         TokenResponse tokenResponse = authService.refresh(refreshToken);

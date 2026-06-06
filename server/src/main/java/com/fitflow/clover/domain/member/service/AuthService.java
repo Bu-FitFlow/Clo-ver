@@ -6,8 +6,8 @@ import com.fitflow.clover.domain.member.entity.Member;
 import com.fitflow.clover.domain.member.repository.MemberRepository;
 import com.fitflow.clover.global.error.CustomException;
 import com.fitflow.clover.global.error.ErrorCode;
-import com.fitflow.clover.global.security.jwt.JwtTokenProvider;
 import com.fitflow.clover.global.infra.redis.RedisUtil;
+import com.fitflow.clover.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -52,7 +52,13 @@ public class AuthService {
             totpService.verifyCode(member.getTotpSecret(), request.totpCode());
         }
 
-        return jwtTokenProvider.issueTokenResponse(member.getMemberId(), member.getRole());
+        boolean isFirst = member.isFirstLogin();
+
+        if (isFirst) {
+            member.markAsNotFirstLogin();
+        }
+
+        return jwtTokenProvider.issueTokenResponse(member.getMemberId(), member.getRole(), isFirst);
     }
 
     @Transactional
@@ -73,7 +79,7 @@ public class AuthService {
 
         String newAccessToken = jwtTokenProvider.createAccessToken(member.getMemberId(), member.getRole());
 
-        return new TokenResponse(newAccessToken, refreshToken);
+        return new TokenResponse(newAccessToken, refreshToken, false);
     }
 
     @Transactional
