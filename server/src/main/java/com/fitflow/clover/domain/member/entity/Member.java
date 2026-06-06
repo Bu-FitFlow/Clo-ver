@@ -42,6 +42,10 @@ public class Member extends BaseTimeEntity {
     @Column(nullable = false, columnDefinition = "TINYINT")
     private boolean isEmailVerified = false;
 
+    @Builder.Default
+    @Column(name = "is_first_login", nullable = false, columnDefinition = "TINYINT")
+    private boolean isFirstLogin = true;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
     private Gender gender;
@@ -61,6 +65,10 @@ public class Member extends BaseTimeEntity {
 
     public void verifyEmail() {
         this.isEmailVerified = true;
+    }
+
+    public void markAsNotFirstLogin() {
+        this.isFirstLogin = false;
     }
 
     public void updateTotpSecret(String secret) {

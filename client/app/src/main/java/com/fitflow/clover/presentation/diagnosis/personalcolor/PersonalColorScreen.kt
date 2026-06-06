@@ -22,8 +22,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,6 +51,7 @@ import kotlinx.coroutines.delay
 fun PersonalColorScreen(
     viewModel: DiagnosisViewModel,
     onBack: () -> Unit,
+    onSkip: () -> Unit,
     onMoveToResult: () -> Unit
 ) {
     val uiState by viewModel.uiState
@@ -57,6 +60,10 @@ fun PersonalColorScreen(
 
     var pendingCameraUri by remember {
         mutableStateOf<Uri?>(null)
+    }
+
+    var showSkipDialog by remember {
+        mutableStateOf(false)
     }
 
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -148,7 +155,10 @@ fun PersonalColorScreen(
             .systemBarsPadding()
     ) {
         PersonalColorHeader(
-            onBack = onBack
+            onBack = onBack,
+            onSkip = {
+                showSkipDialog = true
+            }
         )
 
         Text(
@@ -201,11 +211,24 @@ fun PersonalColorScreen(
             )
         }
     }
+
+    if (showSkipDialog) {
+        PersonalColorSkipConfirmDialog(
+            onDismiss = {
+                showSkipDialog = false
+            },
+            onConfirm = {
+                showSkipDialog = false
+                onSkip()
+            }
+        )
+    }
 }
 
 @Composable
 private fun PersonalColorHeader(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onSkip: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -230,7 +253,55 @@ private fun PersonalColorHeader(
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
-        )    }
+        )
+
+        Text(
+            text = "건너뛰기",
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .clickable(onClick = onSkip)
+                .padding(horizontal = 4.dp, vertical = 8.dp),
+            color = Color(0xFF555555),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun PersonalColorSkipConfirmDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "진단을 건너뛸까요?",
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text(
+                text = "건너뛰면 체형 맞춤 추천 옷을 정확하게 추천할 수 없어요. 정말로 건너뛰시겠어요?",
+                lineHeight = 20.sp
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = "확인")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "취소")
+            }
+        },
+        containerColor = Color.White,
+        titleContentColor = Color.Black,
+        textContentColor = Color.Black
+    )
 }
 
 @Composable

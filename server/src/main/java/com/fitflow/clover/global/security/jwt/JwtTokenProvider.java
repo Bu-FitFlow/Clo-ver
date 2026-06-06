@@ -3,7 +3,10 @@ package com.fitflow.clover.global.security.jwt;
 import com.fitflow.clover.domain.member.dto.response.TokenResponse;
 import com.fitflow.clover.global.infra.redis.RedisUtil;
 import com.fitflow.clover.global.security.auth.CustomUserDetailsService;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -62,13 +65,13 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public TokenResponse issueTokenResponse(Long memberId, String role) {
+    public TokenResponse issueTokenResponse(Long memberId, String role, boolean isFirstLogin) {
         String accessToken = createAccessToken(memberId, role);
         String refreshToken = createRefreshToken(memberId);
 
         redisUtil.setDataExpire("RT:" + memberId, refreshToken, 14 * 24 * 60 * 60 * 1000L);
 
-        return new TokenResponse(accessToken, refreshToken);
+        return new TokenResponse(accessToken, refreshToken, isFirstLogin);
     }
 
     public String getUserId(String token) {

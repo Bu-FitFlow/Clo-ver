@@ -8,12 +8,11 @@ import com.fitflow.clover.domain.member.repository.MemberRepository;
 import com.fitflow.clover.domain.member.repository.PasskeyRepository;
 import com.fitflow.clover.global.error.CustomException;
 import com.fitflow.clover.global.error.ErrorCode;
-import com.fitflow.clover.global.security.jwt.JwtTokenProvider;
 import com.fitflow.clover.global.infra.redis.RedisUtil;
+import com.fitflow.clover.global.security.jwt.JwtTokenProvider;
 import com.yubico.webauthn.*;
 import com.yubico.webauthn.data.*;
 import lombok.RequiredArgsConstructor;
-import com.yubico.webauthn.data.PublicKeyCredential;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -177,7 +176,13 @@ public class PasskeyService {
 
                 credential.updateSignCount(result.getSignatureCount());
 
-                return jwtTokenProvider.issueTokenResponse(member.getMemberId(), member.getRole());
+                boolean isFirst = member.isFirstLogin();
+
+                if (isFirst) {
+                    member.markAsNotFirstLogin();
+                }
+
+                return jwtTokenProvider.issueTokenResponse(member.getMemberId(), member.getRole(), isFirst);
             } else throw new CustomException(ErrorCode.INVALID_PASSKEY_REQUEST);
         } catch (Exception e) {
             throw new CustomException(ErrorCode.INVALID_PASSKEY_REQUEST);
