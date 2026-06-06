@@ -353,6 +353,20 @@ class ProductViewModel(
         }
     }
 
+    fun onSearchQueryChange(query: String) {
+        _listUiState.update { current ->
+            current.copy(
+                searchQuery = query,
+                products = filterProducts(
+                    main = current.selectedMainCategory,
+                    sub = current.selectedSubCategory,
+                    latestOrder = current.isLatestOrder,
+                    query = query
+                )
+            )
+        }
+    }
+
     fun onSellingTabClick() {
         _tradeUiState.update {
             it.copy(isSellingTabSelected = true)
@@ -572,6 +586,16 @@ class ProductViewModel(
         }
     }
 
+    fun onEditGradeChange(grade: String) {
+        _editUiState.update {
+            it.copy(
+                grade = grade,
+                errorMessage = null,
+                isSubmitSuccess = false
+            )
+        }
+    }
+
     fun onEditMainCategorySelect(category: ProductMainCategory) {
         val subList = if (category == ProductMainCategory.ALL) {
             emptyList()
@@ -652,6 +676,8 @@ class ProductViewModel(
     fun onSizeChange(size: String) = onEditSizeChange(size)
 
     fun onFitChange(fit: String) = onEditFitChange(fit)
+
+    fun onGradeChange(grade: String) = onEditGradeChange(grade)
 
     fun onImageUrisChange(imageUris: List<String>) = onEditImageUrisChange(imageUris)
 
@@ -914,13 +940,18 @@ class ProductViewModel(
     private fun filterProducts(
         main: ProductMainCategory,
         sub: ProductSubCategory?,
-        latestOrder: Boolean
+        latestOrder: Boolean,
+        query: String = ""
     ): List<ProductSummary> {
         val filtered = allProducts.filter { product ->
             val mainMatch = main == ProductMainCategory.ALL || product.mainCategory == main
             val subMatch = sub == null || product.subCategory == sub
+            val queryMatch = query.isBlank() ||
+                    product.title.contains(query, ignoreCase = true) ||
+                    product.mainCategory.displayName.contains(query, ignoreCase = true) ||
+                    product.subCategory?.displayName?.contains(query, ignoreCase = true) == true
 
-            mainMatch && subMatch
+            mainMatch && subMatch && queryMatch
         }
 
         return if (latestOrder) {
@@ -1393,4 +1424,3 @@ private val mainHomeFallbackProductModels = listOf(
         thumbnailImageUrl = null
     )
 )
-

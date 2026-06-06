@@ -3,73 +3,65 @@ package com.fitflow.clover.data.remote.dto
 import com.fitflow.clover.domain.modal.ProductDetailModel
 import com.fitflow.clover.domain.modal.ProductImageModel
 import com.fitflow.clover.domain.modal.ProductSummaryModel
-import com.fitflow.clover.domain.modal.WishlistModel
 import com.google.gson.annotations.SerializedName
 
-data class ProductSummaryResponse(
-    @SerializedName("product_id")
-    val productId: Long? = null,
+// ─── 목록 페이지네이션 래퍼 ──────────────────────────────
 
-    @SerializedName("seller_id")
-    val sellerId: Long? = null,
-
-    @SerializedName("category_id")
-    val categoryId: Long? = null,
-
-    @SerializedName("color_id")
-    val colorId: Long? = null,
-
-    @SerializedName("name")
-    val name: String? = null,
-
-    @SerializedName("price")
-    val price: Int? = null,
-
+data class ProductPageResponse(
     @SerializedName("content")
-    val content: String? = null,
+    val content: List<ProductSummaryResponse>? = null,
+
+    @SerializedName("last")
+    val last: Boolean? = null,
+
+    @SerializedName("number")
+    val number: Int? = null,
 
     @SerializedName("size")
-    val size: String? = null,
-
-    @SerializedName("grade")
-    val grade: String? = null,
-
-    @SerializedName("trading_area")
-    val tradingArea: String? = null,
-
-    @SerializedName("recommended_type")
-    val recommendedType: String? = null,
-
-    @SerializedName("post_status")
-    val postStatus: String? = null,
-
-    @SerializedName("view_count")
-    val viewCount: Int? = null,
-
-    @SerializedName("wishlist_count")
-    val wishlistCount: Int? = null,
-
-    @SerializedName("created_at")
-    val createdAt: String? = null,
-
-    @SerializedName("updated_at")
-    val updatedAt: String? = null,
-
-    @SerializedName("thumbnail_image")
-    val thumbnailImage: ProductImageResponse? = null
+    val size: Int? = null
 )
 
-data class ProductDetailResponse(
-    @SerializedName("product_id")
+// ─── 상품 목록 아이템 ─────────────────────────────────────
+
+data class ProductSummaryResponse(
+    @SerializedName("productId")
     val productId: Long? = null,
 
-    @SerializedName("seller_id")
+    @SerializedName("name")
+    val name: String? = null,
+
+    @SerializedName("price")
+    val price: Int? = null,
+
+    @SerializedName("tradingArea")
+    val tradingArea: String? = null,
+
+    @SerializedName("postStatus")
+    val postStatus: String? = null,
+
+    @SerializedName("thumbnailImageUrl")
+    val thumbnailImageUrl: String? = null,
+
+    @SerializedName("wishlistCount")
+    val wishlistCount: Int? = null,
+
+    @SerializedName("createdAt")
+    val createdAt: String? = null
+)
+
+// ─── 상품 상세 ────────────────────────────────────────────
+
+data class ProductDetailResponse(
+    @SerializedName("productId")
+    val productId: Long? = null,
+
+    @SerializedName("sellerId")
     val sellerId: Long? = null,
 
-    @SerializedName("category_id")
+    @SerializedName("categoryId")
     val categoryId: Long? = null,
 
-    @SerializedName("color_id")
+    @SerializedName("colorId")
     val colorId: Long? = null,
 
     @SerializedName("name")
@@ -87,87 +79,108 @@ data class ProductDetailResponse(
     @SerializedName("grade")
     val grade: String? = null,
 
-    @SerializedName("trading_area")
+    @SerializedName("tradingArea")
     val tradingArea: String? = null,
 
-    @SerializedName("recommended_type")
+    @SerializedName("recommendedType")
     val recommendedType: String? = null,
 
-    @SerializedName("post_status")
+    @SerializedName("postStatus")
     val postStatus: String? = null,
 
-    @SerializedName("view_count")
+    @SerializedName("viewCount")
     val viewCount: Int? = null,
 
-    @SerializedName("wishlist_count")
+    @SerializedName("wishlistCount")
     val wishlistCount: Int? = null,
 
-    @SerializedName("created_at")
+    @SerializedName("createdAt")
     val createdAt: String? = null,
 
-    @SerializedName("updated_at")
+    @SerializedName("updatedAt")
     val updatedAt: String? = null,
 
     @SerializedName("images")
     val images: List<ProductImageResponse>? = null,
 
-    @SerializedName("is_wishlisted")
+    @SerializedName("isWishlisted")
     val isWishlisted: Boolean? = null
 )
 
+// ─── 이미지 ───────────────────────────────────────────────
+
 data class ProductImageResponse(
-    @SerializedName("image_id")
+    @SerializedName("imageId")
     val imageId: Long? = null,
 
-    @SerializedName("image_url")
+    @SerializedName("imageUrl")
     val imageUrl: String? = null,
 
-    @SerializedName("reference_type")
+    @SerializedName("referenceType")
     val referenceType: String? = null,
 
-    @SerializedName("reference_id")
+    @SerializedName("referenceId")
     val referenceId: Long? = null,
 
-    @SerializedName("sort_order")
+    @SerializedName("sortOrder")
     val sortOrder: Int? = null,
 
-    @SerializedName("created_at")
+    @SerializedName("createdAt")
     val createdAt: String? = null
 )
 
-data class WishlistResponse(
-    @SerializedName("wishlist_id")
-    val wishlistId: Long? = null,
+// ─── 상품 등록/수정 요청 ──────────────────────────────────
 
-    @SerializedName("member_id")
-    val memberId: Long? = null,
+data class ProductRegisterRequest(
+    @SerializedName("name")
+    val name: String,
 
-    @SerializedName("product_id")
-    val productId: Long? = null,
+    @SerializedName("price")
+    val price: Int,
 
-    @SerializedName("created_at")
-    val createdAt: String? = null
+    @SerializedName("content")
+    val content: String,
+
+    @SerializedName("size")
+    val size: String,
+
+    @SerializedName("grade")
+    val grade: String,
+
+    @SerializedName("tradingArea")
+    val tradingArea: String,
+
+    @SerializedName("recommendedType")
+    val recommendedType: String? = null,
+
+    @SerializedName("categoryId")
+    val categoryId: Long,
+
+    @SerializedName("colorId")
+    val colorId: Long? = null
 )
+
+// ─── toDomain 변환 ────────────────────────────────────────
 
 fun ProductSummaryResponse.toDomain(): ProductSummaryModel {
     return ProductSummaryModel(
         productId = productId ?: 0L,
-        sellerId = sellerId ?: 0L,
-        categoryId = categoryId ?: 0L,
-        colorId = colorId,
+        sellerId = 0L,
+        categoryId = 0L,
+        colorId = null,
         name = name.orEmpty(),
         price = price ?: 0,
-        content = content.orEmpty(),
-        size = size.orEmpty(),
-        grade = grade.orEmpty(),
+        content = "",
+        size = "",
+        grade = "",
         tradingArea = tradingArea.orEmpty(),
-        recommendedType = recommendedType,
+        recommendedType = null,
         postStatus = postStatus.orEmpty(),
-        viewCount = viewCount ?: 0,
+        viewCount = 0,
         wishlistCount = wishlistCount ?: 0,
         createdAt = createdAt.orEmpty(),
-        updatedAt = updatedAt.orEmpty(),
-        thumbnailImageUrl = thumbnailImage?.imageUrl
+        updatedAt = "",
+        thumbnailImageUrl = thumbnailImageUrl
     )
 }
 
@@ -190,15 +203,8 @@ fun ProductDetailResponse.toDomain(): ProductDetailModel {
         createdAt = createdAt.orEmpty(),
         updatedAt = updatedAt.orEmpty(),
         images = images
-            ?.filter { image ->
-                image.referenceType == null || image.referenceType == "PRODUCT"
-            }
-            ?.sortedBy { image ->
-                image.sortOrder ?: 0
-            }
-            ?.map { image ->
-                image.toDomain()
-            }
+            ?.sortedBy { it.sortOrder ?: 0 }
+            ?.map { it.toDomain() }
             .orEmpty(),
         isWishlisted = isWishlisted ?: false
     )
@@ -211,15 +217,6 @@ fun ProductImageResponse.toDomain(): ProductImageModel {
         referenceType = referenceType.orEmpty(),
         referenceId = referenceId ?: 0L,
         sortOrder = sortOrder ?: 0,
-        createdAt = createdAt.orEmpty()
-    )
-}
-
-fun WishlistResponse.toDomain(): WishlistModel {
-    return WishlistModel(
-        wishlistId = wishlistId ?: 0L,
-        memberId = memberId ?: 0L,
-        productId = productId ?: 0L,
         createdAt = createdAt.orEmpty()
     )
 }

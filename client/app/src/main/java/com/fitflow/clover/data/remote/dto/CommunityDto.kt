@@ -7,41 +7,32 @@ import com.fitflow.clover.domain.modal.CommunityPost
 import com.fitflow.clover.domain.modal.CommunityPostSummary
 import com.fitflow.clover.domain.modal.CommunityReply
 import com.google.gson.annotations.SerializedName
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 // ─────────────────────────────────────────────────────────
 // 1. 게시글 목록 응답
 // ─────────────────────────────────────────────────────────
 
 data class CommunityPostSummaryResponse(
-    @SerializedName("post_id")
-    val postId: Long? = null,
+    @SerializedName("communityId")
+    val communityId: Long? = null,
 
-    @SerializedName("category")
-    val category: String? = null,
+    @SerializedName("writerId")
+    val writerId: Long? = null,
 
     @SerializedName("title")
     val title: String? = null,
 
-    @SerializedName("content_preview")
-    val contentPreview: String? = null,
+    @SerializedName("viewCount")
+    val viewCount: Int? = null,
 
-    @SerializedName("author_nickname")
-    val authorNickname: String? = null,
-
-    @SerializedName("author_profile_image_url")
-    val authorProfileImageUrl: String? = null,
-
-    @SerializedName("like_count")
-    val likeCount: Int? = null,
-
-    @SerializedName("comment_count")
+    @SerializedName("commentCount")
     val commentCount: Int? = null,
 
-    @SerializedName("created_at")
-    val createdAt: String? = null,
-
-    @SerializedName("thumbnail_image_url")
-    val thumbnailImageUrl: String? = null
+    @SerializedName("createdAt")
+    val createdAt: String? = null
 )
 
 // ─────────────────────────────────────────────────────────
@@ -49,11 +40,11 @@ data class CommunityPostSummaryResponse(
 // ─────────────────────────────────────────────────────────
 
 data class CommunityPostDetailResponse(
-    @SerializedName("post_id")
-    val postId: Long? = null,
+    @SerializedName("communityId")
+    val communityId: Long? = null,
 
-    @SerializedName("category")
-    val category: String? = null,
+    @SerializedName("writerId")
+    val writerId: Long? = null,
 
     @SerializedName("title")
     val title: String? = null,
@@ -61,31 +52,35 @@ data class CommunityPostDetailResponse(
     @SerializedName("content")
     val content: String? = null,
 
-    @SerializedName("image_url")
-    val imageUrl: String? = null,
+    @SerializedName("ootdInfo")
+    val ootdInfo: String? = null,
 
-    @SerializedName("author_nickname")
-    val authorNickname: String? = null,
+    @SerializedName("imageUrls")
+    val imageUrls: List<String>? = null,
 
-    @SerializedName("author_profile_image_url")
-    val authorProfileImageUrl: String? = null,
+    @SerializedName("writerNickname")
+    val writerNickname: String? = null,
 
-    @SerializedName("like_count")
-    val likeCount: Int? = null,
+    @SerializedName("writerProfileImg")
+    val writerProfileImg: String? = null,
 
-    @SerializedName("is_liked")
-    val isLiked: Boolean? = null,
+    @SerializedName("viewCount")
+    val viewCount: Int? = null,
 
-    @SerializedName("comment_count")
+    @SerializedName("commentCount")
     val commentCount: Int? = null,
+
+    @SerializedName("wishlistCount")
+    val wishlistCount: Int? = null,
+
+    @SerializedName("createdAt")
+    val createdAt: String? = null,
 
     @SerializedName("comments")
     val comments: List<CommunityCommentResponse>? = null,
 
-    @SerializedName("created_at")
-    val createdAt: String? = null,
-
-    @SerializedName("is_my_post")
+    // 백엔드 연결 후 추가될 필드 (현재 API에 없으면 null 처리)
+    @SerializedName("isMyPost")
     val isMyPost: Boolean? = null
 )
 
@@ -94,22 +89,22 @@ data class CommunityPostDetailResponse(
 // ─────────────────────────────────────────────────────────
 
 data class CommunityCommentResponse(
-    @SerializedName("comment_id")
+    @SerializedName("commentId")
     val commentId: Long? = null,
 
-    @SerializedName("author_nickname")
-    val authorNickname: String? = null,
+    @SerializedName("writerNickname")
+    val writerNickname: String? = null,
 
-    @SerializedName("author_profile_image_url")
-    val authorProfileImageUrl: String? = null,
+    @SerializedName("writerProfileImg")
+    val writerProfileImg: String? = null,
 
     @SerializedName("content")
     val content: String? = null,
 
-    @SerializedName("created_at")
+    @SerializedName("createdAt")
     val createdAt: String? = null,
 
-    @SerializedName("is_my_comment")
+    @SerializedName("isMyComment")
     val isMyComment: Boolean? = null,
 
     @SerializedName("replies")
@@ -121,19 +116,19 @@ data class CommunityCommentResponse(
 // ─────────────────────────────────────────────────────────
 
 data class CommunityReplyResponse(
-    @SerializedName("reply_id")
+    @SerializedName("replyId")
     val replyId: Long? = null,
 
-    @SerializedName("author_nickname")
-    val authorNickname: String? = null,
+    @SerializedName("writerNickname")
+    val writerNickname: String? = null,
 
     @SerializedName("content")
     val content: String? = null,
 
-    @SerializedName("created_at")
+    @SerializedName("createdAt")
     val createdAt: String? = null,
 
-    @SerializedName("is_my_reply")
+    @SerializedName("isMyReply")
     val isMyReply: Boolean? = null
 )
 
@@ -151,7 +146,7 @@ data class CreateCommunityPostRequest(
     @SerializedName("content")
     val content: String,
 
-    @SerializedName("image_url")
+    @SerializedName("imageUrl")
     val imageUrl: String? = null
 )
 
@@ -169,7 +164,7 @@ data class UpdateCommunityPostRequest(
     @SerializedName("content")
     val content: String,
 
-    @SerializedName("image_url")
+    @SerializedName("imageUrl")
     val imageUrl: String? = null
 )
 
@@ -197,16 +192,16 @@ data class CreateReplyRequest(
 
 fun CommunityPostSummaryResponse.toDomain(): CommunityPostSummary {
     return CommunityPostSummary(
-        postId = postId ?: 0L,
-        category = category.toCommunityCategory(),
+        postId = communityId ?: 0L,
+        authorNickname = "",                 // 목록 API에 writerNickname 없음 → 상세에서 채워짐
+        category = CommunityCategory.FREE,   // 목록 API에 category 없음 → 기본값
         title = title.orEmpty(),
-        contentPreview = contentPreview.orEmpty(),
-        authorNickname = authorNickname.orEmpty(),
-        authorProfileImageUrl = authorProfileImageUrl,
-        likeCount = likeCount ?: 0,
+        contentPreview = "",                 // 목록 API에 content 없음
+        authorProfileImageUrl = null,
+        likeCount = 0,
         commentCount = commentCount ?: 0,
-        createdAt = createdAt.orEmpty(),
-        thumbnailImageUrl = thumbnailImageUrl
+        createdAt = createdAt.toRelativeTime(),
+        thumbnailImageUrl = null
     )
 }
 
@@ -215,23 +210,28 @@ fun CommunityPostDetailResponse.toDomain(): CommunityPost {
         if (!content.isNullOrBlank()) {
             add(CommunityContentBlock.TextBlock(content))
         }
-        if (!imageUrl.isNullOrBlank()) {
-            add(CommunityContentBlock.ImageBlock(imageUrl = imageUrl, description = "첨부 이미지"))
+        if (!ootdInfo.isNullOrBlank()) {
+            add(CommunityContentBlock.TextBlock(ootdInfo))
+        }
+        imageUrls?.forEach { imageUrl ->
+            if (imageUrl.isNotBlank()) {
+                add(CommunityContentBlock.ImageBlock(imageUrl = imageUrl, description = null))
+            }
         }
     }
 
     return CommunityPost(
-        postId = postId ?: 0L,
-        category = category.toCommunityCategory(),
+        postId = communityId ?: 0L,
+        authorNickname = writerNickname.orEmpty(),
+        category = CommunityCategory.FREE,
         title = title.orEmpty(),
         contentBlocks = contentBlocks,
-        authorNickname = authorNickname.orEmpty(),
-        authorProfileImageUrl = authorProfileImageUrl,
-        likeCount = likeCount ?: 0,
-        isLiked = isLiked ?: false,
+        authorProfileImageUrl = writerProfileImg,
+        likeCount = wishlistCount ?: 0,
+        isLiked = false,                     // API에 없음 → 추후 추가
         commentCount = commentCount ?: 0,
         comments = comments?.map { it.toDomain() }.orEmpty(),
-        createdAt = createdAt.orEmpty(),
+        createdAt = createdAt.toRelativeTime(),
         isMyPost = isMyPost ?: false
     )
 }
@@ -239,10 +239,10 @@ fun CommunityPostDetailResponse.toDomain(): CommunityPost {
 fun CommunityCommentResponse.toDomain(): CommunityComment {
     return CommunityComment(
         commentId = commentId ?: 0L,
-        authorNickname = authorNickname.orEmpty(),
-        authorProfileImageUrl = authorProfileImageUrl,
+        authorNickname = writerNickname.orEmpty(),
+        authorProfileImageUrl = writerProfileImg,
         content = content.orEmpty(),
-        createdAt = createdAt.orEmpty(),
+        createdAt = createdAt.toRelativeTime(),
         isMyComment = isMyComment ?: false,
         replies = replies?.map { it.toDomain() }.orEmpty()
     )
@@ -251,18 +251,31 @@ fun CommunityCommentResponse.toDomain(): CommunityComment {
 fun CommunityReplyResponse.toDomain(): CommunityReply {
     return CommunityReply(
         replyId = replyId ?: 0L,
-        authorNickname = authorNickname.orEmpty(),
+        authorNickname = writerNickname.orEmpty(),
         content = content.orEmpty(),
-        createdAt = createdAt.orEmpty(),
+        createdAt = createdAt.toRelativeTime(),
         isMyReply = isMyReply ?: false
     )
 }
 
-private fun String?.toCommunityCategory(): CommunityCategory {
-    return when (this?.uppercase()) {
-        "FREE" -> CommunityCategory.FREE
-        "REVIEW" -> CommunityCategory.REVIEW
-        "COORDINATION" -> CommunityCategory.COORDINATION
-        else -> CommunityCategory.FREE
+// ─────────────────────────────────────────────────────────
+// 10. ISO 8601 → "N분 전" 변환 유틸
+// ─────────────────────────────────────────────────────────
+
+private fun String?.toRelativeTime(): String {
+    if (this.isNullOrBlank()) return ""
+    return try {
+        val dateTime = ZonedDateTime.parse(this, DateTimeFormatter.ISO_DATE_TIME)
+        val now = ZonedDateTime.now(dateTime.zone)
+        val minutes = ChronoUnit.MINUTES.between(dateTime, now)
+        when {
+            minutes < 1    -> "방금 전"
+            minutes < 60   -> "${minutes}분 전"
+            minutes < 1440 -> "${minutes / 60}시간 전"
+            minutes < 10080 -> "${minutes / 1440}일 전"
+            else           -> "${minutes / 10080}주 전"
+        }
+    } catch (e: Exception) {
+        this
     }
 }

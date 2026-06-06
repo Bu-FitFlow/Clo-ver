@@ -93,6 +93,7 @@ fun ProductEditScreen(
     onTradeLocationChange: (String) -> Unit = {},
     onSizeChange: (String) -> Unit = {},
     onFitChange: (String) -> Unit = {},
+    onGradeChange: (String) -> Unit = {},
     onMainCategorySelect: (ProductMainCategory) -> Unit = {},
     onMainCategoryExpandChange: (Boolean) -> Unit = {},
     onSubCategorySelect: (ProductSubCategory) -> Unit = {},
@@ -516,45 +517,243 @@ fun ProductEditScreen(
 
                 ProductEditLabel(text = "사이즈")
 
-                OutlinedTextField(
-                    value = uiState.size,
-                    onValueChange = onSizeChange,
-                    modifier = Modifier.fillMaxWidth(),
+                var showSizeSheet by remember { mutableStateOf(false) }
+                val sizeOptions = listOf("XS", "S", "M", "L", "XL", "XXL", "FREE")
+
+                Surface(
+                    onClick = { showSizeSheet = true },
                     shape = RoundedCornerShape(8.dp),
-                    colors = productTextFieldColors(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        imeAction = ImeAction.Done
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            focusManager.clearFocus()
+                    border = BorderStroke(1.dp, Color.LightGray),
+                    color = Color.White,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = uiState.size.ifBlank { "사이즈 선택" },
+                            fontSize = 14.sp,
+                            color = if (uiState.size.isNotBlank()) Color.Black else Color.Gray
+                        )
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                if (showSizeSheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { showSizeSheet = false },
+                        containerColor = Color.White
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .navigationBarsPadding()
+                                .padding(horizontal = 20.dp)
+                        ) {
+                            Text(
+                                text = "사이즈 선택",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(vertical = 12.dp)
+                            )
+                            HorizontalDivider(color = Color.LightGray, thickness = 0.5.dp)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                sizeOptions.forEach { size ->
+                                    val isSelected = uiState.size == size
+                                    Surface(
+                                        onClick = {
+                                            onSizeChange(size)
+                                            showSizeSheet = false
+                                        },
+                                        shape = RoundedCornerShape(8.dp),
+                                        border = BorderStroke(
+                                            1.dp,
+                                            if (isSelected) CloverGreen else Color.LightGray
+                                        ),
+                                        color = if (isSelected) CloverGreen.copy(alpha = 0.15f) else Color.White,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Text(
+                                                text = size,
+                                                fontSize = 13.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (isSelected) Color(0xFF5DB846) else Color.Black,
+                                                modifier = Modifier.padding(vertical = 10.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
                         }
-                    )
-                )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 ProductEditLabel(text = "핏 선택 사항")
 
-                OutlinedTextField(
-                    value = uiState.fit,
-                    onValueChange = onFitChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = productTextFieldColors(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        imeAction = ImeAction.Done
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            focusManager.clearFocus()
-                        }
-                    )
-                )
+                var showFitSheet by remember { mutableStateOf(false) }
+                val fitOptions = listOf("슬림핏", "레귤러핏", "세미오버핏", "오버핏")
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Surface(
+                    onClick = { showFitSheet = true },
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, Color.LightGray),
+                    color = Color.White,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = uiState.fit.ifBlank { "핏 선택 (선택 사항)" },
+                            fontSize = 14.sp,
+                            color = if (uiState.fit.isNotBlank()) Color.Black else Color.Gray
+                        )
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                if (showFitSheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { showFitSheet = false },
+                        containerColor = Color.White
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .navigationBarsPadding()
+                                .padding(horizontal = 20.dp)
+                        ) {
+                            Text(
+                                text = "핏 선택",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(vertical = 12.dp)
+                            )
+                            HorizontalDivider(color = Color.LightGray, thickness = 0.5.dp)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            fitOptions.forEach { fit ->
+                                val isSelected = uiState.fit == fit
+                                Text(
+                                    text = fit,
+                                    fontSize = 15.sp,
+                                    color = if (isSelected) Color(0xFF5DB846) else Color.Black,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            onFitChange(fit)
+                                            showFitSheet = false
+                                        }
+                                        .padding(vertical = 16.dp)
+                                )
+                                HorizontalDivider(color = Color(0xFFF0F0F0), thickness = 0.5.dp)
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ProductEditLabel(text = "상품 상태")
+
+                var showGradeSheet by remember { mutableStateOf(false) }
+                val gradeOptions = listOf("상", "중", "하")
+
+                Surface(
+                    onClick = { showGradeSheet = true },
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, Color.LightGray),
+                    color = Color.White,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = uiState.grade.ifBlank { "상품 상태 선택" },
+                            fontSize = 14.sp,
+                            color = if (uiState.grade.isNotBlank()) Color.Black else Color.Gray
+                        )
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                if (showGradeSheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { showGradeSheet = false },
+                        containerColor = Color.White
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .navigationBarsPadding()
+                                .padding(horizontal = 20.dp)
+                        ) {
+                            Text(
+                                text = "상품 상태 선택",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(vertical = 12.dp)
+                            )
+                            HorizontalDivider(color = Color.LightGray, thickness = 0.5.dp)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            gradeOptions.forEach { grade ->
+                                val isSelected = uiState.grade == grade
+                                Text(
+                                    text = grade,
+                                    fontSize = 15.sp,
+                                    color = if (isSelected) Color(0xFF5DB846) else Color.Black,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            onGradeChange(grade)
+                                            showGradeSheet = false
+                                        }
+                                        .padding(vertical = 16.dp)
+                                )
+                                HorizontalDivider(color = Color(0xFFF0F0F0), thickness = 0.5.dp)
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
+                    }
+                }
             }
         }
     }
@@ -1086,6 +1285,9 @@ fun ProductRegisterPreview() {
         onFitChange = {
             uiState = uiState.copy(fit = it)
         },
+        onGradeChange = {
+            uiState = uiState.copy(grade = it)
+        },
         onMainCategorySelect = { category ->
             uiState = uiState.copy(
                 selectedMainCategory = category,
@@ -1151,6 +1353,9 @@ fun ProductEditPreview() {
         },
         onFitChange = {
             uiState = uiState.copy(fit = it)
+        },
+        onGradeChange = {
+            uiState = uiState.copy(grade = it)
         },
         onMainCategorySelect = { category ->
             uiState = uiState.copy(

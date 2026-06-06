@@ -38,6 +38,7 @@ data class ProductEditUiState(
     val tradeLocation: String = "",
     val size: String = "",
     val fit: String = "",
+    val grade: String = "",
     val selectedMainCategory: ProductMainCategory? = null,
     val isMainCategoryExpanded: Boolean = false,
     val selectedSubCategory: ProductSubCategory? = null,

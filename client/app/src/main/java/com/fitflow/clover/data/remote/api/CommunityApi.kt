@@ -3,7 +3,6 @@ package com.fitflow.clover.data.remote.api
 import com.fitflow.clover.data.remote.dto.CommunityCommentResponse
 import com.fitflow.clover.data.remote.dto.CommunityPostDetailResponse
 import com.fitflow.clover.data.remote.dto.CommunityPostSummaryResponse
-import com.fitflow.clover.data.remote.dto.CommunityReplyResponse
 import com.fitflow.clover.data.remote.dto.CreateCommentRequest
 import com.fitflow.clover.data.remote.dto.CreateCommunityPostRequest
 import com.fitflow.clover.data.remote.dto.CreateReplyRequest
@@ -14,107 +13,153 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
-import retrofit2.http.Query
 
 interface CommunityApi {
 
-    // ─── 게시글 ───────────────────────────────────────────────
+    // ─── 자유 게시판 ──────────────────────────────────────────
 
-    @GET("api/community/posts")
-    suspend fun getPosts(
-        @Query("category") category: String? = null,
-        @Query("page") page: Int = 0,
-        @Query("size") size: Int = 20
-    ): List<CommunityPostSummaryResponse>
+    @GET("api/community/free")
+    suspend fun getFreePosts(): List<CommunityPostSummaryResponse>
 
-    @GET("api/community/posts/{post_id}")
-    suspend fun getPostDetail(
-        @Path("post_id") postId: Long
+    @GET("api/community/free/{communityId}")
+    suspend fun getFreePostDetail(
+        @Path("communityId") communityId: Long
     ): CommunityPostDetailResponse
 
-    @POST("api/community/posts")
-    suspend fun createPost(
+    @POST("api/community/free")
+    suspend fun createFreePost(
         @Body body: CreateCommunityPostRequest
     ): CommunityPostDetailResponse
 
-    @PUT("api/community/posts/{post_id}")
-    suspend fun updatePost(
-        @Path("post_id") postId: Long,
+    @PUT("api/community/free/{communityId}")
+    suspend fun updateFreePost(
+        @Path("communityId") communityId: Long,
         @Body body: UpdateCommunityPostRequest
     ): CommunityPostDetailResponse
 
-    @DELETE("api/community/posts/{post_id}")
-    suspend fun deletePost(
-        @Path("post_id") postId: Long
+    @DELETE("api/community/free/{communityId}")
+    suspend fun deleteFreePost(
+        @Path("communityId") communityId: Long
     )
 
-    // ─── 좋아요 ───────────────────────────────────────────────
-
-    @POST("api/community/posts/{post_id}/like")
-    suspend fun likePost(
-        @Path("post_id") postId: Long
+    @POST("api/community/free/{communityId}/like")
+    suspend fun likeFreePost(
+        @Path("communityId") communityId: Long
     )
 
-    @DELETE("api/community/posts/{post_id}/like")
-    suspend fun unlikePost(
-        @Path("post_id") postId: Long
+    // ─── 리뷰 게시판 ──────────────────────────────────────────
+
+    @GET("api/community/review")
+    suspend fun getReviewPosts(): List<CommunityPostSummaryResponse>
+
+    @GET("api/community/review/{communityId}")
+    suspend fun getReviewPostDetail(
+        @Path("communityId") communityId: Long
+    ): CommunityPostDetailResponse
+
+    @POST("api/community/review")
+    suspend fun createReviewPost(
+        @Body body: CreateCommunityPostRequest
+    ): CommunityPostDetailResponse
+
+    @PUT("api/community/review/{communityId}")
+    suspend fun updateReviewPost(
+        @Path("communityId") communityId: Long,
+        @Body body: UpdateCommunityPostRequest
+    ): CommunityPostDetailResponse
+
+    @DELETE("api/community/review/{communityId}")
+    suspend fun deleteReviewPost(
+        @Path("communityId") communityId: Long
+    )
+
+    @POST("api/community/review/{communityId}/like")
+    suspend fun likeReviewPost(
+        @Path("communityId") communityId: Long
+    )
+
+    // ─── 스타일링 게시판 ──────────────────────────────────────
+
+    @GET("api/community/styling")
+    suspend fun getStylingPosts(): List<CommunityPostSummaryResponse>
+
+    @GET("api/community/styling/{communityId}")
+    suspend fun getStylingPostDetail(
+        @Path("communityId") communityId: Long
+    ): CommunityPostDetailResponse
+
+    @POST("api/community/styling")
+    suspend fun createStylingPost(
+        @Body body: CreateCommunityPostRequest
+    ): CommunityPostDetailResponse
+
+    @PUT("api/community/styling/{communityId}")
+    suspend fun updateStylingPost(
+        @Path("communityId") communityId: Long,
+        @Body body: UpdateCommunityPostRequest
+    ): CommunityPostDetailResponse
+
+    @DELETE("api/community/styling/{communityId}")
+    suspend fun deleteStylingPost(
+        @Path("communityId") communityId: Long
+    )
+
+    @POST("api/community/styling/{communityId}/like")
+    suspend fun likeStylingPost(
+        @Path("communityId") communityId: Long
     )
 
     // ─── 댓글 ────────────────────────────────────────────────
 
-    @POST("api/community/posts/{post_id}/comments")
+    @GET("api/community/{communityId}/comments")
+    suspend fun getComments(
+        @Path("communityId") communityId: Long
+    ): List<CommunityCommentResponse>
+
+    @POST("api/community/{communityId}/comments")
     suspend fun createComment(
-        @Path("post_id") postId: Long,
+        @Path("communityId") communityId: Long,
         @Body body: CreateCommentRequest
     ): CommunityCommentResponse
 
-    @PUT("api/community/posts/{post_id}/comments/{comment_id}")
+    @PUT("api/community/{communityId}/comments/{commentId}")
     suspend fun updateComment(
-        @Path("post_id") postId: Long,
-        @Path("comment_id") commentId: Long,
+        @Path("communityId") communityId: Long,
+        @Path("commentId") commentId: Long,
         @Body body: CreateCommentRequest
     ): CommunityCommentResponse
 
-    @DELETE("api/community/posts/{post_id}/comments/{comment_id}")
+    @DELETE("api/community/{communityId}/comments/{commentId}")
     suspend fun deleteComment(
-        @Path("post_id") postId: Long,
-        @Path("comment_id") commentId: Long
+        @Path("communityId") communityId: Long,
+        @Path("commentId") commentId: Long
     )
 
     // ─── 대댓글 ───────────────────────────────────────────────
 
-    @POST("api/community/posts/{post_id}/comments/{comment_id}/replies")
+    @POST("api/community/{communityId}/comments/{parentId}/reply")
     suspend fun createReply(
-        @Path("post_id") postId: Long,
-        @Path("comment_id") commentId: Long,
+        @Path("communityId") communityId: Long,
+        @Path("parentId") parentId: Long,
         @Body body: CreateReplyRequest
-    ): CommunityReplyResponse
+    ): CommunityCommentResponse
 
-    @PUT("api/community/posts/{post_id}/comments/{comment_id}/replies/{reply_id}")
-    suspend fun updateReply(
-        @Path("post_id") postId: Long,
-        @Path("comment_id") commentId: Long,
-        @Path("reply_id") replyId: Long,
-        @Body body: CreateReplyRequest
-    ): CommunityReplyResponse
-
-    @DELETE("api/community/posts/{post_id}/comments/{comment_id}/replies/{reply_id}")
+    @DELETE("api/community/{communityId}/comments/{parentId}/reply/{commentId}")
     suspend fun deleteReply(
-        @Path("post_id") postId: Long,
-        @Path("comment_id") commentId: Long,
-        @Path("reply_id") replyId: Long
+        @Path("communityId") communityId: Long,
+        @Path("parentId") parentId: Long,
+        @Path("commentId") commentId: Long
     )
 
-    // ─── 신고 / 차단 ──────────────────────────────────────────
+    // ─── 차단 ────────────────────────────────────────────────
 
-    @POST("api/community/posts/{post_id}/report")
-    suspend fun reportPost(
-        @Path("post_id") postId: Long,
-        @Body body: Map<String, String>
-    )
-
-    @POST("api/users/{user_id}/block")
+    @POST("api/block/{nickname}")
     suspend fun blockUser(
-        @Path("user_id") userId: Long
+        @Path("nickname") nickname: String
+    )
+
+    @DELETE("api/block/{nickname}")
+    suspend fun unblockUser(
+        @Path("nickname") nickname: String
     )
 }

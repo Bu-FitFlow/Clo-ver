@@ -10,14 +10,11 @@ class ProductRepositoryImpl(
     private val productApi: ProductApi
 ) : ProductRepository {
 
-    override suspend fun getRecentProducts(
-        size: Int
-    ): List<ProductSummaryModel> {
-        return productApi.getRecentProducts(
-            size = size
-        ).map { response ->
-            response.toDomain()
-        }
+    override suspend fun getRecentProducts(size: Int): List<ProductSummaryModel> {
+        return productApi.getProducts(size = size)
+            .content
+            ?.map { it.toDomain() }
+            .orEmpty()
     }
 
     override suspend fun getBodyRecommendedProducts(
@@ -27,36 +24,20 @@ class ProductRepositoryImpl(
         return productApi.getBodyRecommendedProducts(
             recommendedType = recommendedType,
             size = size
-        ).map { response ->
-            response.toDomain()
-        }
+        ).content?.map { it.toDomain() }.orEmpty()
     }
 
-    override suspend fun getProductDetail(
-        productId: Long
-    ): ProductDetailModel {
-        return productApi.getProductDetail(
-            productId = productId
-        ).toDomain()
+    override suspend fun getProductDetail(productId: Long): ProductDetailModel {
+        return productApi.getProductDetail(productId).toDomain()
     }
 
-    override suspend fun addWishlist(
-        productId: Long
-    ): Boolean {
-        productApi.addWishlist(
-            productId = productId
-        )
-
+    override suspend fun addWishlist(productId: Long): Boolean {
+        productApi.toggleWishlist(productId)
         return true
     }
 
-    override suspend fun removeWishlist(
-        productId: Long
-    ): Boolean {
-        productApi.removeWishlist(
-            productId = productId
-        )
-
+    override suspend fun removeWishlist(productId: Long): Boolean {
+        productApi.toggleWishlist(productId)
         return false
     }
 }

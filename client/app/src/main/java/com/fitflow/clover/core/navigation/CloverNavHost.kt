@@ -439,12 +439,12 @@ fun CloverNavHost(
                 onCategoryDropdownToggle = communityViewModel::onWriteCategoryDropdownToggle,
                 onContentBlocksChange = communityViewModel::onWriteContentBlocksChange,
                 onCompleteClick = { imageUri: Uri? ->
-                    communityViewModel.submitPost(imageUri) {
-                        navController.navigate(ScreenRoute.CommunityList.route) {
-                            popUpTo(ScreenRoute.CommunityList.route) {
-                                inclusive = false
+                    communityViewModel.submitPost(imageUri) { newPostId ->
+                        navController.navigate(ScreenRoute.CommunityDetail.createRoute(newPostId)) {
+                            // Write 화면을 백스택에서 제거
+                            popUpTo(ScreenRoute.CommunityWrite.route) {
+                                inclusive = true
                             }
-                            launchSingleTop = true
                         }
                     }
                 }
@@ -481,6 +481,15 @@ fun CloverNavHost(
                 onReplyInputChange = communityViewModel::onReplyInputChange,
                 onReplySubmit = communityViewModel::onReplySubmit,
                 onCommentDeleteClick = communityViewModel::onCommentDeleteClick,
+                onCommentEditStart = communityViewModel::onCommentEditStart,
+                onCommentEditInputChange = communityViewModel::onCommentEditInputChange,
+                onCommentEditSubmit = communityViewModel::onCommentEditSubmit,
+                onCommentEditCancel = communityViewModel::onCommentEditCancel,
+                onReplyDeleteClick = communityViewModel::onReplyDeleteClick,
+                onReplyEditStart = communityViewModel::onReplyEditStart,
+                onReplyEditInputChange = communityViewModel::onReplyEditInputChange,
+                onReplyEditSubmit = communityViewModel::onReplyEditSubmit,
+                onReplyEditCancel = communityViewModel::onReplyEditCancel,
                 onMenuClick = communityViewModel::onDetailMenuClick,
                 onMenuDismiss = communityViewModel::closeDetailMenu,
                 onEditClick = {
@@ -754,6 +763,7 @@ private fun ProductListRouteContent(
         onSubCategorySelect = productViewModel::onSubCategorySelect,
         onSubCategoryExpandChange = productViewModel::onSubCategoryExpandChange,
         onFilterClick = productViewModel::onFilterClick,
+        onSearchQueryChange = productViewModel::onSearchQueryChange,
         onProductListClick = {
             navController.navigate(ScreenRoute.ProductList.route) {
                 launchSingleTop = true
@@ -804,6 +814,7 @@ private fun ProductEditRouteContent(
         onTradeLocationChange = productViewModel::onEditTradeLocationChange,
         onSizeChange = productViewModel::onEditSizeChange,
         onFitChange = productViewModel::onEditFitChange,
+        onGradeChange = productViewModel::onEditGradeChange,
         onMainCategorySelect = productViewModel::onEditMainCategorySelect,
         onMainCategoryExpandChange = productViewModel::onEditMainCategoryExpandChange,
         onSubCategorySelect = productViewModel::onEditSubCategorySelect,
@@ -843,6 +854,33 @@ private fun CommunityListRouteContent(
         },
         onCategorySelect = communityViewModel::onCategorySelect,
         onSearchQueryChange = communityViewModel::onSearchQueryChange,
+        // ... 버튼 메뉴
+        onMenuClick = { postId -> communityViewModel.onListPostMenuClick(postId) },
+        onMenuDismiss = communityViewModel::closeListPostMenu,
+        onListEditClick = { postId ->
+            communityViewModel.closeListPostMenu()
+            communityViewModel.startEdit(postId)
+            navController.navigate(ScreenRoute.CommunityEdit.createRoute(postId))
+        },
+        onListDeleteClick = { postId ->
+            communityViewModel.closeListPostMenu()
+            communityViewModel.loadPostDetail(postId)
+            communityViewModel.deleteCurrentPost {
+                communityViewModel.loadPosts()
+            }
+        },
+        onListReportClick = { postId ->
+            communityViewModel.onListReportClick(postId)
+            navController.navigate(
+                ScreenRoute.Report.createRoute(
+                    targetType = "POST",
+                    targetId = postId
+                )
+            )
+        },
+        onListBlockClick = { postId ->
+            communityViewModel.onListBlockClick(postId)
+        },
         onBackClick = {
             navController.popBackStack()
         },
