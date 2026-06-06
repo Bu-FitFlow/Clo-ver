@@ -2,48 +2,50 @@ package com.fitflow.clover.presentation.auth
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.fitflow.clover.R
-import com.fitflow.clover.core.theme.CloverGreen
 import com.fitflow.clover.core.component.CloverTextField
 import com.fitflow.clover.core.component.CustomCheckBoxRow
-import androidx.compose.foundation.border
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.PlatformTextStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.VisualTransformation
 import com.fitflow.clover.core.navigation.ScreenRoute
 
 val CloverGreen = Color(0xFF99DE81)
+
 @Composable
 fun LoginMain(navController: NavController) {
     var id by remember { mutableStateOf("") }
     var pw by remember { mutableStateOf("") }
-
     var isPwVisible by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color.White
     ) {
+        // 다시 형의 원래 구조(통짜 스크롤)로 원상복구!
+        // 대신 weight 폭탄만 height로 싹 바꿨음 ㅋㅋㅋ
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -52,7 +54,8 @@ fun LoginMain(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Spacer(modifier = Modifier.weight(13.9f))
+            // 피그마 상단 여백 (알맞게 조절해!)
+            Spacer(modifier = Modifier.height(100.dp))
 
             Image(
                 painter = painterResource(id = R.drawable.frame_31),
@@ -60,7 +63,8 @@ fun LoginMain(navController: NavController) {
                 modifier = Modifier.size(287.dp)
             )
 
-            Spacer(modifier = Modifier.weight(3.9f))
+            // 로고랑 ID 입력창 사이 여백
+            Spacer(modifier = Modifier.height(30.dp))
 
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
@@ -84,6 +88,7 @@ fun LoginMain(navController: NavController) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(42.dp)
+                        .onFocusChanged { isIdFocused = it.isFocused }
                         .border(
                             border = BorderStroke(
                                 width = 1.dp,
@@ -104,7 +109,7 @@ fun LoginMain(navController: NavController) {
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1.8f))
+            Spacer(modifier = Modifier.height(15.dp))
 
             // Password 입력란 영역
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -131,6 +136,7 @@ fun LoginMain(navController: NavController) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(42.dp)
+                        .onFocusChanged { isPwFocused = it.isFocused }
                         .border(
                             border = BorderStroke(
                                 width = 1.dp,
@@ -167,16 +173,27 @@ fun LoginMain(navController: NavController) {
                 )
             }
 
-            Spacer(modifier = Modifier.weight(4.3f))
+            // PW창이랑 로그인 버튼 사이 여백
+            Spacer(modifier = Modifier.height(35.dp))
 
             Button(
                 onClick = {
                     if (id.isNotBlank() && pw.isNotBlank()) {
-                        navController.navigate(ScreenRoute.Main.route) {
-                            popUpTo("login") {
-                                inclusive = true
+                        // 💡 나중에 백엔드 서버에서 "너 처음이야?"라는 응답(isFirstLogin)을 받았다고 치는 거야!
+                        val isFirstLogin = true // 👈 테스트할 때 false로 바꿔보면 메인으로 갈 거야!
+
+                        if (isFirstLogin) {
+                            // 1. 최초 로그인이면 체형 분석 페이지로 쏴줌!
+                            navController.navigate(ScreenRoute.BodyAnalysis.route) {
+                                popUpTo("login") { inclusive = true }
+                                launchSingleTop = true
                             }
-                            launchSingleTop = true
+                        } else {
+                            // 2. 이미 했던 유저면 바로 메인(홈)으로 쏴줌!
+                            navController.navigate(ScreenRoute.Main.route) {
+                                popUpTo("login") { inclusive = true }
+                                launchSingleTop = true
+                            }
                         }
                     }
                 },
@@ -196,7 +213,8 @@ fun LoginMain(navController: NavController) {
                 )
             }
 
-            Spacer(modifier = Modifier.weight(2.2f))
+            // 로그인 버튼이랑 하단 텍스트 사이 여백
+            Spacer(modifier = Modifier.height(20.dp))
 
             Row(
                 modifier = Modifier
@@ -222,231 +240,408 @@ fun LoginMain(navController: NavController) {
                 )
             }
 
-            Spacer(modifier = Modifier.weight(22.8f))
-
-            Spacer(modifier = Modifier.height(16.dp))
+            // 맨 밑에 하단 여백 넉넉하게
+            Spacer(modifier = Modifier.height(100.dp))
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JoinDetail(navController: NavController) {
     var name by remember { mutableStateOf("") }
-    var id by remember { mutableStateOf("") }
-    var pw by remember { mutableStateOf("") }
-    var pwConfirm by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var nickname by remember { mutableStateOf("") }
 
+    var isPwVisible by remember { mutableStateOf(false) }
+    var isPwConfirmVisible by remember { mutableStateOf(false) }
+
+    // 💡 개별 중복 검사용 상태 변수들
+    var id by remember { mutableStateOf("") }
     var isIdChecked by remember { mutableStateOf(false) }
     var isIdAvailable by remember { mutableStateOf(false) }
-    var isEmailDuplicate by remember { mutableStateOf(false) }
 
-    val cloverGreen = Color(0xFF99DE81)
+    var email by remember { mutableStateOf("") }
+    var isEmailChecked by remember { mutableStateOf(false) }
+    var isEmailAvailable by remember { mutableStateOf(false) }
 
+    var nickname by remember { mutableStateOf("") }
+    var isNicknameChecked by remember { mutableStateOf(false) }
+    var isNicknameAvailable by remember { mutableStateOf(false) }
 
+    var pw by remember { mutableStateOf("") }
+    var pwConfirm by remember { mutableStateOf("") }
+
+    // 다이얼로그 띄우기용 상태 변수
+    var showEmailSentDialog by remember { mutableStateOf(false) }
+
+    // 🌟 가입 완료 버튼 활성화 조건 (중복확인 3대장 다 통과해야 됨!)
     val isJoinEnabled = name.isNotBlank() &&
-            id.isNotBlank() &&
-            isIdChecked && isIdAvailable && // ID 중복확인 완료 필수
-            pw.isNotBlank() &&
-            pwConfirm.isNotBlank() &&
-            (pw == pwConfirm) &&            // 비밀번호 재입력 일치 필수
-            email.isNotBlank() &&
-            !isEmailDuplicate &&            // 이메일 중복 없을 것 필수
-            nickname.isNotBlank()
+            id.isNotBlank() && isIdChecked && isIdAvailable &&
+            email.isNotBlank() && isEmailChecked && isEmailAvailable &&
+            nickname.isNotBlank() && isNicknameChecked && isNicknameAvailable &&
+            pw.isNotBlank() && pwConfirm.isNotBlank() && (pw == pwConfirm)
 
     Scaffold(
         containerColor = Color.White
     ) { paddingValues ->
+        // 팝업창 (다이얼로그) 띄우는 로직
+        if (showEmailSentDialog) {
+            AlertDialog(
+                onDismissRequest = { /* 바깥 영역 터치로 꺼지는 거 방지 */ },
+                containerColor = Color.White,
+                title = {
+                    Text(text = "가입 신청 완료", fontWeight = FontWeight.Bold)
+                },
+                text = {
+                    Text(text = "입력하신 이메일로 인증 링크가 발송되었습니다.\n이메일 확인 후 로그인해주세요.")
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showEmailSentDialog = false
+                            // 팝업 확인 누르면 로그인 화면으로 쫓아냄!
+                            navController.navigate("login") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        }
+                    ) {
+                        Text("확인", color = Color.Black, fontWeight = FontWeight.Bold)
+                    }
+                }
+            )
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 24.dp)
-                .verticalScroll(rememberScrollState()),
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            Spacer(modifier = Modifier.height(91.dp))
-            Image(
-                painter = painterResource(id = R.drawable.frame_31),
-                contentDescription = null,
-                modifier = Modifier.size(200.dp)
-            )
-
-            // 이름 입력칸 시작점 (Y:290) 보정 마진
-            Spacer(modifier = Modifier.height(30.dp))
-
-
+            // 상단 스크롤 폼 영역
             Column(
-                modifier = Modifier.width(309.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 이름 입력칸: 크기(309*40)
-                CloverTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = "이름",
-                    modifier = Modifier.height(40.dp)
+                Spacer(modifier = Modifier.height(60.dp))
+
+                Image(
+                    painter = painterResource(id = R.drawable.frame_31),
+                    contentDescription = null,
+                    modifier = Modifier.size(200.dp)
                 )
 
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(30.dp))
 
-                // ID 라인 행 구성
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CloverTextField(
-                        value = id,
-                        onValueChange = {
-                            id = it
-                            isIdChecked = false
-                            isIdAvailable = false
-                        },
-                        label = "ID",
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(40.dp)
-                    )
+                Column(modifier = Modifier.width(309.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    // 1. 이름
+                    CloverTextField(value = name, onValueChange = { name = it }, label = "이름", modifier = Modifier.height(40.dp))
+                    Spacer(modifier = Modifier.height(15.dp))
 
-                    Spacer(modifier = Modifier.width(7.dp))
-
-                    if (isIdChecked && isIdAvailable) {
-                        Image(
-                            painter = painterResource(id = R.drawable.check),
-                            contentDescription = "사용 가능",
-                            modifier = Modifier.size(28.dp)
+                    // 2. ID (중복확인)
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        CloverTextField(
+                            value = id,
+                            onValueChange = { id = it; isIdChecked = false; isIdAvailable = false },
+                            label = "ID",
+                            modifier = Modifier.weight(1f).height(40.dp)
                         )
-                    } else {
-                        Button(
-                            onClick = {
-                                isIdChecked = true
-                                isIdAvailable = id.isNotBlank() && id != "test"
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isIdChecked && !isIdAvailable) Color(0xFFFF6B6B) else cloverGreen
-                            ),
-                            shape = RoundedCornerShape(5.dp),
-                            elevation = null,
-                            modifier = Modifier.width(60.dp).height(40.dp),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Text(
-                                text = if (isIdChecked && !isIdAvailable) "불가" else "중복확인",
-                                color = if (isIdChecked && !isIdAvailable) Color.White else Color.Black,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
+                        Spacer(modifier = Modifier.width(7.dp))
+
+                        if (isIdChecked && isIdAvailable) {
+                            Image(
+                                painter = painterResource(id = R.drawable.check),
+                                contentDescription = "사용 가능",
+                                modifier = Modifier.size(28.dp)
                             )
+                        } else {
+                            Button(
+                                onClick = {
+                                    // TODO: 나중에 여기서 ID 중복검사 API(Swagger) 호출!
+                                    isIdChecked = true
+                                    isIdAvailable = id.isNotBlank() && id != "test"
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isIdChecked && !isIdAvailable) Color(0xFFFF6B6B) else CloverGreen
+                                ),
+                                shape = RoundedCornerShape(5.dp),
+                                elevation = null,
+                                modifier = Modifier.width(60.dp).height(40.dp),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(
+                                    text = if (isIdChecked && !isIdAvailable) "불가" else "중복확인",
+                                    color = if (isIdChecked && !isIdAvailable) Color.White else Color.Black,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
                     }
-                }
 
-                if (isIdChecked && !isIdAvailable) {
-                    Text(
-                        text = "이미 사용 중이거나 유효하지 않은 아이디입니다.",
-                        color = Color.Red,
-                        fontSize = 12.sp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 4.dp, top = 4.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(15.dp))
-
-                // password 입력칸: 크기(309*40)
-                CloverTextField(value = pw, onValueChange = { pw = it }, label = "password", modifier = Modifier.height(40.dp))
-
-                Spacer(modifier = Modifier.height(15.dp))
-
-                // password 재입력: 크기(309*40)
-                CloverTextField(value = pwConfirm, onValueChange = { pwConfirm = it }, label = "password 재입력", modifier = Modifier.height(40.dp))
-
-                // 🎯 비밀번호 실시간 검증 안내 문구 추가
-                if (pw.isNotEmpty() && pwConfirm.isNotEmpty()) {
-                    Text(
-                        text = if (pw == pwConfirm) "비밀번호가 일치합니다." else "비밀번호가 일치하지 않습니다.",
-                        color = if (pw == pwConfirm) Color(0xFF4CAF50) else Color.Red,
-                        fontSize = 12.sp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 4.dp, top = 4.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(15.dp))
-
-                // 이메일 입력칸: 크기(309*40)
-                CloverTextField(
-                    value = email,
-                    onValueChange = { email = it; isEmailDuplicate = (it == "test") },
-                    label = "이메일",
-                    modifier = Modifier.height(40.dp)
-                )
-
-                if (isEmailDuplicate) {
-                    Text(
-                        text = "중복 된 이메일 입니다.",
-                        color = Color.Red,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Normal,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 4.dp, top = 4.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(15.dp))
-
-                // 닉네임 입력칸: 크기(309*40)
-                CloverTextField(value = nickname, onValueChange = { nickname = it }, label = "닉네임", modifier = Modifier.height(40.dp))
-
-                Spacer(modifier = Modifier.height(45.dp))
-
-                // 이미 계정이 있으신가요?
-                Text(
-                    text = "이미 계정이 있으신가요?",
-                    fontSize = 16.sp,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Normal,
-                    modifier = Modifier.clickable {
-                        navController.navigate("login") { popUpTo("login") { inclusive = true } }
+                    if (isIdChecked && !isIdAvailable) {
+                        Text(
+                            text = "이미 사용 중이거나 유효하지 않은 아이디입니다.",
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 4.dp)
+                        )
                     }
-                )
+
+                    Spacer(modifier = Modifier.height(15.dp))
+
+                    // 3. 비밀번호
+                    // 🔒 3. 비밀번호 (프라이빗 모드 ON!)
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "Password",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color.Black,
+                            modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
+                        )
+                        var isPwFocused by remember { mutableStateOf(false) }
+                        BasicTextField(
+                            value = pw,
+                            onValueChange = { pw = it },
+                            visualTransformation = if (isPwVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            textStyle = TextStyle(color = Color.Black, fontSize = 14.sp, platformStyle = PlatformTextStyle(includeFontPadding = false)),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(40.dp) // 다른 칸들이랑 똑같이 40dp로 맞춤!
+                                .onFocusChanged { isPwFocused = it.isFocused }
+                                .border(
+                                    border = BorderStroke(1.dp, if (isPwFocused) Color.Black else Color.LightGray),
+                                    shape = RoundedCornerShape(5.dp)
+                                ),
+                            decorationBox = { innerTextField ->
+                                Row(
+                                    modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) { innerTextField() }
+                                    IconButton(onClick = { isPwVisible = !isPwVisible }, modifier = Modifier.size(24.dp)) {
+                                        Icon(
+                                            painter = painterResource(id = if (isPwVisible) R.drawable.eye else R.drawable.eyeinvisibleoutlined),
+                                            contentDescription = "비밀번호 보이기",
+                                            modifier = Modifier.size(20.dp),
+                                            tint = Color.Gray
+                                        )
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(15.dp))
+
+                    // 🔒 3-1. 비밀번호 재입력 (여기도 프라이빗!)
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "Password 재입력",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color.Black,
+                            modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
+                        )
+                        var isPwConfirmFocused by remember { mutableStateOf(false) }
+                        BasicTextField(
+                            value = pwConfirm,
+                            onValueChange = { pwConfirm = it },
+                            visualTransformation = if (isPwConfirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            textStyle = TextStyle(color = Color.Black, fontSize = 14.sp, platformStyle = PlatformTextStyle(includeFontPadding = false)),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(40.dp)
+                                .onFocusChanged { isPwConfirmFocused = it.isFocused }
+                                .border(
+                                    border = BorderStroke(1.dp, if (isPwConfirmFocused) Color.Black else Color.LightGray),
+                                    shape = RoundedCornerShape(5.dp)
+                                ),
+                            decorationBox = { innerTextField ->
+                                Row(
+                                    modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) { innerTextField() }
+                                    IconButton(onClick = { isPwConfirmVisible = !isPwConfirmVisible }, modifier = Modifier.size(24.dp)) {
+                                        Icon(
+                                            painter = painterResource(id = if (isPwConfirmVisible) R.drawable.eye else R.drawable.eyeinvisibleoutlined),
+                                            contentDescription = "비밀번호 보이기",
+                                            modifier = Modifier.size(20.dp),
+                                            tint = Color.Gray
+                                        )
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+                    // 🎯 비밀번호 일치/불일치 텍스트
+                    if (pw.isNotEmpty() && pwConfirm.isNotEmpty()) {
+                        Text(
+                            text = if (pw == pwConfirm) "비밀번호가 일치합니다." else "비밀번호가 일치하지 않습니다.",
+                            color = if (pw == pwConfirm) Color(0xFF4CAF50) else Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 4.dp)
+                        )
+                    }
+
+                    // 4. 이메일 (타이머 삭제! 중복확인 버튼으로 통일)
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        CloverTextField(
+                            value = email,
+                            onValueChange = { email = it; isEmailChecked = false; isEmailAvailable = false },
+                            label = "이메일",
+                            modifier = Modifier.weight(1f).height(40.dp)
+                        )
+                        Spacer(modifier = Modifier.width(7.dp))
+
+                        if (isEmailChecked && isEmailAvailable) {
+                            Image(
+                                painter = painterResource(id = R.drawable.check),
+                                contentDescription = "사용 가능",
+                                modifier = Modifier.size(28.dp)
+                            )
+                        } else {
+                            Button(
+                                onClick = {
+                                    // TODO: 나중에 여기서 이메일 중복검사 API 호출!
+                                    isEmailChecked = true
+                                    isEmailAvailable = email.isNotBlank() && email != "test@test.com"
+                                },
+                                enabled = email.isNotBlank(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isEmailChecked && !isEmailAvailable) Color(0xFFFF6B6B)
+                                    else if (email.isNotBlank()) CloverGreen else Color(0xFFC8E6C9)
+                                ),
+                                shape = RoundedCornerShape(5.dp),
+                                elevation = null,
+                                modifier = Modifier.width(60.dp).height(40.dp),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(
+                                    text = if (isEmailChecked && !isEmailAvailable) "불가" else "중복확인",
+                                    color = if (isEmailChecked && !isEmailAvailable) Color.White
+                                    else if (email.isNotBlank()) Color.Black else Color.Gray,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+
+                    if (isEmailChecked && !isEmailAvailable) {
+                        Text(
+                            text = "이미 가입된 이메일입니다.",
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 4.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(15.dp))
+
+                    // 5. 닉네임 (중복확인)
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        CloverTextField(
+                            value = nickname,
+                            onValueChange = { nickname = it; isNicknameChecked = false; isNicknameAvailable = false },
+                            label = "닉네임",
+                            modifier = Modifier.weight(1f).height(40.dp)
+                        )
+                        Spacer(modifier = Modifier.width(7.dp))
+
+                        if (isNicknameChecked && isNicknameAvailable) {
+                            Image(
+                                painter = painterResource(id = R.drawable.check),
+                                contentDescription = "사용 가능",
+                                modifier = Modifier.size(28.dp)
+                            )
+                        } else {
+                            Button(
+                                onClick = {
+                                    // TODO: 나중에 여기서 닉네임 중복검사 API 호출!
+                                    isNicknameChecked = true
+                                    isNicknameAvailable = nickname.isNotBlank() && nickname != "test"
+                                },
+                                enabled = nickname.isNotBlank(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isNicknameChecked && !isNicknameAvailable) Color(0xFFFF6B6B)
+                                    else if (nickname.isNotBlank()) CloverGreen else Color(0xFFC8E6C9)
+                                ),
+                                shape = RoundedCornerShape(5.dp),
+                                elevation = null,
+                                modifier = Modifier.width(60.dp).height(40.dp),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(
+                                    text = if (isNicknameChecked && !isNicknameAvailable) "불가" else "중복확인",
+                                    color = if (isNicknameChecked && !isNicknameAvailable) Color.White
+                                    else if (nickname.isNotBlank()) Color.Black else Color.Gray,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+
+                    if (isNicknameChecked && !isNicknameAvailable) {
+                        Text(
+                            text = "이미 사용 중인 닉네임입니다.",
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 4.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(45.dp))
+
+                    Text(
+                        text = "이미 계정이 있으신가요?",
+                        fontSize = 16.sp,
+                        color = Color.Black,
+                        modifier = Modifier.clickable { navController.navigate("login") { popUpTo("login") { inclusive = true } } }
+                    )
+
+                    Spacer(modifier = Modifier.height(40.dp))
+                }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-            Spacer(modifier = Modifier.height(20.dp))
-
+            // 🎯 하단 버튼 (모든 검사 통과 시 활성화)
+            Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = {
                     if (isJoinEnabled) {
-                        navController.navigate(ScreenRoute.BodyAnalysis.route) {
-                            launchSingleTop = true
-                        }
+                        // TODO: 나중에 여기에 찐 POST 요청 쏘는 통신 코드 넣기!
+                        // 지금은 201 Created 응답이 왔다고 치고 다이얼로그 띄움!
+                        showEmailSentDialog = true
                     }
                 },
-
-                enabled = isJoinEnabled, // 🌟 유효성 검사 결과에 따라 켜고 꺼짐
+                enabled = isJoinEnabled,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(63.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = cloverGreen,
-                    disabledContainerColor = Color(0xFFC8E6C9) // 꺼졌을 때 배경 회색 처리
+                    containerColor = CloverGreen,
+                    disabledContainerColor = Color(0xFFC8E6C9)
                 ),
                 shape = RoundedCornerShape(5.dp),
                 elevation = null
             ) {
                 Text(
                     text = "완료",
-                    color = Color.Black, // 꺼졌을 때 글씨 흰색 처리
+                    color = Color.Black,
                     fontWeight = FontWeight.Medium,
                     fontSize = 24.sp
                 )
             }
-
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
@@ -463,20 +658,18 @@ fun JoinTerms(navController: NavController) {
     Scaffold(
         containerColor = Color.White,
         topBar = {
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
-                    .padding(top = 15.dp) // 피그마 Y:63 라인을 맞추기 위한 상단 마진
+                    .padding(top = 15.dp)
                     .height(48.dp)
             ) {
-
                 IconButton(
                     onClick = { navController.popBackStack() },
                     modifier = Modifier
-                        .padding(start = 27.dp) // 요청 스펙 X:27 반영
-                        .size(40.dp) // 요청 스펙 크기 40*40 반영
+                        .padding(start = 24.dp)
+                        .size(40.dp)
                         .align(Alignment.CenterStart)
                 ) {
                     Image(
@@ -486,15 +679,12 @@ fun JoinTerms(navController: NavController) {
                     )
                 }
 
-
                 Text(
                     text = "약관 동의",
-                    fontSize = 28.sp, // 요청 스펙 크기 28 반영
-                    fontWeight = FontWeight.Medium, // Medium 적용
-                    color = Color.Black, // 검은색 적용
-                    modifier = Modifier
-                        .padding(start = 149.dp) // 요청 스펙 X:149 반영
-                        .align(Alignment.CenterStart)
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black,
+                    modifier = Modifier.align(Alignment.Center)
                 )
             }
         }
@@ -503,62 +693,66 @@ fun JoinTerms(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp)
-                .verticalScroll(rememberScrollState()),
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.weight(8.5f))
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(60.dp))
 
-            // 중앙 로고 이미지 (180*180)
-            Image(
-                painter = painterResource(id = R.drawable.frame_31),
-                contentDescription = null,
-                modifier = Modifier.size(180.dp)
-            )
+                Image(
+                    painter = painterResource(id = R.drawable.frame_31),
+                    contentDescription = null,
+                    modifier = Modifier.size(180.dp)
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "회원님 환영합니다!",
-                fontWeight = FontWeight.Medium,
-                fontSize = 28.sp,
-                color = Color.Black
-            )
+                Spacer(modifier = Modifier.height(12.dp))
 
-            Spacer(modifier = Modifier.weight(6f))
+                Text(
+                    text = "회원님 환영합니다!",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 28.sp,
+                    color = Color.Black
+                )
 
+                Spacer(modifier = Modifier.height(50.dp))
 
-            CustomCheckBoxRow("약관 전체 동의", isAllChecked, { val t = !isAllChecked; term1 = t; term2 = t; term3 = t })
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 1.dp, color = Color.LightGray)
+                CustomCheckBoxRow("약관 전체 동의", isAllChecked, { val t = !isAllChecked; term1 = t; term2 = t; term3 = t })
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 1.dp, color = Color.LightGray)
 
-            CustomCheckBoxRow("이용약관 동의(필수)", term1, { term1 = it }, { navController.navigate("term_detail_1") })
-            CustomCheckBoxRow("개인정보 수집 및 이용동의(필수)", term2, { term2 = it }, { navController.navigate("term_detail_2") })
-            CustomCheckBoxRow("가입 시 알림 동의(선택)", term3, { term3 = it })
+                CustomCheckBoxRow("이용약관 동의(필수)", term1, { term1 = it }, { navController.navigate("term_detail_1") })
+                CustomCheckBoxRow("개인정보 수집 및 이용동의(필수)", term2, { term2 = it }, { navController.navigate("term_detail_2") })
+                CustomCheckBoxRow("가입 시 알림 동의(선택)", term3, { term3 = it })
 
-            Spacer(modifier = Modifier.weight(15f))
+                Spacer(modifier = Modifier.height(40.dp))
+            }
 
-
+            Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = { navController.navigate("join_detail") },
                 enabled = term1 && term2,
                 modifier = Modifier
-                    .fillMaxWidth() // 가로 패딩 24.dp와 결합되어 자동으로 가로폭 345.dp 규격 충족
-                    .height(63.dp), // 요청 스펙 높이 63 반영
+                    .fillMaxWidth()
+                    .height(63.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF99DE81), // 색상 99DE81 반영
+                    containerColor = CloverGreen,
                     disabledContainerColor = Color(0xFFC8E6C9)
                 ),
-                shape = RoundedCornerShape(5.dp), // 모서리 5 반영
-                elevation = null // 외곽선 X, 그림자 제거 플랫화
+                shape = RoundedCornerShape(5.dp),
+                elevation = null
             ) {
-
                 Text(
                     text = "다음",
-                    color = Color.Black, // 검은색 적용
-                    fontWeight = FontWeight.Medium, // Medium 적용
-                    fontSize = 24.sp // 크기 24 적용
+                    color = Color.Black,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 24.sp
                 )
             }
-
             Spacer(modifier = Modifier.height(16.dp))
         }
     }

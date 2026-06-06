@@ -51,23 +51,10 @@ class BackendConnectionTester(
 
             Log.d(
                 TAG,
-                "3-4. Chat API 호출 및 Domain 변환 성공: DTO=${chatRoomResponses.size}, Domain=${chatRoomDomains.size}"
-            )
-
-            val communityResponses = networkModule.communityApi.getPosts(
-                category = null,
-                page = 0,
-                size = 5
-            )
-            val communityDomains = communityResponses.map { it.toDomain() }
-
-            Log.d(
-                TAG,
-                "3-4. Community API 호출 및 Domain 변환 성공: DTO=${communityResponses.size}, Domain=${communityDomains.size}"
+                "3. Chat API 호출 및 Domain 변환 성공: DTO=${chatRoomResponses.size}, Domain=${chatRoomDomains.size}"
             )
 
             Log.d(TAG, "전체 백엔드 연결 테스트 성공")
-
         } catch (e: Exception) {
             Log.e(TAG, "백엔드 연결 테스트 실패", e)
         }
