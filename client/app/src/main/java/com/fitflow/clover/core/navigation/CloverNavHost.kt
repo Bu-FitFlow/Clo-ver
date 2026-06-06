@@ -217,6 +217,14 @@ fun CloverNavHost(
                         navigateSingleTop(ScreenRoute.BodyAnalysis.route)
                     }
                 },
+                onSkip = {
+                    navController.navigate(ScreenRoute.Main.route) {
+                        popUpTo("splash") {
+                            inclusive = false
+                        }
+                        launchSingleTop = true
+                    }
+                },
                 onMoveToResult = {
                     navigateSingleTop(DIAGNOSIS_SUMMARY_ROUTE)
                 }
