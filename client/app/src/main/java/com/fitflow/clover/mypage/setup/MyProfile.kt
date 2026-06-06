@@ -122,15 +122,8 @@ fun MyProfile(navController: NavController) {
                 // 프로필 사진 아래 ID 표기
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text(
-                    text = "ID",
-                    fontSize = 16.sp,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Medium
-                )
 
                 // 키, 몸무게 가로배치
-                // 그 아래 상하체 비만 여부, 얼굴형 아래로 배치
                 Spacer(modifier = Modifier.height(30.dp))
 
                 Column(
@@ -151,10 +144,10 @@ fun MyProfile(navController: NavController) {
                     }
 
                     // [상하체 비만] 박스
-                    ProfileInfoBox(text = "상하체 비만", modifier = Modifier.fillMaxWidth())
+                    ProfileInfoBox(text = "퍼스널 컬러", modifier = Modifier.fillMaxWidth())
 
                     // [얼굴형] 박스
-                    ProfileInfoBox(text = "얼굴형", modifier = Modifier.fillMaxWidth())
+                    ProfileInfoBox(text = "체형", modifier = Modifier.fillMaxWidth())
                 }
             }
         }
