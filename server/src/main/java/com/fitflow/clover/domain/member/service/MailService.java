@@ -32,9 +32,11 @@ public class MailService {
     public void sendVerificationEmail(String toEmail) {
         String token = UUID.randomUUID().toString();
 
-        redisUtil.setDataExpire(toEmail, token, 60 * 10L * 1000);
+        redisUtil.setDataExpire("SIGNUP_AUTH:" + toEmail, token, 60 * 10L * 1000);
 
-        String verificationLink = baseUrl + "/api/members/emails/verify?email=" + toEmail + "&token=" + token;
+        String encodedEmail = java.net.URLEncoder.encode(toEmail, java.nio.charset.StandardCharsets.UTF_8);
+
+        String verificationLink = baseUrl + "/api/members/emails/verify-page?email=" + encodedEmail + "&token=" + token;
 
         MimeMessage message = emailSender.createMimeMessage();
         try {
@@ -56,10 +58,9 @@ public class MailService {
 
     @Transactional
     public boolean verifyEmail(String email, String token) {
-        String savedToken = redisUtil.getData(email);
-
+        String savedToken = redisUtil.getData("SIGNUP_AUTH:" + email);
         if (savedToken != null && savedToken.equals(token)) {
-            redisUtil.deleteData(email);
+            redisUtil.deleteData("SIGNUP_AUTH:" + email);
             Member member = memberRepository.findByEmail(email)
                     .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
             member.verifyEmail();

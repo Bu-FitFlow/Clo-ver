@@ -1,6 +1,7 @@
 package com.fitflow.clover.domain.member.controller;
 
 import com.fitflow.clover.domain.member.service.MailService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Hidden
 @Tag(name = "이메일 인증", description = "회원가입 등 이메일 소유권 인증 관련 API")
 @RestController
 @RequestMapping("/api/members/emails")
@@ -22,13 +24,43 @@ public class VerificationController {
         return ResponseEntity.ok("인증 메일이 성공적으로 발송되었습니다.");
     }
 
-    @Operation(summary = "인증 메일 링크 검증", description = "사용자가 이메일에서 수신한 인증 링크를 클릭했을 때 호출됩니다. 전달된 토큰과 이메일의 유효성을 검증하고, 성공 여부에 따라 결과를 HTML 형식으로 반환하여 웹 브라우저에 표시합니다.")
-    @GetMapping(value = "/verify", produces = "text/html; charset=UTF-8")
+    @Operation(summary = "이메일 인증 자동 처리 페이지", description = "자바스크립트를 활용해 봇을 우회하고 자동으로 인증(POST)을 요청합니다.")
+    @GetMapping(value = "/verify-page", produces = "text/html; charset=UTF-8")
+    public ResponseEntity<String> getVerifyPage(@RequestParam("email") String email, @RequestParam("token") String token) {
+        String html = "<!DOCTYPE html>" +
+                "<html lang='ko'>" +
+                "<head>" +
+                "<meta charset='UTF-8'>" +
+                "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+                "<title>인증 처리 중...</title>" +
+                "</head>" +
+                "<body style='background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: sans-serif;'>" +
+                "  <h3 style='color:#666;'>안전하게 인증을 처리하고 있습니다...</h3>" +
+                "  <form id='verifyForm' action='/api/members/emails/verify' method='POST' style='display:none;'>" +
+                "    <input type='hidden' name='email' value='" + email + "'>" +
+                "    <input type='hidden' name='token' value='" + token + "'>" +
+                "  </form>" +
+                "  <script>" +
+                "    window.onload = function() {" +
+                "       document.getElementById('verifyForm').submit();" +
+                "    };" +
+                "  </script>" +
+                "</body>" +
+                "</html>";
+
+        return ResponseEntity.ok(html);
+    }
+
+    @Operation(summary = "실제 인증 처리 및 결과 화면 반환", description = "사용자가 버튼을 클릭했을 때 호출되며 최종 결과 HTML을 렌더링합니다.")
+    @PostMapping(value = "/verify", produces = "text/html; charset=UTF-8")
     public ResponseEntity<String> verifyEmail(@RequestParam("email") String email, @RequestParam("token") String token) {
         boolean isVerified = mailService.verifyEmail(email, token);
 
-        if (isVerified) return ResponseEntity.ok(getHtmlTemplate(true));
-        else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(getHtmlTemplate(false));
+        if (isVerified) {
+            return ResponseEntity.ok(getHtmlTemplate(true));
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(getHtmlTemplate(false));
+        }
     }
 
     // TODO: 회원가입 이메일 인증 디자인
