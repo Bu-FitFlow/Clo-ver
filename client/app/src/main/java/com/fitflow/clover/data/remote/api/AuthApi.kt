@@ -11,21 +11,21 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 
 interface AuthApi {
-    @POST("api/auth/signup")
+    @POST("api/members/signup")
     suspend fun signUp(
         @Body request: SignUpRequest
     ): SignUpResponse
 
-    @POST("api/auth/login")
+    @POST("api/members/login")
     suspend fun login(
         @Body request: LoginRequest
     ): LoginResponse
 
-    @POST("api/auth/refresh")
+    @POST("api/members/refresh")
     suspend fun refreshToken(
         @Body request: TokenRefreshRequest
     ): TokenRefreshResponse
 
-    @POST("api/auth/logout")
+    @POST("api/members/logout")
     suspend fun logout(): Response<Unit>
 }

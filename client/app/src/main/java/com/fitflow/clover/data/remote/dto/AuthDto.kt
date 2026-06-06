@@ -3,7 +3,7 @@ package com.fitflow.clover.data.remote.dto
 import com.google.gson.annotations.SerializedName
 
 data class SignUpRequest(
-    @SerializedName("login_id")
+    @SerializedName("loginId") //login_id -> loginId
     val loginId: String,
 
     @SerializedName("password")
@@ -58,11 +58,16 @@ data class SignUpResponse(
 )
 
 data class LoginRequest(
-    @SerializedName("login_id")
+    @SerializedName("loginId")
     val loginId: String,
 
     @SerializedName("password")
-    val password: String
+    val password: String,
+
+
+    // 뷰모델에서 안 넘겨줘도 알아서 "000000"이 포장돼서 서버로 날아감
+    @SerializedName("totpCode")
+    val totpCode: String = "000000"
 )
 
 data class LoginResponse(
@@ -95,7 +100,7 @@ data class LoginResponse(
 )
 
 data class TokenRefreshRequest(
-    @SerializedName("refresh_token")
+    @SerializedName("refreshToken") // 💡 혹시 모를 400 에러 방지: refresh_token -> refreshToken
     val refreshToken: String
 )
 

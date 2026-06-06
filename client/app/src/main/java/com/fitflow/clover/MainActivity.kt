@@ -9,6 +9,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.fitflow.clover.core.navigation.CloverNavHost
+import com.fitflow.clover.core.network.NetworkModule
+import com.fitflow.clover.presentation.auth.AuthViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,12 +26,15 @@ class MainActivity : ComponentActivity() {
 //            )
 //        }
 
+        val networkModule = NetworkModule(this)
+        val authViewModel = AuthViewModel(networkModule)
+
         setContent {
             MaterialTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    CloverNavHost()
+                    CloverNavHost(authViewModel = authViewModel)
                 }
             }
         }

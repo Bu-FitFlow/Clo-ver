@@ -1,5 +1,6 @@
 package com.fitflow.clover.presentation.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -16,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
@@ -26,6 +28,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.fitflow.clover.R
 import com.fitflow.clover.core.component.CloverTextField
@@ -35,9 +38,9 @@ import com.fitflow.clover.core.navigation.ScreenRoute
 val CloverGreen = Color(0xFF99DE81)
 
 @Composable
-fun LoginMain(navController: NavController) {
-    var id by remember { mutableStateOf("") }
-    var pw by remember { mutableStateOf("") }
+fun LoginMain(navController: NavController, viewModel: AuthViewModel) {
+    val id by viewModel.id
+    val pw by viewModel.pw
     var isPwVisible by remember { mutableStateOf(false) }
 
     Surface(
@@ -78,7 +81,7 @@ fun LoginMain(navController: NavController) {
                 var isIdFocused by remember { mutableStateOf(false) }
                 BasicTextField(
                     value = id,
-                    onValueChange = { id = it },
+                    onValueChange = { viewModel.onIdChange(it) },
                     textStyle = TextStyle(
                         color = Color.Black,
                         fontSize = 14.sp,
@@ -124,7 +127,7 @@ fun LoginMain(navController: NavController) {
                 var isPwFocused by remember { mutableStateOf(false) }
                 BasicTextField(
                     value = pw,
-                    onValueChange = { pw = it },
+                    onValueChange = { viewModel.onPwChange(it) },
                     visualTransformation = if (isPwVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
                     textStyle = TextStyle(
                         color = Color.Black,
@@ -179,22 +182,26 @@ fun LoginMain(navController: NavController) {
             Button(
                 onClick = {
                     if (id.isNotBlank() && pw.isNotBlank()) {
-                        // 💡 나중에 백엔드 서버에서 "너 처음이야?"라는 응답(isFirstLogin)을 받았다고 치는 거야!
-                        val isFirstLogin = true // 👈 테스트할 때 false로 바꿔보면 메인으로 갈 거야!
+                        val isFirstLogin = true
 
-                        if (isFirstLogin) {
-                            // 1. 최초 로그인이면 체형 분석 페이지로 쏴줌!
-                            navController.navigate(ScreenRoute.BodyAnalysis.route) {
-                                popUpTo("login") { inclusive = true }
-                                launchSingleTop = true
+                        viewModel.login(
+                            onSuccess = { isFirstLogin ->
+                                if (isFirstLogin) {
+                                    navController.navigate(ScreenRoute.BodyAnalysis.route) {
+                                        popUpTo("login") { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                } else {
+                                    navController.navigate(ScreenRoute.Main.route) {
+                                        popUpTo("login") { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                }
+                            },
+                            onError = {
+                                // TODO: 로그인 실패 시 에러 메시지 띄우기 (나중에 처리)
                             }
-                        } else {
-                            // 2. 이미 했던 유저면 바로 메인(홈)으로 쏴줌!
-                            navController.navigate(ScreenRoute.Main.route) {
-                                popUpTo("login") { inclusive = true }
-                                launchSingleTop = true
-                            }
-                        }
+                        )
                     }
                 },
                 enabled = true,
@@ -248,7 +255,7 @@ fun LoginMain(navController: NavController) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun JoinDetail(navController: NavController) {
+fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
     var name by remember { mutableStateOf("") }
 
     var isPwVisible by remember { mutableStateOf(false) }
@@ -270,6 +277,8 @@ fun JoinDetail(navController: NavController) {
     var pw by remember { mutableStateOf("") }
     var pwConfirm by remember { mutableStateOf("") }
 
+    var gender by remember { mutableStateOf("MALE") }
+
     // 다이얼로그 띄우기용 상태 변수
     var showEmailSentDialog by remember { mutableStateOf(false) }
 
@@ -279,6 +288,8 @@ fun JoinDetail(navController: NavController) {
             email.isNotBlank() && isEmailChecked && isEmailAvailable &&
             nickname.isNotBlank() && isNicknameChecked && isNicknameAvailable &&
             pw.isNotBlank() && pwConfirm.isNotBlank() && (pw == pwConfirm)
+
+    val context = LocalContext.current
 
     Scaffold(
         containerColor = Color.White
@@ -338,6 +349,35 @@ fun JoinDetail(navController: NavController) {
                 Column(modifier = Modifier.width(309.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     // 1. 이름
                     CloverTextField(value = name, onValueChange = { name = it }, label = "이름", modifier = Modifier.height(40.dp))
+                    Spacer(modifier = Modifier.height(15.dp))
+
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "성별",
+                            fontSize = 12.sp,
+                            color = Color.Black,
+                            modifier = Modifier.padding(start = 6.dp, bottom = 4.dp)
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(
+                                    selected = (gender == "MALE"),
+                                    onClick = { gender = "MALE" },
+                                    colors = RadioButtonDefaults.colors(selectedColor = CloverGreen)
+                                )
+                                Text(text = "남성", fontSize = 14.sp)
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(
+                                    selected = (gender == "FEMALE"),
+                                    onClick = { gender = "FEMALE" },
+                                    colors = RadioButtonDefaults.colors(selectedColor = CloverGreen)
+                                )
+                                Text(text = "여성", fontSize = 14.sp)
+                            }
+                        }
+                    }
                     Spacer(modifier = Modifier.height(15.dp))
 
                     // 2. ID (중복확인)
@@ -619,9 +659,20 @@ fun JoinDetail(navController: NavController) {
             Button(
                 onClick = {
                     if (isJoinEnabled) {
-                        // TODO: 나중에 여기에 찐 POST 요청 쏘는 통신 코드 넣기!
-                        // 지금은 201 Created 응답이 왔다고 치고 다이얼로그 띄움!
-                        showEmailSentDialog = true
+                        viewModel.signUp(
+                            loginId = id,
+                            password = pw,
+                            name = name,
+                            nickname = nickname,
+                            email = email,
+                            gender = gender,
+                            onSuccess = {
+                                // 통신 성공 시 이메일 인증 안내 다이얼로그 띄우기
+                                showEmailSentDialog = true
+                            },
+                            onError = {
+                                Toast.makeText(context, "회원가입 실패! Android Studio Logcat을 확인하세요.", Toast.LENGTH_SHORT).show()                            }
+                        )
                     }
                 },
                 enabled = isJoinEnabled,

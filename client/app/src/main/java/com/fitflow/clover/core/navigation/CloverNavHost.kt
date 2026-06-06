@@ -28,12 +28,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.fitflow.clover.mypage.mainscreen.MyPageScreen
 import com.fitflow.clover.mypage.mainscreen.NotificationScreen
 import com.fitflow.clover.mypage.mainscreen.SearchBar
-import com.fitflow.clover.mypage.mainscreen.UserPageScreen
 import com.fitflow.clover.mypage.setup.MyPageNavHost
-import com.fitflow.clover.mypage.setup.NotificationPush
 import com.fitflow.clover.presentation.auth.*
 import com.fitflow.clover.presentation.chat.ChatScreen
 import com.fitflow.clover.presentation.chat.ChatViewModel
@@ -64,13 +61,15 @@ private const val JOIN_DETAIL_ROUTE = "join_detail"
 
 @Composable
 fun CloverNavHost(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    authViewModel: AuthViewModel
 ) {
     val navController = rememberNavController()
 
     CloverNavHost(
         navController = navController,
-        modifier = modifier
+        modifier = modifier,
+        authViewModel = authViewModel
     )
 }
 
@@ -78,7 +77,8 @@ fun CloverNavHost(
 fun CloverNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    startDestination: String = "splash"
+    startDestination: String = "splash",
+    authViewModel: AuthViewModel
 ) {
     val productViewModel: ProductViewModel = viewModel()
     val communityViewModel: CommunityViewModel = viewModel()
@@ -133,7 +133,7 @@ fun CloverNavHost(
 
 
         composable("login") {
-            LoginMain(navController)
+            LoginMain(navController, viewModel = authViewModel)
         }
 
         composable("join_terms") {
@@ -149,7 +149,7 @@ fun CloverNavHost(
         }
 
         composable("join_detail") {
-            JoinDetail(navController)
+            JoinDetail(navController, viewModel = authViewModel)
         }
 
         composable("find_id_pw") {
