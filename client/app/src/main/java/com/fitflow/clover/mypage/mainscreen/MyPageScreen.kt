@@ -1,5 +1,6 @@
 package com.fitflow.clover.mypage.mainscreen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -22,22 +24,29 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import com.fitflow.clover.R
+import com.fitflow.clover.mypage.MyPageProductItem
+import com.fitflow.clover.mypage.MyPageUiState
 
 @Composable
-fun MyPageScreen(cloverProgress: Float,
-                 onSettingsClick: () -> Unit,
-                 onMyWritingClick: () -> Unit,
-                 onGoodsClick: () -> Unit,
-                 onBackClick: () -> Unit = {}) {
-    // 전체 화면을 감싸는 도화지
+fun MyPageScreen(
+    uiState: MyPageUiState,
+    onSettingsClick: () -> Unit,
+    onMyWritingClick: () -> Unit,
+    onGoodsClick: () -> Unit,
+    onBackClick: () -> Unit = {}
+) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -46,26 +55,22 @@ fun MyPageScreen(cloverProgress: Float,
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 상단바
             MyPageScreenTopBar()
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(57.dp)               // 세로 높이 57dp 적용
-                    .background(Color(0x3399DE81)) // 99DE81 색상으로 배경 채우기
+                    .height(57.dp)
+                    .background(Color(0x3399DE81))
             ) {
-                // 2. 이 아이콘은 Box의 자식이므로 CenterStart (왼쪽 중앙) 정렬이 가능합니다!
                 Icon(
                     painter = painterResource(R.drawable.kakaotalk_20260514_111630855),
                     contentDescription = "뒤로가기 아이콘",
                     modifier = Modifier
-                        .padding(start=16.dp)
+                        .padding(start = 16.dp)
                         .size(28.dp)
                         .align(Alignment.CenterStart)
                         .clickable { onBackClick() }
-                // 🔥 Box 내부 정렬 규칙 적용
-
                 )
                 Text(
                     text = "마이페이지",
@@ -73,68 +78,55 @@ fun MyPageScreen(cloverProgress: Float,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.align(Alignment.Center)
                 )
-                // 3. 오른쪽: 새로 추가한 우측 아이콘 (CenterEnd)
                 Icon(
-                    // ⚠️ 사용할 아이콘 리소스 ID로 변경해주세요 (예: R.drawable.ic_settings)
                     painter = painterResource(R.drawable.settings),
-                    contentDescription = "우측 설정 아이콘",
+                    contentDescription = "설정",
                     modifier = Modifier
-                        .padding(end = 16.dp) // 우측 레이아웃과의 여백 16dp
+                        .padding(end = 16.dp)
                         .size(28.dp)
-                        .align(Alignment.CenterEnd) //🔥 Box 내부 오른쪽 중앙 정렬
-                        .clickable { onSettingsClick()},
+                        .align(Alignment.CenterEnd)
+                        .clickable { onSettingsClick() },
                     tint = Color.Unspecified
                 )
             }
-            // 150 150 프로필 사진
+
             Spacer(modifier = Modifier.height(20.dp))
 
-            Box(
-                modifier = Modifier
-                    .size(150.dp)
-                    .background(Color(0xFFE0E0E0)) // 회색 배경
-                    .border(1.dp, Color.Gray),     // 테두리
-                contentAlignment = Alignment.Center
-            ){
+            ProfileImageBox(
+                imageModel = uiState.profileImageModel,
+                fallbackText = uiState.displayName.take(1)
+            )
 
-            }
-
-            // 프로필 사진 아래 ID 표기
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "ID",
+                text = uiState.displayLoginId,
                 fontSize = 16.sp,
                 color = Color.Black,
                 fontWeight = FontWeight.Medium
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 길이 331짜리 선
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 31.dp) // 양옆 31dp 여백을 주면 화면 크기(393) 기준 자동으로 가로 331dp가 됩니다!
-                    .padding(top = 8.dp)          // 글씨 영역과의 위쪽 간격
-                    .height(1.dp)                 // 두께 (1dp)
-                    .background(Color.Black)      // 색상
+            Text(
+                text = uiState.displayName,
+                fontSize = 14.sp,
+                color = Color.Gray,
+                fontWeight = FontWeight.Medium
             )
 
-            // 🔥 여기서부터 새로 추가할 '나의 클로버' & 게이지 바 영역
-            // ----------------------------------------------------
+            Spacer(modifier = Modifier.height(12.dp))
+
+            DividerLine()
+
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 글자와 새싹 이미지를 담는 Column (전체 가로 여백을 선과 맞춤)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 31.dp)
             ) {
-                // [위쪽] '나의 클로버' 텍스트와 새싹 이미지
                 Box(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.CenterStart // 세로 중앙 정렬
+                    contentAlignment = Alignment.CenterStart
                 ) {
                     Text(
                         text = "나의 클로버",
@@ -143,185 +135,229 @@ fun MyPageScreen(cloverProgress: Float,
                         color = Color.Black
                     )
 
-                    // 🌿 새싹 이미지 (리소스 ID는 적절히 변경해주세요!)
                     Icon(
-                        painter = painterResource(R.drawable.seed_icon2), // ⚠️ 실제 새싹 이미지 리소스로 변경
+                        painter = painterResource(R.drawable.seed_icon2),
                         contentDescription = "새싹",
                         modifier = Modifier
-                            .size(70.dp) // 크기 조절
+                            .size(70.dp)
                             .align(Alignment.Center),
-                        tint = Color.Unspecified // 본래 이미지 색상 유지
+                        tint = Color.Unspecified
                     )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // [아래쪽] 게이지 바 (둥근 선 형태)
-                // Jetpack Compose의 LinearProgressIndicator나 커스텀 Box로 구현 가능합니다.
-                // 여기서는 시안과 비슷하게 테두리가 있는 커스텀 Box로 구현했습니다.
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(14.dp)
-                        .background(Color.White, shape = androidx.compose.foundation.shape.CircleShape)
-                        .border(1.dp, Color.Black, shape = androidx.compose.foundation.shape.CircleShape)
-                        .padding(2.dp) // 테두리와 내부 게이지 사이 여백
+                        .background(Color.White, shape = CircleShape)
+                        .border(1.dp, Color.Black, shape = CircleShape)
+                        .padding(2.dp)
                 ) {
-                    // 초록색 진행률 표시 바 (예: 35% 채워짐)
                     Box(
                         modifier = Modifier
                             .fillMaxHeight()
-                            .fillMaxWidth(cloverProgress) // 🔥 0.0f ~ 1.0f 사이로 채워지는 양 조절 (0.35 = 35%)
-                            .background(Color(0xFF99DE81), shape = androidx.compose.foundation.shape.CircleShape)
+                            .fillMaxWidth(uiState.cloverProgress.coerceIn(0f, 1f))
+                            .background(Color(0xFF99DE81), shape = CircleShape)
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+            DividerLine()
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // [아래쪽] 다음 구분선 (시안에 있는 게이지 아래 선)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 31.dp)
-                    .height(1.dp)
-                    .background(Color.Black)
+            MenuRow(
+                text = "내 글 보기",
+                onClick = onMyWritingClick
             )
 
-            // 🔥 여기서부터 새로 추가할 '판매 물품 내역' 영역
-
+            Spacer(modifier = Modifier.height(16.dp))
+            DividerLine()
             Spacer(modifier = Modifier.height(16.dp))
 
-            // [타이틀 영역] '내글 보기' 텍스트와 우측 화살표(>)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 31.dp)
-                    .clickable { onMyWritingClick() },
-                horizontalArrangement = Arrangement.SpaceBetween, // 양 끝으로 배치
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "내 글 보기",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-
-                // 우측 화살표 아이콘 (시안의 > 모양)
-                Icon(
-                    painter = painterResource(R.drawable.kakaotalk_20260514_111630855), // ⚠️ 가지고 계신 화살표 아이콘(또는 뒤로가기를 회전) 리소스로 변경
-                    contentDescription = "더보기",
-                    modifier = Modifier
-                        .size(20.dp)
-                        .rotate(180f),
-                    tint = Color.Black
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 31.dp)
-                    .height(1.dp)
-                    .background(Color.Black)
+            MenuRow(
+                text = "내 판매 물품",
+                onClick = onGoodsClick
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            ProductPreviewList(products = uiState.myProducts)
+        }
+    }
+}
+
+@Composable
+private fun ProfileImageBox(
+    imageModel: String?,
+    fallbackText: String
+) {
+    Box(
+        modifier = Modifier
+            .size(150.dp)
+            .clip(CircleShape)
+            .background(Color(0xFFE0E0E0))
+            .border(1.dp, Color.Gray, CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        if (!imageModel.isNullOrBlank()) {
+            Image(
+                painter = rememberAsyncImagePainter(model = imageModel),
+                contentDescription = "프로필 사진",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Text(
+                text = fallbackText.ifBlank { "C" },
+                fontSize = 42.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray
+            )
+        }
+    }
+}
+
+@Composable
+private fun MenuRow(
+    text: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 31.dp)
+            .clickable { onClick() },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+
+        Icon(
+            painter = painterResource(R.drawable.kakaotalk_20260514_111630855),
+            contentDescription = "더보기",
+            modifier = Modifier
+                .size(20.dp)
+                .rotate(180f),
+            tint = Color.Black
+        )
+    }
+}
+
+@Composable
+private fun ProductPreviewList(products: List<MyPageProductItem>) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 31.dp)
+    ) {
+        if (products.isEmpty()) {
+            Text(
+                text = "등록한 판매 물품이 없습니다.",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(vertical = 12.dp)
+            )
+            return@Column
+        }
+
+        products.take(3).forEachIndexed { index, product ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 31.dp)
-                    .clickable { onGoodsClick() },
-                horizontalArrangement = Arrangement.SpaceBetween, // 양 끝으로 배치
+                    .padding(vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "내 판매 물품",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-
-                // 우측 화살표 아이콘 (시안의 > 모양)
-                Icon(
-                    painter = painterResource(R.drawable.kakaotalk_20260514_111630855), // ⚠️ 가지고 계신 화살표 아이콘(또는 뒤로가기를 회전) 리소스로 변경
-                    contentDescription = "더보기",
+                Box(
                     modifier = Modifier
-                        .size(20.dp)
-                        .rotate(180f),
-                    tint = Color.Black
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 31.dp)
-            ) {
-                repeat(3) { index ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 12.dp), // 아이템 간의 위아래 간격
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // 시안에 있던 정사각형 이미지 박스
-                        Box(
-                            modifier = Modifier
-                                .size(50.dp) // 정사각형 크기
-                                .border(1.dp, Color.Black) // 검은색 테두리
-                                .background(Color.White)
-                        )
-
-                        // 💡 만약 글씨를 넣고 싶다면 여기에 Spacer와 Text를 추가하면 됩니다.
-                        // Spacer(modifier = Modifier.width(16.dp))
-                        // Text(text = "물품 제목 $index", fontSize = 14.sp)
-                    }
-
-                    // 아이템 사이사이마다 들어가는 회색 구분선 (마지막 아이템 밑에는 선을 안 그리기 조건문 추가)
-                    if (index < 3) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(Color.LightGray) // 연한 회색 선
+                        .size(50.dp)
+                        .border(1.dp, Color.Black)
+                        .background(Color.White),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (!product.thumbnailImageUrl.isNullOrBlank()) {
+                        Image(
+                            painter = rememberAsyncImagePainter(model = product.thumbnailImageUrl),
+                            contentDescription = product.name,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = product.name.ifBlank { "상품명 없음" },
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = "${product.price}원 · ${product.postStatus}",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
 
-
+            if (index < products.take(3).lastIndex) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(Color.LightGray)
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun DividerLine() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 31.dp)
+            .height(1.dp)
+            .background(Color.Black)
+    )
 }
 
 @Composable
 fun MyPageScreenTopBar() {
     Box(
         modifier = Modifier
-            .width(393.dp)  // 가로 사이즈
-            .height(57.dp) // 세로 사이즈
-            .background(Color.White) // 배경을 흰색으로 채움
-    ) {
-    }
+            .width(393.dp)
+            .height(57.dp)
+            .background(Color.White)
+    )
 }
 
-
-
-//미리보기 도화지 설정창
 @Preview(showBackground = true, device = "spec:width=393dp,height=852dp")
 @Composable
 fun MyPageScreenPreview() {
-
-    MyPageScreen(cloverProgress = 0.35f,
+    MyPageScreen(
+        uiState = MyPageUiState(
+            loginId = "clover01",
+            nickname = "clover",
+            cloverProgress = 0.35f
+        ),
         onSettingsClick = {},
         onMyWritingClick = {},
         onGoodsClick = {},
-        onBackClick = {})
+        onBackClick = {}
+    )
 }

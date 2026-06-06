@@ -217,6 +217,14 @@ fun CloverNavHost(
                         navigateSingleTop(ScreenRoute.BodyAnalysis.route)
                     }
                 },
+                onSkip = {
+                    navController.navigate(ScreenRoute.Main.route) {
+                        popUpTo("splash") {
+                            inclusive = false
+                        }
+                        launchSingleTop = true
+                    }
+                },
                 onMoveToResult = {
                     navigateSingleTop(DIAGNOSIS_SUMMARY_ROUTE)
                 }
@@ -666,21 +674,17 @@ fun CloverNavHost(
         composable(ScreenRoute.MyPage.route) {
             MyPageNavHost(
                 onExitMyPage = {
-                    // 🎯 마이페이지 메인 화면에서 '뒤로가기'를 누르면 전체 앱의 메인 화면으로 이동!
                     navigateSingleTop(ScreenRoute.Main.route)
                 },
                 onNavigateToLogin = {
-                    // 🚀 [여기 핵심!] 전체 앱을 주관하는 최상위 navController를 사용하여 로그인 창으로 튕겨버립니다.
-                    // 뒤로가기를 눌러서 마이페이지로 다시 들어올 수 없도록 백스택을 0번까지 싹 날립니다.
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
                 },
                 onGoodsClick = {
-                    // 지금은 임시로 메인 화면으로 가게 하거나 비워둘 수 있습니다.
-                    // 다른 사람이 이 파일을 열면 이 블록 내부를 본인들이 만든 화면 주소로 바꿀 거예요!
-                    navigateSingleTop(ScreenRoute.Main.route)
-                }
+                    navigateSingleTop(ScreenRoute.ProductList.route)
+                },
+                diagnosisUiState = diagnosisViewModel.uiState.value
             )
         }
 

@@ -28,12 +28,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -78,6 +80,10 @@ fun BodyAnalysisScreen(
         mutableStateOf(BodyAnalysisStep.USER_INFO)
     }
 
+    var showSkipDialog by remember {
+        mutableStateOf(false)
+    }
+
     LaunchedEffect(
         uiState.isBodyAnalyzing,
         uiState.frontBodyPhotoBitmap,
@@ -112,7 +118,10 @@ fun BodyAnalysisScreen(
                 onNext = {
                     currentStep = BodyAnalysisStep.BODY_FRONT_CAMERA
                 },
-                onBack = onBackToSignUp
+                onBack = onBackToSignUp,
+                onSkip = {
+                    showSkipDialog = true
+                }
             )
         }
 
@@ -132,6 +141,9 @@ fun BodyAnalysisScreen(
                 },
                 onBack = {
                     currentStep = BodyAnalysisStep.USER_INFO
+                },
+                onSkip = {
+                    showSkipDialog = true
                 }
             )
         }
@@ -149,6 +161,9 @@ fun BodyAnalysisScreen(
                 },
                 onBack = {
                     currentStep = BodyAnalysisStep.BODY_FRONT_CAMERA
+                },
+                onSkip = {
+                    showSkipDialog = true
                 }
             )
         }
@@ -160,6 +175,9 @@ fun BodyAnalysisScreen(
                 onRetry = {
                     viewModel.resetBodyPhotos()
                     currentStep = BodyAnalysisStep.BODY_FRONT_CAMERA
+                },
+                onSkip = {
+                    showSkipDialog = true
                 }
             )
         }
@@ -170,9 +188,24 @@ fun BodyAnalysisScreen(
                 onBack = {
                     currentStep = BodyAnalysisStep.BODY_SIDE_CAMERA
                 },
-                onMoveToPersonalColor = onMoveToPersonalColor
+                onMoveToPersonalColor = onMoveToPersonalColor,
+                onSkip = {
+                    showSkipDialog = true
+                }
             )
         }
+    }
+
+    if (showSkipDialog) {
+        BodySkipConfirmDialog(
+            onDismiss = {
+                showSkipDialog = false
+            },
+            onConfirm = {
+                showSkipDialog = false
+                onMoveToMain()
+            }
+        )
     }
 }
 
@@ -185,7 +218,8 @@ private fun BodyUserInfoContent(
     onSelectHeight: (Int) -> Unit,
     onSelectWeight: (Int) -> Unit,
     onNext: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onSkip: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -197,7 +231,8 @@ private fun BodyUserInfoContent(
     ) {
         DiagnosisHeader(
             title = "내 정보",
-            onBack = onBack
+            onBack = onBack,
+            onSkip = onSkip
         )
 
         Spacer(modifier = Modifier.height(40.dp))
@@ -285,7 +320,8 @@ private fun BodyCameraContent(
     bitmap: Bitmap?,
     isLoading: Boolean,
     onPhotoCaptured: (Bitmap?) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onSkip: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -373,7 +409,8 @@ private fun BodyCameraContent(
     ) {
         DiagnosisHeader(
             title = headerTitle,
-            onBack = onBack
+            onBack = onBack,
+            onSkip = onSkip
         )
 
         Spacer(modifier = Modifier.height(30.dp))
@@ -442,7 +479,8 @@ private fun BodyCameraContent(
 @Composable
 private fun BodyRetryContent(
     message: String,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onSkip: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -451,6 +489,13 @@ private fun BodyRetryContent(
             .systemBarsPadding(),
         contentAlignment = Alignment.Center
     ) {
+        DiagnosisSkipTextButton(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 28.dp, end = 20.dp),
+            onClick = onSkip
+        )
+
         Column(
             modifier = Modifier.padding(horizontal = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -495,7 +540,8 @@ private fun BodyRetryContent(
 private fun BodyResultContent(
     uiState: DiagnosisUiState,
     onBack: () -> Unit,
-    onMoveToPersonalColor: () -> Unit
+    onMoveToPersonalColor: () -> Unit,
+    onSkip: () -> Unit
 ) {
     val result = uiState.bodyResult
 
@@ -509,7 +555,8 @@ private fun BodyResultContent(
     ) {
         DiagnosisHeader(
             title = "체형분석",
-            onBack = onBack
+            onBack = onBack,
+            onSkip = onSkip
         )
 
         Spacer(modifier = Modifier.height(50.dp))
@@ -563,7 +610,8 @@ private fun BodyResultContent(
 @Composable
 private fun DiagnosisHeader(
     title: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onSkip: (() -> Unit)? = null
 ) {
     Box(
         modifier = Modifier
@@ -588,7 +636,67 @@ private fun DiagnosisHeader(
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
-        )    }
+        )
+
+        if (onSkip != null) {
+            DiagnosisSkipTextButton(
+                modifier = Modifier.align(Alignment.CenterEnd),
+                onClick = onSkip
+            )
+        }
+    }
+}
+
+@Composable
+private fun DiagnosisSkipTextButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Text(
+        text = "건너뛰기",
+        modifier = modifier
+            .clickable(onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 8.dp),
+        color = Color(0xFF555555),
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Medium,
+        textAlign = TextAlign.Center
+    )
+}
+
+@Composable
+private fun BodySkipConfirmDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "진단을 건너뛸까요?",
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text(
+                text = "건너뛰면 체형 맞춤 추천 옷을 정확하게 추천할 수 없어요. 정말로 건너뛰시겠어요?",
+                lineHeight = 20.sp
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = "확인")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "취소")
+            }
+        },
+        containerColor = Color.White,
+        titleContentColor = Color.Black,
+        textContentColor = Color.Black
+    )
 }
 
 @Composable
