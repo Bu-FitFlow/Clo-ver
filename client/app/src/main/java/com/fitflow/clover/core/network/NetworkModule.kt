@@ -10,6 +10,7 @@ import com.fitflow.clover.data.remote.api.CommunityApi
 import com.fitflow.clover.data.remote.api.DiagnosisApi
 import com.fitflow.clover.data.remote.api.HealthApi
 import com.fitflow.clover.data.remote.api.ProductApi
+import com.fitflow.clover.data.remote.api.UserApi
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import okhttp3.Interceptor
@@ -101,6 +102,10 @@ class NetworkModule(
 
     val diagnosisApi: DiagnosisApi by lazy {
         retrofit.create(DiagnosisApi::class.java)
+    }
+
+    val userApi: UserApi by lazy {
+        retrofit.create(UserApi::class.java)
     }
 
     companion object {

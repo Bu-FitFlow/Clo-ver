@@ -24,6 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable // 🎯 composable 인식을 위해 필수 추가
@@ -45,6 +47,7 @@ import com.fitflow.clover.R
 import com.fitflow.clover.mypage.mainscreen.MyPageScreen
 import com.fitflow.clover.mypage.mainscreen.MyWriting
 import com.fitflow.clover.mypage.MyPageViewModel
+import com.fitflow.clover.presentation.diagnosis.DiagnosisUiState
 
 
 // 💡 화면들의 이동 주소 정의
@@ -67,58 +70,91 @@ object MyPageDestinations {
 
 // 💡 마이페이지 화면 이동을 총괄하는 네비게이션 호스트
 @Composable
-fun MyPageNavHost(onExitMyPage: () -> Unit,
-                  onNavigateToLogin: () -> Unit,
-                  onGoodsClick: () -> Unit,
-                  viewModel: MyPageViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+fun MyPageNavHost(
+    onExitMyPage: () -> Unit,
+    onNavigateToLogin: () -> Unit,
+    onGoodsClick: () -> Unit,
+    diagnosisUiState: DiagnosisUiState = DiagnosisUiState(),
+    viewModel: MyPageViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
 
-    // 🎯 DB에서 변경되는 진행률 값을 실시간 감시하는 레이더를 켭니다!
-    val cloverProgress by viewModel.cloverProgress.collectAsState()
+    LaunchedEffect(Unit) {
+        viewModel.loadMyPage(context)
+    }
+
+    LaunchedEffect(
+        diagnosisUiState.selectedHeightCm,
+        diagnosisUiState.selectedWeightKg,
+        diagnosisUiState.bodyResult,
+        diagnosisUiState.personalColorResult
+    ) {
+        viewModel.syncDiagnosisState(diagnosisUiState)
+    }
 
     NavHost(navController = navController, startDestination = MyPageDestinations.MYPAGE_SCREEN) {
-        // 🎯 1. 마이페이지 메인 화면 등록
         composable(MyPageDestinations.MYPAGE_SCREEN) {
             MyPageScreen(
-                cloverProgress = cloverProgress,
-                onSettingsClick = {
-                    // 아이콘을 누르면 SETUP(설정창)으로 이동합니다.
-                    navController.navigate(MyPageDestinations.SETUP)
-                },
-                onMyWritingClick = {
-                    // 🎯 내 글 보기 행을 누르면 MYWRITING 화면으로 이동합니다.
-                    navController.navigate(MyPageDestinations.MY_WRITING)
-                },
+                uiState = uiState,
+                onSettingsClick = { navController.navigate(MyPageDestinations.SETUP) },
+                onMyWritingClick = { navController.navigate(MyPageDestinations.MY_WRITING) },
                 onGoodsClick = onGoodsClick,
                 onBackClick = onExitMyPage
-
             )
         }
 
         composable(MyPageDestinations.MY_WRITING) {
-            MyWriting(navController = navController)
+            MyWriting(
+                navController = navController,
+                posts = uiState.myPosts
+            )
         }
         composable(MyPageDestinations.SETUP) {
-            MyPageSetup(navController = navController,
-                onLogoutOrWithdraw = onNavigateToLogin)
+            MyPageSetup(
+                navController = navController,
+                onLogoutOrWithdraw = onNavigateToLogin
+            )
         }
         composable(MyPageDestinations.ACCOUNT_PROFILE) {
             MyPageAccountProfile(
-                navController = navController)
+                navController = navController,
+                uiState = uiState
+            )
         }
         composable(MyPageDestinations.ACCOUNT_PROFILE_MODIFY) {
             MyPageAccountProfileModify(
-                navController = navController)
+                navController = navController,
+                uiState = uiState,
+                onSaveNickname = { nickname ->
+                    viewModel.updateNickname(context, nickname)
+                }
+            )
         }
         composable(MyPageDestinations.ACCOUNT_PASSWORD) {
             MyPageAccountPassword(navController = navController)
         }
         composable(MyPageDestinations.MYPROFILE) {
-            MyProfile(navController = navController)
+            MyProfile(
+                navController = navController,
+                uiState = uiState
+            )
         }
         composable(MyPageDestinations.MYPROFILE_MODIFY) {
-            MyProfileModify(navController = navController)
+            MyProfileModify(
+                navController = navController,
+                myPageUiState = uiState,
+                onProfileSaved = { height, weight, personalColor, bodyType, profileImageUri ->
+                    viewModel.updateProfileFromEdit(
+                        heightLabel = height,
+                        weightLabel = weight,
+                        personalColorLabel = personalColor,
+                        bodyTypeLabel = bodyType,
+                        profileImageUri = profileImageUri
+                    )
+                }
+            )
         }
         composable(MyPageDestinations.NOTIFICATION_PUSH) {
             NotificationPush(navController = navController)
@@ -127,7 +163,6 @@ fun MyPageNavHost(onExitMyPage: () -> Unit,
         composable(MyPageDestinations.PERSONAL_INFORMATION) {
             PersonalInformation(navController = navController)
         }
-
     }
 }
 
@@ -142,11 +177,11 @@ fun MyPageSetup(navController: NavController,
 
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-   /*
-    // 팝업창을 띄울지 말지 결정하는 "상태" 정의 (처음엔 닫힘 상태)
-    var showWithdrawDialog by remember { mutableStateOf(false) }
-    var showLogoutDialog by remember { mutableStateOf(false) }
-    */
+    /*
+     // 팝업창을 띄울지 말지 결정하는 "상태" 정의 (처음엔 닫힘 상태)
+     var showWithdrawDialog by remember { mutableStateOf(false) }
+     var showLogoutDialog by remember { mutableStateOf(false) }
+     */
 
     Surface(
         modifier = Modifier.fillMaxSize(),
