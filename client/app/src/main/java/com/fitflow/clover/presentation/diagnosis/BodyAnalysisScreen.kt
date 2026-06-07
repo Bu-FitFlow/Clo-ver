@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -112,6 +111,7 @@ fun BodyAnalysisScreen(
                 uiState = uiState,
                 heightOptions = viewModel.heightOptions,
                 weightOptions = viewModel.weightOptions,
+                onSelectGender = viewModel::selectGender,
                 onSelectHeight = viewModel::selectHeight,
                 onSelectWeight = viewModel::selectWeight,
                 onNext = {
@@ -134,6 +134,7 @@ fun BodyAnalysisScreen(
                 isLoading = false,
                 onPhotoCaptured = { bitmap ->
                     viewModel.onFrontBodyPhotoCaptured(bitmap)
+
                     if (bitmap != null) {
                         currentStep = BodyAnalysisStep.BODY_SIDE_CAMERA
                     }
@@ -213,6 +214,7 @@ private fun BodyUserInfoContent(
     uiState: DiagnosisUiState,
     heightOptions: List<Int>,
     weightOptions: List<Int>,
+    onSelectGender: (DiagnosisGender) -> Unit,
     onSelectHeight: (Int) -> Unit,
     onSelectWeight: (Int) -> Unit,
     onNext: () -> Unit,
@@ -233,17 +235,49 @@ private fun BodyUserInfoContent(
             onSkip = onSkip
         )
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "키와 몸무게를 입력해 주세요.",
+            text = "성별, 키, 몸무게를 입력해 주세요.",
             color = Color.Black,
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(26.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .height(136.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            GenderSelectButton(
+                gender = DiagnosisGender.MALE,
+                isSelected = uiState.selectedGender == DiagnosisGender.MALE,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize(),
+                onClick = {
+                    onSelectGender(DiagnosisGender.MALE)
+                }
+            )
+
+            GenderSelectButton(
+                gender = DiagnosisGender.FEMALE,
+                isSelected = uiState.selectedGender == DiagnosisGender.FEMALE,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize(),
+                onClick = {
+                    onSelectGender(DiagnosisGender.FEMALE)
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(26.dp))
 
         FigmaNumberDropdown(
             modifier = Modifier
@@ -256,7 +290,7 @@ private fun BodyUserInfoContent(
             onSelect = onSelectHeight
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
         FigmaNumberDropdown(
             modifier = Modifier
@@ -267,6 +301,21 @@ private fun BodyUserInfoContent(
             selectedValue = uiState.selectedWeightKg,
             options = weightOptions,
             onSelect = onSelectWeight
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        Text(
+            text = when {
+                uiState.selectedGender == null -> "성별을 선택해 주세요."
+                uiState.selectedHeightCm == null -> "키를 선택해 주세요."
+                uiState.selectedWeightKg == null -> "몸무게를 선택해 주세요."
+                else -> "입력한 정보로 체형 분석을 진행할 수 있어요."
+            },
+            color = if (uiState.isInfoCompleted) Color(0xFF5FAE4F) else Color(0xFF777777),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -503,7 +552,8 @@ private fun BodyRetryContent(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
-            }        }
+            }
+        }
     }
 }
 
@@ -676,6 +726,7 @@ private fun ChevronLeftIcon() {
         modifier = Modifier.size(24.dp)
     ) {
         val strokeWidth = 2.dp.toPx()
+
         drawLine(
             color = Color.Black,
             start = Offset(x = size.width * 0.7f, y = size.height * 0.1f),
@@ -711,8 +762,15 @@ private fun GenderSelectButton(
                 shape = RoundedCornerShape(8.dp)
             )
             .then(
-                if (isSelected) Modifier.border(2.dp, baseColor, RoundedCornerShape(8.dp))
-                else Modifier
+                if (isSelected) {
+                    Modifier.border(
+                        width = 2.dp,
+                        color = baseColor,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                } else {
+                    Modifier
+                }
             )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
@@ -777,6 +835,7 @@ private fun GenderAvatar(
                 strokeWidth = w * 0.08f,
                 cap = StrokeCap.Round
             )
+
             drawLine(
                 color = drawColor,
                 start = Offset(centerX + w * 0.28f, h * 0.2f),
@@ -784,6 +843,7 @@ private fun GenderAvatar(
                 strokeWidth = w * 0.08f,
                 cap = StrokeCap.Round
             )
+
             drawLine(
                 color = drawColor,
                 start = Offset(centerX - w * 0.09f, h * 0.55f),
@@ -791,6 +851,7 @@ private fun GenderAvatar(
                 strokeWidth = w * 0.1f,
                 cap = StrokeCap.Round
             )
+
             drawLine(
                 color = drawColor,
                 start = Offset(centerX + w * 0.09f, h * 0.55f),
@@ -805,7 +866,11 @@ private fun GenderAvatar(
                 lineTo(centerX + w * 0.35f, h * 0.62f)
                 close()
             }
-            drawPath(path = dressPath, color = drawColor)
+
+            drawPath(
+                path = dressPath,
+                color = drawColor
+            )
 
             drawLine(
                 color = drawColor,
@@ -814,6 +879,7 @@ private fun GenderAvatar(
                 strokeWidth = w * 0.07f,
                 cap = StrokeCap.Round
             )
+
             drawLine(
                 color = drawColor,
                 start = Offset(centerX + w * 0.2f, h * 0.2f),
@@ -821,6 +887,7 @@ private fun GenderAvatar(
                 strokeWidth = w * 0.07f,
                 cap = StrokeCap.Round
             )
+
             drawLine(
                 color = drawColor,
                 start = Offset(centerX - w * 0.1f, h * 0.6f),
@@ -828,6 +895,7 @@ private fun GenderAvatar(
                 strokeWidth = w * 0.09f,
                 cap = StrokeCap.Round
             )
+
             drawLine(
                 color = drawColor,
                 start = Offset(centerX + w * 0.1f, h * 0.6f),
@@ -848,19 +916,26 @@ private fun FigmaNumberDropdown(
     options: List<Int>,
     onSelect: (Int) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember {
+        mutableStateOf(false)
+    }
 
     Box(modifier = modifier) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White, shape = RoundedCornerShape(6.dp))
+                .background(
+                    color = Color.White,
+                    shape = RoundedCornerShape(6.dp)
+                )
                 .border(
                     width = 1.dp,
                     color = Color.Black,
                     shape = RoundedCornerShape(6.dp)
                 )
-                .clickable { expanded = true }
+                .clickable {
+                    expanded = true
+                }
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -874,23 +949,30 @@ private fun FigmaNumberDropdown(
 
             Canvas(modifier = Modifier.size(14.dp)) {
                 val path = Path().apply {
-                    moveTo(size.width / 2f, 0f)
-                    lineTo(size.width, size.height)
-                    lineTo(0f, size.height)
+                    moveTo(size.width / 2f, size.height)
+                    lineTo(size.width, 0f)
+                    lineTo(0f, 0f)
                     close()
                 }
-                drawPath(path, Color.Black)
+
+                drawPath(
+                    path = path,
+                    color = Color.Black
+                )
             }
         }
 
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.fillMaxWidth(0.85f)
+            onDismissRequest = {
+                expanded = false
+            }
         ) {
             options.forEach { value ->
                 DropdownMenuItem(
-                    text = { Text(text = "$value$suffix") },
+                    text = {
+                        Text(text = "$value$suffix")
+                    },
                     onClick = {
                         onSelect(value)
                         expanded = false
@@ -922,8 +1004,11 @@ private fun PhotoCaptureBox(
     ) {
         when {
             isLoading -> {
-                CircularProgressIndicator(color = Color(0xFF99DE81))
+                CircularProgressIndicator(
+                    color = Color(0xFF99DE81)
+                )
             }
+
             bitmap != null -> {
                 Image(
                     bitmap = bitmap.asImageBitmap(),
@@ -932,6 +1017,7 @@ private fun PhotoCaptureBox(
                     contentScale = ContentScale.Crop
                 )
             }
+
             else -> {
                 PlusIcon()
             }
@@ -942,7 +1028,10 @@ private fun PhotoCaptureBox(
 @Composable
 private fun PlusIcon() {
     Canvas(
-        modifier = Modifier.size(width = 40.dp, height = 40.dp)
+        modifier = Modifier.size(
+            width = 40.dp,
+            height = 40.dp
+        )
     ) {
         drawLine(
             color = Color.Black,
@@ -951,6 +1040,7 @@ private fun PlusIcon() {
             strokeWidth = 2.dp.toPx(),
             cap = StrokeCap.Round
         )
+
         drawLine(
             color = Color.Black,
             start = Offset(0f, size.height / 2f),

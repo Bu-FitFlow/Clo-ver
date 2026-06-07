@@ -10,6 +10,8 @@ import com.fitflow.clover.core.network.NetworkModule
 import com.fitflow.clover.data.remote.dto.LoginRequest
 import com.fitflow.clover.data.remote.dto.SignUpRequest
 import com.google.gson.Gson
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
@@ -101,7 +103,25 @@ class AuthViewModel(
 
                 Log.d(
                     TAG_LOGIN,
-                    "로그인 성공: memberId=${response.memberId}, loginId=${response.loginId}, gender=${response.gender}, accessToken=${accessToken.take(20)}..."
+                    "로그인 1차 성공: memberId=${response.memberId}, loginId=${response.loginId}, gender=${response.gender}, accessToken=${accessToken.take(20)}..."
+                )
+
+                refreshCurrentMemberProfile(
+                    fallbackLoginId = loginId
+                )
+
+                if (_currentMemberId.value == null) {
+                    Log.e(
+                        TAG_LOGIN,
+                        "로그인 후 회원 ID 복구 실패: currentMemberId=null"
+                    )
+                    onError("로그인은 되었지만 회원 정보를 불러오지 못했어요. 백엔드 /api/members/me 응답에 memberId가 있는지 확인해 주세요.")
+                    return@launch
+                }
+
+                Log.d(
+                    TAG_LOGIN,
+                    "로그인 최종 성공: memberId=${_currentMemberId.value}, displayName=${_currentDisplayName.value}, gender=${_currentGender.value}"
                 )
 
                 onSuccess(false)
@@ -113,6 +133,36 @@ class AuthViewModel(
                 Log.e(TAG_LOGIN, "로그인 통신 실패: $message", e)
                 onError(message)
             }
+        }
+    }
+
+    private suspend fun refreshCurrentMemberProfile(
+        fallbackLoginId: String
+    ) {
+        runCatching {
+            val rawResponse = networkModule.userApi.getMyInfo()
+            val profile = rawResponse.toMemberProfile()
+
+            Log.d(
+                TAG_LOGIN,
+                "내 정보 조회 성공: memberId=${profile.memberId}, displayName=${profile.displayName}, gender=${profile.gender}, raw=$rawResponse"
+            )
+
+            _currentMemberId.value = profile.memberId
+                ?: _currentMemberId.value
+
+            _currentDisplayName.value = profile.displayName
+                ?: _currentDisplayName.value
+                        ?: fallbackLoginId
+
+            _currentGender.value = profile.gender
+                ?: _currentGender.value
+        }.onFailure { error ->
+            Log.e(
+                TAG_LOGIN,
+                "내 정보 조회 실패: ${error.toDisplayMessage("회원 정보 조회에 실패했어요.")}",
+                error
+            )
         }
     }
 
@@ -151,6 +201,99 @@ class AuthViewModel(
             }
         }
     }
+
+    private fun JsonObject.toMemberProfile(): MemberProfile {
+        val memberId = findLongRecursively(
+            "memberId",
+            "member_id",
+            "id",
+            "userId",
+            "user_id"
+        )
+
+        val displayName = findStringRecursively(
+            "nickname",
+            "name",
+            "loginId",
+            "login_id",
+            "username"
+        )
+
+        val gender = findStringRecursively(
+            "gender",
+            "sex"
+        )
+
+        return MemberProfile(
+            memberId = memberId,
+            displayName = displayName,
+            gender = gender
+        )
+    }
+
+    private fun JsonObject.findLongRecursively(
+        vararg keys: String
+    ): Long? {
+        for (key in keys) {
+            val value = get(key)
+            val parsed = value.asLongOrNull()
+            if (parsed != null) return parsed
+        }
+
+        for ((_, value) in entrySet()) {
+            if (value != null && !value.isJsonNull && value.isJsonObject) {
+                val parsed = value.asJsonObject.findLongRecursively(*keys)
+                if (parsed != null) return parsed
+            }
+        }
+
+        return null
+    }
+
+    private fun JsonObject.findStringRecursively(
+        vararg keys: String
+    ): String? {
+        for (key in keys) {
+            val value = get(key)
+            val parsed = value.asStringOrNull()
+            if (!parsed.isNullOrBlank()) return parsed
+        }
+
+        for ((_, value) in entrySet()) {
+            if (value != null && !value.isJsonNull && value.isJsonObject) {
+                val parsed = value.asJsonObject.findStringRecursively(*keys)
+                if (!parsed.isNullOrBlank()) return parsed
+            }
+        }
+
+        return null
+    }
+
+    private fun JsonElement?.asLongOrNull(): Long? {
+        if (this == null || isJsonNull) return null
+
+        runCatching {
+            asLong
+        }.getOrNull()?.let {
+            return it
+        }
+
+        return asStringOrNull()?.toLongOrNull()
+    }
+
+    private fun JsonElement?.asStringOrNull(): String? {
+        if (this == null || isJsonNull) return null
+
+        return runCatching {
+            asString
+        }.getOrNull()
+    }
+
+    private data class MemberProfile(
+        val memberId: Long?,
+        val displayName: String?,
+        val gender: String?
+    )
 
     private fun Throwable.toDisplayMessage(
         defaultMessage: String

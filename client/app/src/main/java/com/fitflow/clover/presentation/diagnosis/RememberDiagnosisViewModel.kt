@@ -56,9 +56,7 @@ fun rememberDiagnosisViewModel(
 }
 
 private fun JsonObject.toDiagnosisMemberProfile(): DiagnosisMemberProfile {
-    val payload = payloadObject()
-
-    val currentMemberId = payload.longOrNull(
+    val currentMemberId = findLongRecursively(
         "memberId",
         "member_id",
         "id",
@@ -66,12 +64,15 @@ private fun JsonObject.toDiagnosisMemberProfile(): DiagnosisMemberProfile {
         "user_id"
     )
 
-    val currentDisplayName = payload.stringOrNull("nickname")
-        ?: payload.stringOrNull("name")
-        ?: payload.stringOrNull("loginId", "login_id")
-        ?: payload.stringOrNull("username")
+    val currentDisplayName = findStringRecursively(
+        "nickname",
+        "name",
+        "loginId",
+        "login_id",
+        "username"
+    )
 
-    val currentGender = payload.stringOrNull(
+    val currentGender = findStringRecursively(
         "gender",
         "sex"
     )
@@ -88,83 +89,54 @@ private fun JsonObject.toDiagnosisMemberProfile(): DiagnosisMemberProfile {
     )
 }
 
-private fun JsonObject.payloadObject(): JsonObject {
-    val wrapperKeys = listOf(
-        "data",
-        "payload",
-        "result",
-        "body"
-    )
-
-    for (key in wrapperKeys) {
+private fun JsonObject.findLongRecursively(
+    vararg keys: String
+): Long? {
+    for (key in keys) {
         val value = get(key)
+        val parsed = value.asLongOrNull()
+        if (parsed != null) return parsed
+    }
 
+    for ((_, value) in entrySet()) {
         if (value != null && !value.isJsonNull && value.isJsonObject) {
-            val wrapperObject = value.asJsonObject
-
-            val nestedObject = wrapperObject.objectOrNull("member")
-                ?: wrapperObject.objectOrNull("user")
-                ?: wrapperObject.objectOrNull("memberInfo")
-                ?: wrapperObject.objectOrNull("userInfo")
-                ?: wrapperObject.objectOrNull("profile")
-
-            return nestedObject ?: wrapperObject
-        }
-    }
-
-    val nestedObject = objectOrNull("member")
-        ?: objectOrNull("user")
-        ?: objectOrNull("memberInfo")
-        ?: objectOrNull("userInfo")
-        ?: objectOrNull("profile")
-
-    return nestedObject ?: this
-}
-
-private fun JsonObject.objectOrNull(key: String): JsonObject? {
-    val value = get(key)
-
-    return if (value != null && !value.isJsonNull && value.isJsonObject) {
-        value.asJsonObject
-    } else {
-        null
-    }
-}
-
-private fun JsonObject.stringOrNull(vararg keys: String): String? {
-    for (key in keys) {
-        val value = get(key).asStringOrNull()
-
-        if (!value.isNullOrBlank()) {
-            return value
+            val parsed = value.asJsonObject.findLongRecursively(*keys)
+            if (parsed != null) return parsed
         }
     }
 
     return null
 }
 
-private fun JsonObject.longOrNull(vararg keys: String): Long? {
+private fun JsonObject.findStringRecursively(
+    vararg keys: String
+): String? {
     for (key in keys) {
-        val value = get(key) ?: continue
+        val value = get(key)
+        val parsed = value.asStringOrNull()
+        if (!parsed.isNullOrBlank()) return parsed
+    }
 
-        if (value.isJsonNull) {
-            continue
+    for ((_, value) in entrySet()) {
+        if (value != null && !value.isJsonNull && value.isJsonObject) {
+            val parsed = value.asJsonObject.findStringRecursively(*keys)
+            if (!parsed.isNullOrBlank()) return parsed
         }
-
-        runCatching {
-            value.asLong
-        }.getOrNull()?.let {
-            return it
-        }
-
-        value.asStringOrNull()
-            ?.toLongOrNull()
-            ?.let {
-                return it
-            }
     }
 
     return null
+}
+
+private fun JsonElement?.asLongOrNull(): Long? {
+    if (this == null || isJsonNull) return null
+
+    runCatching {
+        asLong
+    }.getOrNull()?.let {
+        return it
+    }
+
+    return asStringOrNull()?.toLongOrNull()
 }
 
 private fun JsonElement?.asStringOrNull(): String? {
