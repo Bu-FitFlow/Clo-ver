@@ -1,13 +1,14 @@
 # main.py
-from fastapi import FastAPI, UploadFile, Form
-from fastapi.responses import JSONResponse
-import cv2
-import numpy as np
-from ultralytics import YOLO
 import os
 import urllib.request
-from sklearn.cluster import KMeans
+
+import cv2
 import mediapipe as mp
+import numpy as np
+from fastapi import FastAPI, UploadFile, Form
+from fastapi.responses import JSONResponse
+from sklearn.cluster import KMeans
+from ultralytics import YOLO
 
 app = FastAPI()
 
@@ -29,9 +30,9 @@ FaceLandmarker = mp.tasks.vision.FaceLandmarker
 VisionRunningMode = mp.tasks.vision.RunningMode
 
 options = mp.tasks.vision.FaceLandmarkerOptions(
-    base_options=BaseOptions(model_asset_path=MODEL_PATH),
-    running_mode=VisionRunningMode.IMAGE,
-    num_faces=1
+    base_options = BaseOptions(model_asset_path = MODEL_PATH),
+    running_mode = VisionRunningMode.IMAGE,
+    num_faces = 1
 )
 landmarker = FaceLandmarker.create_from_options(options)
 
@@ -89,19 +90,19 @@ def get_skin_color(image_rgb, mask):
     valid_mask = (L_values > 50) & (L_values < 200)
     filtered_pixels = pixels[valid_mask]
     if len(filtered_pixels) < 50: filtered_pixels = pixels
-    kmeans = KMeans(n_clusters=3, n_init=5, random_state=42).fit(filtered_pixels)
+    kmeans = KMeans(n_clusters = 3, n_init = 5, random_state = 42).fit(filtered_pixels)
     return kmeans.cluster_centers_[np.argmax(np.bincount(kmeans.labels_))]
 
 
 def get_data(img):
-    r_seg = seg_model.predict(img, conf=0.3, verbose=False)[0]
-    r_pose = pose_model.predict(img, conf=0.3, verbose=False)[0]
+    r_seg = seg_model.predict(img, conf = 0.3, verbose = False)[0]
+    r_pose = pose_model.predict(img, conf = 0.3, verbose = False)[0]
     if r_seg.masks is None or r_pose.keypoints is None: return None, None, None
     mask = r_seg.masks.data[0].cpu().numpy()
     mask_resized = cv2.resize(mask, (img.shape[1], img.shape[0]))
     binary_mask = (mask_resized > 0.5).astype(np.uint8) * 255
     kernel = np.ones((5, 5), np.uint8)
-    binary_mask = cv2.erode(binary_mask, kernel, iterations=2)
+    binary_mask = cv2.erode(binary_mask, kernel, iterations = 2)
     kp = r_pose.keypoints.xy[0].cpu().numpy()
     bbox = r_seg.boxes.xyxy[0].cpu().numpy()
     return binary_mask, kp, bbox
@@ -123,12 +124,12 @@ def get_w(b_mask, y):
     return (idx[-1] - idx[0]) if len(idx) > 1 else 1
 
 
-def resize_image(img, target_height=640):
+def resize_image(img, target_height = 640):
     h, w = img.shape[:2]
     if h > target_height:
         ratio = target_height / float(h)
         new_w = int(w * ratio)
-        return cv2.resize(img, (new_w, target_height), interpolation=cv2.INTER_AREA)
+        return cv2.resize(img, (new_w, target_height), interpolation = cv2.INTER_AREA)
     return img
 
 
@@ -152,7 +153,7 @@ async def analyze_body(
     s_mask, s_kp, s_bbox = get_data(s_cv)
 
     if f_mask is None or s_mask is None:
-        return JSONResponse(status_code=400, content={"error": "체형 분석 실패. 사람이 제대로 나오지 않았습니다."})
+        return JSONResponse(status_code = 400, content = { "error": "체형 분석 실패. 사람이 제대로 나오지 않았습니다." })
 
     f_sy = int((f_kp[5][1] + f_kp[6][1]) / 2)
     f_hy = int((f_kp[11][1] + f_kp[12][1]) / 2)
@@ -176,7 +177,7 @@ async def analyze_body(
     side_fat_ratio = s_belly_d / s_chest_d
 
     body_type = ""
-    if gender == 'M':
+    if gender == 'MALE':
         if f_aspect < 0.38:
             body_type = "The Lean Column"
         elif (side_fat_ratio > 1.02 or f_aspect > 0.48) and w_to_h > 0.90:
@@ -190,7 +191,7 @@ async def analyze_body(
                 body_type = "The Hour Glass"
             else:
                 body_type = "The Rectangle"
-    elif gender == 'F':
+    elif gender == 'FEMALE':
         if (side_fat_ratio > 1.02 or f_aspect > 0.45) and w_to_h > 0.92:
             body_type = "The Apple"
         elif f_w_w / ((f_s_w + f_h_w) / 2) < 0.78 and abs(f_s_w - f_h_w) < (f_h_w * 0.1):
@@ -208,7 +209,7 @@ async def analyze_body(
     return {
         "gender": gender,
         "body_type": body_type,
-        "metrics": {"f_aspect": float(f_aspect), "side_fat_ratio": float(side_fat_ratio)}
+        "metrics": { "f_aspect": float(f_aspect), "side_fat_ratio": float(side_fat_ratio) }
     }
 
 
@@ -224,14 +225,14 @@ async def analyze_color(front_img: UploadFile = Form(...)):
     img_rgb = cv2.cvtColor(f_cv_orig, cv2.COLOR_BGR2RGB)
     wb_img_rgb = apply_white_balance(img_rgb)
 
-    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=wb_img_rgb)
+    mp_image = mp.Image(image_format = mp.ImageFormat.SRGB, data = wb_img_rgb)
     result = landmarker.detect(mp_image)
 
     final_tone = "Unknown"
 
     if result.face_landmarks:
         landmarks = result.face_landmarks[0]
-        mask_skin = np.zeros((h, w), dtype=np.uint8)
+        mask_skin = np.zeros((h, w), dtype = np.uint8)
         pts_skin = np.array([[int(landmarks[i].x * w), int(landmarks[i].y * h)] for i in IDX_CHEEK], np.int32)
         cv2.fillPoly(mask_skin, [pts_skin], 255)
 
@@ -257,7 +258,7 @@ async def analyze_color(front_img: UploadFile = Form(...)):
                     final_tone = "Winter Cool"
 
     if final_tone == "Unknown":
-        return JSONResponse(status_code=400, content={"error": "퍼스널 컬러 분석 실패. 얼굴을 명확히 인식할 수 없습니다."})
+        return JSONResponse(status_code = 400, content = { "error": "퍼스널 컬러 분석 실패. 얼굴을 명확히 인식할 수 없습니다." })
 
     return {
         "personal_color": final_tone,
