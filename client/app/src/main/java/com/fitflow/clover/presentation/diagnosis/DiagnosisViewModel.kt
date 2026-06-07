@@ -58,6 +58,7 @@ class DiagnosisViewModel(
         }
 
         val loader = memberProfileLoader
+
         if (loader == null) {
             Log.e(TAG, "회원 정보 복구 실패: memberProfileLoader 없음")
             return false
@@ -93,7 +94,6 @@ class DiagnosisViewModel(
                 "회원 정보 서버 복구 실패: ${error.toDiagnosisLogMessage()}",
                 error
             )
-
             false
         }
     }
@@ -136,18 +136,24 @@ class DiagnosisViewModel(
         uiState.value = uiState.value.copy(
             selectedGender = gender
         )
+
+        Log.d(TAG, "성별 선택: gender=${gender.name}")
     }
 
     fun selectHeight(heightCm: Int) {
         uiState.value = uiState.value.copy(
             selectedHeightCm = heightCm
         )
+
+        Log.d(TAG, "키 선택: height=$heightCm")
     }
 
     fun selectWeight(weightKg: Int) {
         uiState.value = uiState.value.copy(
             selectedWeightKg = weightKg
         )
+
+        Log.d(TAG, "몸무게 선택: weight=$weightKg")
     }
 
     fun onFrontBodyPhotoCaptured(bitmap: Bitmap?) {
@@ -237,7 +243,7 @@ class DiagnosisViewModel(
             uiState.value = state.copy(
                 isBodyAnalyzing = false,
                 bodyResult = null,
-                bodyAnalysisErrorMessage = "성별 정보를 불러오지 못했어요. 내 정보 또는 회원가입 정보를 확인해 주세요."
+                bodyAnalysisErrorMessage = "성별을 선택해 주세요."
             )
             return false
         }
@@ -265,7 +271,7 @@ class DiagnosisViewModel(
 
         Log.d(
             TAG,
-            "체형 분석 요청 시작: memberId=$safeMemberId, gender=$gender, height=$heightCm, weight=$weightKg"
+            "체형 분석 요청 시작: memberId=$safeMemberId, gender=${gender.name}, height=$heightCm, weight=$weightKg"
         )
 
         val apiResult = runCatching {
@@ -515,7 +521,7 @@ class DiagnosisViewModel(
         return when (this) {
             is HttpException -> {
                 when (code()) {
-                    400 -> "진단 요청값이 서버 형식과 맞지 않아요. 이미지 필드명 또는 회원 정보를 확인해 주세요."
+                    400 -> "진단 요청값이 서버 형식과 맞지 않아요. 이미지 필드명 또는 입력값을 확인해 주세요."
                     401 -> "로그인 정보가 만료되었어요. 다시 로그인한 뒤 진행해 주세요."
                     403 -> "진단 요청 권한이 없어요. 로그인 상태를 확인해 주세요."
                     404 -> "진단 API 경로를 찾지 못했어요. 백엔드 API 주소를 확인해 주세요."

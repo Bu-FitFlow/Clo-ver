@@ -93,15 +93,18 @@ private fun JsonObject.findLongRecursively(
     vararg keys: String
 ): Long? {
     for (key in keys) {
-        val value = get(key)
-        val parsed = value.asLongOrNull()
-        if (parsed != null) return parsed
+        val parsed = get(key).asLongOrNull()
+        if (parsed != null) {
+            return parsed
+        }
     }
 
     for ((_, value) in entrySet()) {
         if (value != null && !value.isJsonNull && value.isJsonObject) {
             val parsed = value.asJsonObject.findLongRecursively(*keys)
-            if (parsed != null) return parsed
+            if (parsed != null) {
+                return parsed
+            }
         }
     }
 
@@ -112,15 +115,18 @@ private fun JsonObject.findStringRecursively(
     vararg keys: String
 ): String? {
     for (key in keys) {
-        val value = get(key)
-        val parsed = value.asStringOrNull()
-        if (!parsed.isNullOrBlank()) return parsed
+        val parsed = get(key).asStringOrNull()
+        if (!parsed.isNullOrBlank()) {
+            return parsed
+        }
     }
 
     for ((_, value) in entrySet()) {
         if (value != null && !value.isJsonNull && value.isJsonObject) {
             val parsed = value.asJsonObject.findStringRecursively(*keys)
-            if (!parsed.isNullOrBlank()) return parsed
+            if (!parsed.isNullOrBlank()) {
+                return parsed
+            }
         }
     }
 
@@ -128,7 +134,9 @@ private fun JsonObject.findStringRecursively(
 }
 
 private fun JsonElement?.asLongOrNull(): Long? {
-    if (this == null || isJsonNull) return null
+    if (this == null || isJsonNull) {
+        return null
+    }
 
     runCatching {
         asLong

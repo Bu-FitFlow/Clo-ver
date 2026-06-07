@@ -46,12 +46,12 @@ class AuthInterceptor(
     }
 
     private fun shouldSkipAuth(path: String): Boolean {
-        return path == "/api/health" ||
-                path.contains("/login") ||
-                path.contains("/signup") ||
-                path.contains("/sign-up") ||
-                path.contains("/refresh") ||
-                path.contains("/reissue")
+        return path.contains("/api/members/login") ||
+                path.contains("/api/members/signup") ||
+                path.contains("/api/members/refresh") ||
+                path.contains("/api/auth/login") ||
+                path.contains("/api/auth/signup") ||
+                path.contains("/api/auth/refresh")
     }
 
     private fun String.toBearerHeaderValue(): String {
