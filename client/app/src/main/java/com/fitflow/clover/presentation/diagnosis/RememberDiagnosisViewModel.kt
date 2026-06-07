@@ -9,8 +9,6 @@ import com.fitflow.clover.core.network.NetworkModule
 import com.fitflow.clover.data.repository.DiagnosisRepositoryImpl
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import retrofit2.HttpException
-import java.io.IOException
 
 @Composable
 fun rememberDiagnosisViewModel(
@@ -28,7 +26,12 @@ fun rememberDiagnosisViewModel(
         DiagnosisViewModel(
             diagnosisRepository = DiagnosisRepositoryImpl(
                 diagnosisApi = networkModule.diagnosisApi
-            )
+            ),
+            memberProfileLoader = {
+                networkModule.userApi
+                    .getMyInfo()
+                    .toDiagnosisMemberProfile()
+            }
         )
     }
 
@@ -40,62 +43,49 @@ fun rememberDiagnosisViewModel(
         )
 
         if (memberId == null || memberId <= 0L) {
-            runCatching {
-                val rawResponse = networkModule.userApi.getMyInfo()
-                val payload = rawResponse.payloadObject()
+            val loaded = viewModel.refreshMemberProfileFromServer()
 
-                val currentMemberId = payload.longOrNull(
-                    "memberId",
-                    "member_id",
-                    "id",
-                    "userId",
-                    "user_id"
-                )
-
-                val currentDisplayName = displayName
-                    ?: payload.stringOrNull("nickname")
-                    ?: payload.stringOrNull("name")
-                    ?: payload.stringOrNull("loginId", "login_id")
-                    ?: payload.stringOrNull("username")
-
-                val currentGender = gender
-                    ?: payload.stringOrNull("gender", "sex")
-
-                Log.d(
-                    TAG,
-                    "회원 정보 복구 성공: memberId=$currentMemberId, displayName=$currentDisplayName, gender=$currentGender, raw=$rawResponse"
-                )
-
-                viewModel.setMemberProfile(
-                    memberId = currentMemberId,
-                    displayName = currentDisplayName,
-                    gender = currentGender
-                )
-            }.onFailure { error ->
-                val message = when (error) {
-                    is HttpException -> {
-                        val errorBody = error.response()
-                            ?.errorBody()
-                            ?.string()
-
-                        "HTTP ${error.code()}, body=$errorBody"
-                    }
-
-                    is IOException -> {
-                        "네트워크 연결 실패: ${error.message}"
-                    }
-
-                    else -> {
-                        error.message ?: "알 수 없는 오류"
-                    }
-                }
-
-                Log.e(TAG, "회원 정보 복구 실패: $message", error)
-            }
+            Log.d(
+                TAG,
+                "초기 회원 정보 복구 결과: loaded=$loaded"
+            )
         }
     }
 
     return viewModel
+}
+
+private fun JsonObject.toDiagnosisMemberProfile(): DiagnosisMemberProfile {
+    val payload = payloadObject()
+
+    val currentMemberId = payload.longOrNull(
+        "memberId",
+        "member_id",
+        "id",
+        "userId",
+        "user_id"
+    )
+
+    val currentDisplayName = payload.stringOrNull("nickname")
+        ?: payload.stringOrNull("name")
+        ?: payload.stringOrNull("loginId", "login_id")
+        ?: payload.stringOrNull("username")
+
+    val currentGender = payload.stringOrNull(
+        "gender",
+        "sex"
+    )
+
+    Log.d(
+        TAG,
+        "회원 정보 응답 파싱 결과: memberId=$currentMemberId, displayName=$currentDisplayName, gender=$currentGender, raw=$this"
+    )
+
+    return DiagnosisMemberProfile(
+        memberId = currentMemberId,
+        displayName = currentDisplayName,
+        gender = currentGender
+    )
 }
 
 private fun JsonObject.payloadObject(): JsonObject {
@@ -112,21 +102,23 @@ private fun JsonObject.payloadObject(): JsonObject {
         if (value != null && !value.isJsonNull && value.isJsonObject) {
             val wrapperObject = value.asJsonObject
 
-            val nestedMember = wrapperObject.objectOrNull("member")
+            val nestedObject = wrapperObject.objectOrNull("member")
                 ?: wrapperObject.objectOrNull("user")
                 ?: wrapperObject.objectOrNull("memberInfo")
                 ?: wrapperObject.objectOrNull("userInfo")
+                ?: wrapperObject.objectOrNull("profile")
 
-            return nestedMember ?: wrapperObject
+            return nestedObject ?: wrapperObject
         }
     }
 
-    val nestedMember = objectOrNull("member")
+    val nestedObject = objectOrNull("member")
         ?: objectOrNull("user")
         ?: objectOrNull("memberInfo")
         ?: objectOrNull("userInfo")
+        ?: objectOrNull("profile")
 
-    return nestedMember ?: this
+    return nestedObject ?: this
 }
 
 private fun JsonObject.objectOrNull(key: String): JsonObject? {

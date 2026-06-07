@@ -21,12 +21,14 @@ class TokenAuthenticator(
         response: Response
     ): Request? {
         if (responseCount(response) >= 2) {
-            Log.e(TAG, "토큰 재발급 중단: 401 재시도 횟수 초과")
+            Log.e(TAG, "토큰 재발급 중단: 재시도 횟수 초과")
             return null
         }
 
-        val hasAccessToken = response.request.header(NetworkConstants.HEADER_AUTHORIZATION) != null
-        if (!hasAccessToken) {
+        val hasAuthorizationHeader =
+            response.request.header(NetworkConstants.HEADER_AUTHORIZATION) != null
+
+        if (!hasAuthorizationHeader) {
             Log.e(TAG, "토큰 재발급 중단: 기존 요청에 Authorization 헤더가 없음")
             return null
         }
@@ -37,20 +39,22 @@ class TokenAuthenticator(
 
         if (refreshToken.isNullOrBlank()) {
             Log.e(TAG, "토큰 재발급 중단: refreshToken 없음")
+
             runBlocking {
                 tokenDataStore.clearTokens()
             }
+
             return null
         }
 
-        val refreshBody = JSONObject()
+        val requestBody = JSONObject()
             .put("refreshToken", refreshToken)
             .toString()
             .toRequestBody("application/json".toMediaType())
 
         val refreshRequest = Request.Builder()
             .url("${NetworkConstants.BASE_URL}api/members/refresh")
-            .post(refreshBody)
+            .post(requestBody)
             .header("Authorization-Refresh", refreshToken)
             .header(NetworkConstants.HEADER_CONTENT_TYPE, "application/json")
             .build()
@@ -74,11 +78,12 @@ class TokenAuthenticator(
 
                 val tokenPair = responseBody.extractTokenPair()
                 val newAccessToken = tokenPair.accessToken
-                val newRefreshToken = tokenPair.refreshToken?.takeIf { it.isNotBlank() }
+                val newRefreshToken = tokenPair.refreshToken
+                    ?.takeIf { it.isNotBlank() }
                     ?: refreshToken
 
                 if (newAccessToken.isNullOrBlank()) {
-                    Log.e(TAG, "토큰 재발급 실패: accessToken이 비어 있음. body=$responseBody")
+                    Log.e(TAG, "토큰 재발급 실패: accessToken 없음, body=$responseBody")
 
                     runBlocking {
                         tokenDataStore.clearTokens()
@@ -99,7 +104,7 @@ class TokenAuthenticator(
                 response.request.newBuilder()
                     .header(
                         NetworkConstants.HEADER_AUTHORIZATION,
-                        "${NetworkConstants.BEARER_PREFIX} $newAccessToken"
+                        newAccessToken.toBearerHeaderValue()
                     )
                     .build()
             }
@@ -133,6 +138,7 @@ class TokenAuthenticator(
 
         return runCatching {
             val root = JSONObject(this)
+
             val tokenObject = root.objectOrNull("data")
                 ?: root.objectOrNull("payload")
                 ?: root.objectOrNull("result")
@@ -159,8 +165,8 @@ class TokenAuthenticator(
                     "refresh_token"
                 )
             )
-        }.getOrElse {
-            Log.e(TAG, "토큰 응답 파싱 실패: ${it.message}", it)
+        }.getOrElse { error ->
+            Log.e(TAG, "토큰 응답 파싱 실패: ${error.message}", error)
             TokenPair()
         }
     }
@@ -172,12 +178,23 @@ class TokenAuthenticator(
     private fun JSONObject.stringOrNull(vararg keys: String): String? {
         for (key in keys) {
             val value = optString(key, null)
+
             if (!value.isNullOrBlank() && value != "null") {
                 return value
             }
         }
 
         return null
+    }
+
+    private fun String.toBearerHeaderValue(): String {
+        val token = trim()
+
+        return if (token.startsWith("${NetworkConstants.BEARER_PREFIX} ", ignoreCase = true)) {
+            token
+        } else {
+            "${NetworkConstants.BEARER_PREFIX} $token"
+        }
     }
 
     private data class TokenPair(
