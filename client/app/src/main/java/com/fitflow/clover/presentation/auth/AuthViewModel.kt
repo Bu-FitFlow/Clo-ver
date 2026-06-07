@@ -84,7 +84,11 @@ class AuthViewModel(
                 val refreshToken = response.refreshToken
 
                 if (accessToken.isNullOrBlank()) {
-                    Log.e(TAG_LOGIN, "로그인 실패: accessToken이 비어 있음. response=$response")
+                    Log.e(
+                        TAG_LOGIN,
+                        "로그인 실패: accessToken이 비어 있음. response=$response"
+                    )
+
                     onError("로그인 응답에서 토큰을 받지 못했어요. 백엔드 응답 구조를 확인해 주세요.")
                     return@launch
                 }
@@ -115,6 +119,7 @@ class AuthViewModel(
                         TAG_LOGIN,
                         "로그인 후 회원 ID 복구 실패: currentMemberId=null"
                     )
+
                     onError("로그인은 되었지만 회원 정보를 불러오지 못했어요. 백엔드 /api/members/me 응답에 memberId가 있는지 확인해 주세요.")
                     return@launch
                 }
@@ -132,6 +137,46 @@ class AuthViewModel(
 
                 Log.e(TAG_LOGIN, "로그인 통신 실패: $message", e)
                 onError(message)
+            }
+        }
+    }
+
+    fun checkAutoLogin(
+        onTokenValid: () -> Unit,
+        onTokenInvalid: () -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val accessToken = networkModule.tokenDataStore.getAccessToken()
+                val refreshToken = networkModule.tokenDataStore.getRefreshToken()
+
+                if (accessToken.isNullOrBlank() || refreshToken.isNullOrBlank()) {
+                    Log.d(TAG_AUTH, "자동 로그인 실패: 저장된 토큰 없음")
+                    onTokenInvalid()
+                    return@launch
+                }
+
+                Log.d(TAG_AUTH, "저장된 토큰 발견. 회원 정보 복구를 시도합니다.")
+
+                refreshCurrentMemberProfile(
+                    fallbackLoginId = "사용자"
+                )
+
+                if (_currentMemberId.value == null) {
+                    Log.e(TAG_AUTH, "자동 로그인 실패: 회원 ID 복구 실패")
+                    onTokenInvalid()
+                    return@launch
+                }
+
+                Log.d(
+                    TAG_AUTH,
+                    "자동 로그인 성공: memberId=${_currentMemberId.value}, displayName=${_currentDisplayName.value}, gender=${_currentGender.value}"
+                )
+
+                onTokenValid()
+            } catch (e: Exception) {
+                Log.e(TAG_AUTH, "자동 로그인 체크 실패", e)
+                onTokenInvalid()
             }
         }
     }
@@ -237,13 +282,19 @@ class AuthViewModel(
         for (key in keys) {
             val value = get(key)
             val parsed = value.asLongOrNull()
-            if (parsed != null) return parsed
+
+            if (parsed != null) {
+                return parsed
+            }
         }
 
         for ((_, value) in entrySet()) {
             if (value != null && !value.isJsonNull && value.isJsonObject) {
                 val parsed = value.asJsonObject.findLongRecursively(*keys)
-                if (parsed != null) return parsed
+
+                if (parsed != null) {
+                    return parsed
+                }
             }
         }
 
@@ -256,13 +307,19 @@ class AuthViewModel(
         for (key in keys) {
             val value = get(key)
             val parsed = value.asStringOrNull()
-            if (!parsed.isNullOrBlank()) return parsed
+
+            if (!parsed.isNullOrBlank()) {
+                return parsed
+            }
         }
 
         for ((_, value) in entrySet()) {
             if (value != null && !value.isJsonNull && value.isJsonObject) {
                 val parsed = value.asJsonObject.findStringRecursively(*keys)
-                if (!parsed.isNullOrBlank()) return parsed
+
+                if (!parsed.isNullOrBlank()) {
+                    return parsed
+                }
             }
         }
 
@@ -270,7 +327,9 @@ class AuthViewModel(
     }
 
     private fun JsonElement?.asLongOrNull(): Long? {
-        if (this == null || isJsonNull) return null
+        if (this == null || isJsonNull) {
+            return null
+        }
 
         runCatching {
             asLong
@@ -282,7 +341,9 @@ class AuthViewModel(
     }
 
     private fun JsonElement?.asStringOrNull(): String? {
-        if (this == null || isJsonNull) return null
+        if (this == null || isJsonNull) {
+            return null
+        }
 
         return runCatching {
             asString
@@ -340,5 +401,6 @@ class AuthViewModel(
     companion object {
         private const val TAG_LOGIN = "Login"
         private const val TAG_SIGN_UP = "SignUp"
+        private const val TAG_AUTH = "AuthViewModel"
     }
 }
