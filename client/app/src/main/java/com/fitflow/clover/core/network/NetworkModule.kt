@@ -15,11 +15,9 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
-import okhttp3.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.runBlocking // 💡 DataStore 비동기 값을 동기적으로 뽑아오기 위해 필요해!
 
 class NetworkModule(
     context: Context
@@ -40,6 +38,10 @@ class NetworkModule(
         AuthInterceptor(tokenDataStore)
     }
 
+    private val tokenAuthenticator: TokenAuthenticator by lazy {
+        TokenAuthenticator(tokenDataStore)
+    }
+
     private val isDebuggable: Boolean by lazy {
         (appContext.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
     }
@@ -57,7 +59,10 @@ class NetworkModule(
             val elapsedMs = System.currentTimeMillis() - startedAt
 
             if (isDebuggable) {
-                Log.d(NETWORK_LOG_TAG, "<-- ${response.code} ${request.method} ${request.url} (${elapsedMs}ms)")
+                Log.d(
+                    NETWORK_LOG_TAG,
+                    "<-- ${response.code} ${request.method} ${request.url} (${elapsedMs}ms)"
+                )
             }
 
             response
@@ -70,6 +75,7 @@ class NetworkModule(
             .readTimeout(NetworkConstants.READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .writeTimeout(NetworkConstants.WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .addInterceptor(authInterceptor)
+            .authenticator(tokenAuthenticator)
             .addInterceptor(networkLogInterceptor)
             .build()
     }

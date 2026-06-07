@@ -1,8 +1,10 @@
 package com.fitflow.clover.core.network
 
+import android.util.Log
 import com.fitflow.clover.data.local.TokenDataStore
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -18,84 +20,172 @@ class TokenAuthenticator(
         route: Route?,
         response: Response
     ): Request? {
-        // 1️⃣ [무한 루프 방지] 재발급 받았는데도 또 401이 뜨면? 2번 이상 시도 안 함!
         if (responseCount(response) >= 2) {
+            Log.e(TAG, "토큰 재발급 중단: 401 재시도 횟수 초과")
             return null
         }
 
-        // 2️⃣ 기존 요청에 토큰이 없던 거면 그냥 실패 처리 (로그인 안 한 상태니까)
-        val hasToken = response.request.header("Authorization") != null
-        if (!hasToken) {
+        val hasAccessToken = response.request.header(NetworkConstants.HEADER_AUTHORIZATION) != null
+        if (!hasAccessToken) {
+            Log.e(TAG, "토큰 재발급 중단: 기존 요청에 Authorization 헤더가 없음")
             return null
         }
 
-        // 3️⃣ 금고(DataStore)에서 리프레시 토큰 꺼내오기 (동기 처리)
         val refreshToken = runBlocking {
-            // 형의 TokenDataStore 구현에 맞게 메서드명 수정해서 써!
-            // ex) tokenDataStore.getRefreshToken().firstOrNull()
             tokenDataStore.getRefreshToken()
         }
 
-        // 리프레시 토큰조차 없으면 얄짤없이 비우고 로그아웃
-        if (refreshToken.isNullOrEmpty()) {
-            runBlocking { tokenDataStore.clearTokens() }
+        if (refreshToken.isNullOrBlank()) {
+            Log.e(TAG, "토큰 재발급 중단: refreshToken 없음")
+            runBlocking {
+                tokenDataStore.clearTokens()
+            }
             return null
         }
 
-        // 4️⃣ [핵심] 리프레시 토큰을 들고 스웨거 명세에 맞게 /api/members/refresh 찌르기!
-        // (주의: 여기서 쓰이는 OkHttpClient는 새로 하나 파야 무한 루프가 안 생겨!)
+        val refreshBody = JSONObject()
+            .put("refreshToken", refreshToken)
+            .toString()
+            .toRequestBody("application/json".toMediaType())
+
         val refreshRequest = Request.Builder()
-            .url("https://clo-ver.shop/api/members/refresh") // 👈 백엔드 운영 서버 URL
-            .post("".toRequestBody(null)) // 빈 바디 전송
-            .addHeader("Authorization-Refresh", refreshToken) // 스웨거 명세에 맞춘 헤더
+            .url("${NetworkConstants.BASE_URL}api/members/refresh")
+            .post(refreshBody)
+            .header("Authorization-Refresh", refreshToken)
+            .header(NetworkConstants.HEADER_CONTENT_TYPE, "application/json")
             .build()
 
-        val refreshClient = OkHttpClient()
-        val refreshResponse = refreshClient.newCall(refreshRequest).execute()
+        return try {
+            OkHttpClient().newCall(refreshRequest).execute().use { refreshResponse ->
+                val responseBody = refreshResponse.body?.string().orEmpty()
 
-        // 5️⃣ [재발급 성공!]
-        if (refreshResponse.isSuccessful) {
-            val responseBody = refreshResponse.body?.string()
-            if (responseBody != null) {
-                try {
-                    // 백엔드가 준 JSON 뜯어서 새 토큰 뽑아내기
-                    val jsonObject = JSONObject(responseBody)
-                    // 스웨거 명세에 TokenResponse 필드명이 accessToken, refreshToken 이니까 그대로 추출
-                    val newAccessToken = jsonObject.getString("accessToken")
-                    val newRefreshToken = jsonObject.getString("refreshToken")
+                if (!refreshResponse.isSuccessful) {
+                    Log.e(
+                        TAG,
+                        "토큰 재발급 실패: HTTP ${refreshResponse.code}, body=$responseBody"
+                    )
 
-                    // 새 토큰들 금고에 다시 안전하게 보관!
                     runBlocking {
-                        tokenDataStore.saveTokens(newAccessToken, newRefreshToken)
+                        tokenDataStore.clearTokens()
                     }
 
-                    // 6️⃣ 실패했던 원래 통신에 새 엑세스 토큰 달아서 다시 쏴줌! (심폐소생술 성공)
-                    return response.request.newBuilder()
-                        .header("Authorization", "Bearer $newAccessToken")
-                        .build()
-
-                } catch (e: Exception) {
-                    e.printStackTrace()
+                    return null
                 }
-            }
-        }
 
-        // 7️⃣ [재발급 실패] (리프레시 토큰도 2주 지나서 죽었거나 서버 에러 났을 때)
-        // 금고 싹 비우고 null 리턴 -> 이러면 앱에서 "다시 로그인하세요" 에러 처리 됨
-        runBlocking {
-            tokenDataStore.clearTokens()
+                val tokenPair = responseBody.extractTokenPair()
+                val newAccessToken = tokenPair.accessToken
+                val newRefreshToken = tokenPair.refreshToken?.takeIf { it.isNotBlank() }
+                    ?: refreshToken
+
+                if (newAccessToken.isNullOrBlank()) {
+                    Log.e(TAG, "토큰 재발급 실패: accessToken이 비어 있음. body=$responseBody")
+
+                    runBlocking {
+                        tokenDataStore.clearTokens()
+                    }
+
+                    return null
+                }
+
+                runBlocking {
+                    tokenDataStore.saveTokens(
+                        accessToken = newAccessToken,
+                        refreshToken = newRefreshToken
+                    )
+                }
+
+                Log.d(TAG, "토큰 재발급 성공")
+
+                response.request.newBuilder()
+                    .header(
+                        NetworkConstants.HEADER_AUTHORIZATION,
+                        "${NetworkConstants.BEARER_PREFIX} $newAccessToken"
+                    )
+                    .build()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "토큰 재발급 통신 실패: ${e.message}", e)
+
+            runBlocking {
+                tokenDataStore.clearTokens()
+            }
+
+            null
         }
-        return null
     }
 
-    // 통신 몇 번 실패했는지 카운트 세는 함수 (기존 형 코드 그대로)
     private fun responseCount(response: Response): Int {
         var count = 1
         var priorResponse = response.priorResponse
+
         while (priorResponse != null) {
             count++
             priorResponse = priorResponse.priorResponse
         }
+
         return count
+    }
+
+    private fun String.extractTokenPair(): TokenPair {
+        if (isBlank()) {
+            return TokenPair()
+        }
+
+        return runCatching {
+            val root = JSONObject(this)
+            val tokenObject = root.objectOrNull("data")
+                ?: root.objectOrNull("payload")
+                ?: root.objectOrNull("result")
+                ?: root.objectOrNull("body")
+                ?: root.objectOrNull("token")
+                ?: root.objectOrNull("tokens")
+                ?: root
+
+            TokenPair(
+                accessToken = tokenObject.stringOrNull(
+                    "accessToken",
+                    "access_token",
+                    "token"
+                ) ?: root.stringOrNull(
+                    "accessToken",
+                    "access_token",
+                    "token"
+                ),
+                refreshToken = tokenObject.stringOrNull(
+                    "refreshToken",
+                    "refresh_token"
+                ) ?: root.stringOrNull(
+                    "refreshToken",
+                    "refresh_token"
+                )
+            )
+        }.getOrElse {
+            Log.e(TAG, "토큰 응답 파싱 실패: ${it.message}", it)
+            TokenPair()
+        }
+    }
+
+    private fun JSONObject.objectOrNull(key: String): JSONObject? {
+        return optJSONObject(key)
+    }
+
+    private fun JSONObject.stringOrNull(vararg keys: String): String? {
+        for (key in keys) {
+            val value = optString(key, null)
+            if (!value.isNullOrBlank() && value != "null") {
+                return value
+            }
+        }
+
+        return null
+    }
+
+    private data class TokenPair(
+        val accessToken: String? = null,
+        val refreshToken: String? = null
+    )
+
+    companion object {
+        private const val TAG = "TokenAuthenticator"
     }
 }
