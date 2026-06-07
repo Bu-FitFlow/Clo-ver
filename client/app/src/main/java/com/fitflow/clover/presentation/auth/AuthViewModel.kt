@@ -5,20 +5,11 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fitflow.clover.core.network.ErrorResponse
 import com.fitflow.clover.core.network.NetworkModule
 import com.fitflow.clover.data.remote.dto.LoginRequest
-import com.fitflow.clover.data.remote.dto.SignUpRequest
-import com.google.gson.Gson
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import java.io.IOException
 
-class AuthViewModel(
-    private val networkModule: NetworkModule
-) : ViewModel() {
-
-    private val gson = Gson()
+class AuthViewModel(private val networkModule: NetworkModule) : ViewModel() {
 
     private val _name = mutableStateOf("")
     val name: State<String> = _name
@@ -48,70 +39,31 @@ class AuthViewModel(
         _pwConfirm.value = newValue
     }
 
-    private val _currentMemberId = mutableStateOf<Long?>(null)
-    val currentMemberId: State<Long?> = _currentMemberId
-
-    private val _currentDisplayName = mutableStateOf<String?>(null)
-    val currentDisplayName: State<String?> = _currentDisplayName
-
-    private val _currentGender = mutableStateOf<String?>(null)
-    val currentGender: State<String?> = _currentGender
-
-    fun login(
-        onSuccess: (Boolean) -> Unit,
-        onError: (String) -> Unit
-    ) {
-        val loginId = id.value.trim()
-        val password = pw.value
-
-        if (loginId.isBlank() || password.isBlank()) {
-            onError("아이디와 비밀번호를 입력해 주세요.")
-            return
-        }
-
+    fun login(onSuccess: (Boolean) -> Unit, onError: () -> Unit) {
         viewModelScope.launch {
             try {
                 val response = networkModule.authApi.login(
                     LoginRequest(
-                        loginId = loginId,
-                        password = password
+                        loginId = id.value,
+                        password = pw.value,
                     )
                 )
 
                 val accessToken = response.accessToken
                 val refreshToken = response.refreshToken
 
-                if (accessToken.isNullOrBlank()) {
-                    Log.e(TAG_LOGIN, "로그인 실패: accessToken이 비어 있음. response=$response")
-                    onError("로그인 응답에서 토큰을 받지 못했어요. 백엔드 응답 구조를 확인해 주세요.")
-                    return@launch
+                if (!accessToken.isNullOrBlank()) {
+                    networkModule.tokenDataStore.saveTokens(accessToken, refreshToken)
+                    Log.d("Login", "로그인 성공! Token: $accessToken")
+
+                    onSuccess(false)
+                } else {
+                    Log.e("Login", "토큰이 비어있음")
+                    onError()
                 }
-
-                networkModule.tokenDataStore.saveTokens(
-                    accessToken = accessToken,
-                    refreshToken = refreshToken
-                )
-
-                _currentMemberId.value = response.memberId
-                _currentDisplayName.value = response.nickname
-                    ?: response.name
-                            ?: response.loginId
-                            ?: loginId
-                _currentGender.value = response.gender
-
-                Log.d(
-                    TAG_LOGIN,
-                    "로그인 성공: memberId=${response.memberId}, loginId=${response.loginId}, gender=${response.gender}, accessToken=${accessToken.take(20)}..."
-                )
-
-                onSuccess(false)
             } catch (e: Exception) {
-                val message = e.toDisplayMessage(
-                    defaultMessage = "로그인에 실패했어요. 아이디, 비밀번호, 이메일 인증 상태를 확인해 주세요."
-                )
-
-                Log.e(TAG_LOGIN, "로그인 통신 실패: $message", e)
-                onError(message)
+                Log.e("Login", "로그인 통신 실패", e)
+                onError()
             }
         }
     }
@@ -128,74 +80,53 @@ class AuthViewModel(
     ) {
         viewModelScope.launch {
             try {
-                val request = SignUpRequest(
-                    loginId = loginId.trim(),
+                // 🚨 주의: SignUpRequest DTO의 실제 파라미터 이름에 맞춰서 값을 넣어주세요!
+                val request = com.fitflow.clover.data.remote.dto.SignUpRequest(
+                    loginId = loginId,
                     password = password,
-                    name = name.trim(),
-                    nickname = nickname.trim(),
-                    email = email.trim(),
+                    name = name,
+                    nickname = nickname,
+                    email = email,
                     gender = gender
                 )
 
+                // 백엔드 API 호출!
                 val response = networkModule.authApi.signUp(request)
-                Log.d(TAG_SIGN_UP, "회원가입 성공: $response")
+                Log.d("SignUp", "회원가입 성공: $response")
 
+                // 성공 시 콜백 실행 (다이얼로그 띄우기용)
                 onSuccess()
             } catch (e: Exception) {
-                val message = e.toDisplayMessage(
-                    defaultMessage = "회원가입에 실패했어요. 이미 가입된 아이디, 이메일, 닉네임인지 확인해 주세요."
-                )
-
-                Log.e(TAG_SIGN_UP, "회원가입 통신 실패: $message", e)
+                Log.e("SignUp", "회원가입 통신 실패", e)
                 onError()
             }
         }
     }
 
-    private fun Throwable.toDisplayMessage(
-        defaultMessage: String
-    ): String {
-        return when (this) {
-            is HttpException -> {
-                val statusCode = code()
-                val serverMessage = response()
-                    ?.errorBody()
-                    ?.string()
-                    ?.parseServerMessage()
+    fun checkAutoLogin(
+        onTokenValid: () -> Unit,
+        onTokenInvalid: () -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                // 1. DataStore에서 엑세스 토큰과 리프레시 토큰을 꺼내옵니다.
+                val accessToken = networkModule.tokenDataStore.getAccessToken()
+                val refreshToken = networkModule.tokenDataStore.getRefreshToken()
 
-                when {
-                    !serverMessage.isNullOrBlank() -> serverMessage
-                    statusCode == 401 -> "로그인 인증에 실패했어요. 아이디, 비밀번호, 이메일 인증 상태를 확인해 주세요."
-                    statusCode == 403 -> "접근 권한이 없어요. 이메일 인증 또는 계정 상태를 확인해 주세요."
-                    statusCode == 404 -> "요청한 API 경로를 찾지 못했어요. 백엔드 주소와 API 경로를 확인해 주세요."
-                    statusCode == 409 -> "이미 사용 중인 아이디, 이메일 또는 닉네임이에요."
-                    statusCode >= 500 -> "서버 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
-                    else -> "$defaultMessage (HTTP $statusCode)"
+                // 2. 두 토큰이 모두 존재한다면? (자동 로그인 성공 조건)
+                if (!accessToken.isNullOrBlank() && !refreshToken.isNullOrBlank()) {
+                    Log.d("AuthViewModel", "저장된 토큰 발견! 메인 화면으로 자동 이동합니다.")
+                    // 여기서 토큰이 만료되었더라도 괜찮습니다.
+                    // 다음 API 통신 때 TokenAuthenticator가 알아서 갱신해줍니다.
+                    onTokenValid()
+                } else {
+                    Log.d("AuthViewModel", "토큰이 없습니다. 로그인 화면으로 이동합니다.")
+                    onTokenInvalid()
                 }
-            }
-
-            is IOException -> {
-                "서버에 연결하지 못했어요. 인터넷 연결 또는 서버 주소를 확인해 주세요."
-            }
-
-            else -> {
-                message
-                    ?.takeIf { it.isNotBlank() }
-                    ?: defaultMessage
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "자동 로그인 체크 실패", e)
+                onTokenInvalid()
             }
         }
-    }
-
-    private fun String.parseServerMessage(): String? {
-        return runCatching {
-            gson.fromJson(this, ErrorResponse::class.java)
-                ?.getDisplayMessage()
-                ?.takeIf { it.isNotBlank() }
-        }.getOrNull()
-    }
-
-    companion object {
-        private const val TAG_LOGIN = "Login"
-        private const val TAG_SIGN_UP = "SignUp"
     }
 }

@@ -15,9 +15,11 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.runBlocking // 💡 DataStore 비동기 값을 동기적으로 뽑아오기 위해 필요해!
 
 class NetworkModule(
     context: Context
@@ -34,12 +36,15 @@ class NetworkModule(
             .create()
     }
 
-    private val authInterceptor: AuthInterceptor by lazy {
-        AuthInterceptor(tokenDataStore)
+    private val tokenAuthenticator: TokenAuthenticator by lazy {
+        TokenAuthenticator(
+            tokenDataStore = tokenDataStore,
+            authApiProvider = { authApi }
+        )
     }
 
-    private val tokenAuthenticator: TokenAuthenticator by lazy {
-        TokenAuthenticator(tokenDataStore)
+    private val authInterceptor: AuthInterceptor by lazy {
+        AuthInterceptor(tokenDataStore)
     }
 
     private val isDebuggable: Boolean by lazy {

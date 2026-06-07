@@ -132,7 +132,7 @@ fun CloverNavHost(
         modifier = modifier
     ) {
         composable("splash") {
-            SplashScreen(navController = navController)
+            SplashScreen(navController = navController, viewModel = authViewModel)
         }
 
 
@@ -753,7 +753,6 @@ fun CloverNavHost(
         }
     }
 }
-
 
 
 @Composable

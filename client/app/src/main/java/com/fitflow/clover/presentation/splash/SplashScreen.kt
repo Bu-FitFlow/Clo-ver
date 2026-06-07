@@ -22,10 +22,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.fitflow.clover.R
+import com.fitflow.clover.core.navigation.ScreenRoute
+import com.fitflow.clover.presentation.auth.AuthViewModel
 import kotlinx.coroutines.delay
 
 @Composable
-fun SplashScreen(navController: NavController) {
+fun SplashScreen(navController: NavController, viewModel: AuthViewModel) {
     val alphaAnim = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
@@ -34,9 +36,21 @@ fun SplashScreen(navController: NavController) {
             animationSpec = tween(durationMillis = 800)
         )
         delay(500)
-        navController.navigate("login") {
-            popUpTo("splash") { inclusive = true }
-        }
+
+        viewModel.checkAutoLogin(
+            onTokenValid = {
+                // 토큰이 있으면 메인 화면으로 바로 이동!
+                navController.navigate(ScreenRoute.Main.route) {
+                    popUpTo("splash") { inclusive = true }
+                }
+            },
+            onTokenInvalid = {
+                // 토큰이 없거나 에러가 나면 로그인 화면으로 이동!
+                navController.navigate("login") {
+                    popUpTo("splash") { inclusive = true }
+                }
+            }
+        )
     }
 
     Surface(
@@ -45,7 +59,8 @@ fun SplashScreen(navController: NavController) {
     ) {
 
         Box(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
                 .background(Color.White),
             contentAlignment = Alignment.Center
         ) {
