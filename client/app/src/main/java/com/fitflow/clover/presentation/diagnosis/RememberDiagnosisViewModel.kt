@@ -12,7 +12,8 @@ import com.google.gson.JsonObject
 @Composable
 fun rememberDiagnosisViewModel(
     memberId: Long?,
-    displayName: String?
+    displayName: String?,
+    gender: String? = null
 ): DiagnosisViewModel {
     val context = LocalContext.current
 
@@ -28,10 +29,11 @@ fun rememberDiagnosisViewModel(
         )
     }
 
-    LaunchedEffect(memberId, displayName) {
+    LaunchedEffect(memberId, displayName, gender) {
         viewModel.setMemberProfile(
             memberId = memberId,
-            displayName = displayName
+            displayName = displayName,
+            gender = gender
         )
 
         if (memberId == null || memberId <= 0L) {
@@ -42,10 +44,13 @@ fun rememberDiagnosisViewModel(
                     ?: payload.stringOrNull("nickname")
                     ?: payload.stringOrNull("name")
                     ?: payload.stringOrNull("loginId", "login_id")
+                val currentGender = gender
+                    ?: payload.stringOrNull("gender", "sex")
 
                 viewModel.setMemberProfile(
                     memberId = currentMemberId,
-                    displayName = currentDisplayName
+                    displayName = currentDisplayName,
+                    gender = currentGender
                 )
             }
         }

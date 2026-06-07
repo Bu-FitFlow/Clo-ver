@@ -41,14 +41,16 @@ val CloverGreen = Color(0xFF99DE81)
 fun LoginMain(navController: NavController, viewModel: AuthViewModel) {
     val id by viewModel.id
     val pw by viewModel.pw
+    val context = LocalContext.current
+
     var isPwVisible by remember { mutableStateOf(false) }
+    var isLoginLoading by remember { mutableStateOf(false) }
+    var loginErrorMessage by remember { mutableStateOf<String?>(null) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color.White
     ) {
-        // 다시 형의 원래 구조(통짜 스크롤)로 원상복구!
-        // 대신 weight 폭탄만 height로 싹 바꿨음 ㅋㅋㅋ
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -56,8 +58,6 @@ fun LoginMain(navController: NavController, viewModel: AuthViewModel) {
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            // 피그마 상단 여백 (알맞게 조절해!)
             Spacer(modifier = Modifier.height(100.dp))
 
             Image(
@@ -66,7 +66,6 @@ fun LoginMain(navController: NavController, viewModel: AuthViewModel) {
                 modifier = Modifier.size(287.dp)
             )
 
-            // 로고랑 ID 입력창 사이 여백
             Spacer(modifier = Modifier.height(30.dp))
 
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -81,7 +80,10 @@ fun LoginMain(navController: NavController, viewModel: AuthViewModel) {
                 var isIdFocused by remember { mutableStateOf(false) }
                 BasicTextField(
                     value = id,
-                    onValueChange = { viewModel.onIdChange(it) },
+                    onValueChange = {
+                        viewModel.onIdChange(it)
+                        loginErrorMessage = null
+                    },
                     textStyle = TextStyle(
                         color = Color.Black,
                         fontSize = 14.sp,
@@ -114,7 +116,6 @@ fun LoginMain(navController: NavController, viewModel: AuthViewModel) {
 
             Spacer(modifier = Modifier.height(15.dp))
 
-            // Password 입력란 영역
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = "Password",
@@ -127,8 +128,11 @@ fun LoginMain(navController: NavController, viewModel: AuthViewModel) {
                 var isPwFocused by remember { mutableStateOf(false) }
                 BasicTextField(
                     value = pw,
-                    onValueChange = { viewModel.onPwChange(it) },
-                    visualTransformation = if (isPwVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
+                    onValueChange = {
+                        viewModel.onPwChange(it)
+                        loginErrorMessage = null
+                    },
+                    visualTransformation = if (isPwVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     textStyle = TextStyle(
                         color = Color.Black,
                         fontSize = 14.sp,
@@ -154,7 +158,10 @@ fun LoginMain(navController: NavController, viewModel: AuthViewModel) {
                                 .padding(horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                            Box(
+                                modifier = Modifier.weight(1f),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
                                 innerTextField()
                             }
 
@@ -176,51 +183,72 @@ fun LoginMain(navController: NavController, viewModel: AuthViewModel) {
                 )
             }
 
-            // PW창이랑 로그인 버튼 사이 여백
             Spacer(modifier = Modifier.height(35.dp))
 
             Button(
                 onClick = {
-                    if (id.isNotBlank() && pw.isNotBlank()) {
-                        val isFirstLogin = true
-
-                        viewModel.login(
-                            onSuccess = { isFirstLogin ->
-                                if (isFirstLogin) {
-                                    navController.navigate(ScreenRoute.BodyAnalysis.route) {
-                                        popUpTo("login") { inclusive = true }
-                                        launchSingleTop = true
-                                    }
-                                } else {
-                                    navController.navigate(ScreenRoute.Main.route) {
-                                        popUpTo("login") { inclusive = true }
-                                        launchSingleTop = true
-                                    }
-                                }
-                            },
-                            onError = {
-                                // TODO: 로그인 실패 시 에러 메시지 띄우기 (나중에 처리)
-                            }
-                        )
+                    if (id.isBlank() || pw.isBlank() || isLoginLoading) {
+                        return@Button
                     }
+
+                    isLoginLoading = true
+                    loginErrorMessage = null
+
+                    viewModel.login(
+                        onSuccess = { isFirstLogin ->
+                            isLoginLoading = false
+
+                            if (isFirstLogin) {
+                                navController.navigate(ScreenRoute.BodyAnalysis.route) {
+                                    popUpTo("login") { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            } else {
+                                navController.navigate(ScreenRoute.Main.route) {
+                                    popUpTo("login") { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
+                        },
+                        onError = { message ->
+                            isLoginLoading = false
+                            loginErrorMessage = message
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        }
+                    )
                 },
-                enabled = true,
+                enabled = id.isNotBlank() && pw.isNotBlank() && !isLoginLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CloverGreen),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = CloverGreen,
+                    disabledContainerColor = Color(0xFFC8E6C9)
+                ),
                 shape = RoundedCornerShape(5.dp),
                 elevation = null
             ) {
                 Text(
-                    text = "로그인",
+                    text = if (isLoginLoading) "로그인 중..." else "로그인",
                     color = Color.Black,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
 
-            // 로그인 버튼이랑 하단 텍스트 사이 여백
+            loginErrorMessage?.let { message ->
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = message,
+                    color = Color.Red,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
             Spacer(modifier = Modifier.height(20.dp))
 
             Row(
@@ -237,6 +265,7 @@ fun LoginMain(navController: NavController, viewModel: AuthViewModel) {
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Normal
                 )
+
                 Text(
                     text = "아직 회원이 아니신가요?",
                     modifier = Modifier.clickable { navController.navigate("join_terms") },
@@ -247,7 +276,6 @@ fun LoginMain(navController: NavController, viewModel: AuthViewModel) {
                 )
             }
 
-            // 맨 밑에 하단 여백 넉넉하게
             Spacer(modifier = Modifier.height(100.dp))
         }
     }

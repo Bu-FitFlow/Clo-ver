@@ -28,8 +28,20 @@ data class DiagnosisDataResponse(
     @SerializedName("personalColor")
     val personalColor: String? = null,
 
+    @SerializedName("faceShape")
+    val faceShape: String? = null,
+
     @SerializedName("resultTitle")
-    val resultTitle: String? = null
+    val resultTitle: String? = null,
+
+    @SerializedName("resultRecommend")
+    val resultRecommend: String? = null,
+
+    @SerializedName("height")
+    val height: Int? = null,
+
+    @SerializedName("weight")
+    val weight: Int? = null
 )
 
 fun DiagnosisApiResponse.toBodyUiModel(
@@ -49,9 +61,13 @@ fun DiagnosisApiResponse.toBodyUiModel(
     val apiTitle = data.resultTitle
         ?.trim()
         ?.takeIf { it.isNotBlank() && it != "string" }
+    val apiRecommend = data.resultRecommend
+        ?.trim()
+        ?.takeIf { it.isNotBlank() && it != "string" }
 
     return fallback.copy(
-        title = apiTitle ?: fallback.title
+        title = apiTitle ?: fallback.title,
+        recommendMessage = apiRecommend ?: fallback.recommendMessage
     )
 }
 
@@ -72,9 +88,13 @@ fun DiagnosisApiResponse.toPersonalColorUiModel(
     val apiTitle = data.resultTitle
         ?.trim()
         ?.takeIf { it.isNotBlank() && it != "string" }
+    val apiRecommend = data.resultRecommend
+        ?.trim()
+        ?.takeIf { it.isNotBlank() && it != "string" }
 
     return fallback.copy(
-        resultTitle = apiTitle ?: fallback.resultTitle
+        resultTitle = apiTitle ?: fallback.resultTitle,
+        resultRecommend = apiRecommend ?: fallback.resultRecommend
     )
 }
 

@@ -112,7 +112,6 @@ fun BodyAnalysisScreen(
                 uiState = uiState,
                 heightOptions = viewModel.heightOptions,
                 weightOptions = viewModel.weightOptions,
-                onSelectGender = viewModel::selectGender,
                 onSelectHeight = viewModel::selectHeight,
                 onSelectWeight = viewModel::selectWeight,
                 onNext = {
@@ -214,7 +213,6 @@ private fun BodyUserInfoContent(
     uiState: DiagnosisUiState,
     heightOptions: List<Int>,
     weightOptions: List<Int>,
-    onSelectGender: (DiagnosisGender) -> Unit,
     onSelectHeight: (Int) -> Unit,
     onSelectWeight: (Int) -> Unit,
     onNext: () -> Unit,
@@ -238,41 +236,14 @@ private fun BodyUserInfoContent(
         Spacer(modifier = Modifier.height(40.dp))
 
         Text(
-            text = "성별",
+            text = "키와 몸무게를 입력해 주세요.",
             color = Color.Black,
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(0.85f),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            GenderSelectButton(
-                gender = DiagnosisGender.MALE,
-                isSelected = uiState.selectedGender == DiagnosisGender.MALE,
-                modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(0.7f),
-                onClick = { onSelectGender(DiagnosisGender.MALE) }
-            )
-
-            Spacer(modifier = Modifier.width(24.dp))
-
-            GenderSelectButton(
-                gender = DiagnosisGender.FEMALE,
-                isSelected = uiState.selectedGender == DiagnosisGender.FEMALE,
-                modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(0.7f),
-                onClick = { onSelectGender(DiagnosisGender.FEMALE) }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(50.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
         FigmaNumberDropdown(
             modifier = Modifier

@@ -83,9 +83,14 @@ fun CloverNavHost(
     val productViewModel: ProductViewModel = viewModel()
     val communityViewModel: CommunityViewModel = viewModel()
 
+    val currentMemberId by authViewModel.currentMemberId
+    val currentDisplayName by authViewModel.currentDisplayName
+    val currentGender by authViewModel.currentGender
+
     val diagnosisViewModel = rememberDiagnosisViewModel(
-        memberId = null,
-        displayName = null
+        memberId = currentMemberId,
+        displayName = currentDisplayName,
+        gender = currentGender
     )
 
     val chatViewModel = remember {

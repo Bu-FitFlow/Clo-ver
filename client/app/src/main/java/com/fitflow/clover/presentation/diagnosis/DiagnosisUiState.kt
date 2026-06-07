@@ -26,8 +26,7 @@ data class DiagnosisUiState(
 
     val isInfoCompleted: Boolean
         get() {
-            return selectedGender != null &&
-                    selectedHeightCm != null &&
+            return selectedHeightCm != null &&
                     selectedWeightKg != null
         }
 
