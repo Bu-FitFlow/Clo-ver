@@ -374,9 +374,17 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                Column(modifier = Modifier.width(309.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    modifier = Modifier.width(309.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     // 1. 이름
-                    CloverTextField(value = name, onValueChange = { name = it }, label = "이름", modifier = Modifier.height(40.dp))
+                    CloverTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = "이름",
+                        modifier = Modifier.height(40.dp)
+                    )
                     Spacer(modifier = Modifier.height(15.dp))
 
                     Column(modifier = Modifier.fillMaxWidth()) {
@@ -409,12 +417,17 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
                     Spacer(modifier = Modifier.height(15.dp))
 
                     // 2. ID (중복확인)
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         CloverTextField(
                             value = id,
                             onValueChange = { id = it; isIdChecked = false; isIdAvailable = false },
                             label = "ID",
-                            modifier = Modifier.weight(1f).height(40.dp)
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
                         )
                         Spacer(modifier = Modifier.width(7.dp))
 
@@ -432,11 +445,15 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
                                     isIdAvailable = id.isNotBlank() && id != "test"
                                 },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isIdChecked && !isIdAvailable) Color(0xFFFF6B6B) else CloverGreen
+                                    containerColor = if (isIdChecked && !isIdAvailable) Color(
+                                        0xFFFF6B6B
+                                    ) else CloverGreen
                                 ),
                                 shape = RoundedCornerShape(5.dp),
                                 elevation = null,
-                                modifier = Modifier.width(60.dp).height(40.dp),
+                                modifier = Modifier
+                                    .width(60.dp)
+                                    .height(40.dp),
                                 contentPadding = PaddingValues(0.dp)
                             ) {
                                 Text(
@@ -454,7 +471,9 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
                             text = "이미 사용 중이거나 유효하지 않은 아이디입니다.",
                             color = Color.Red,
                             fontSize = 12.sp,
-                            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 4.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 4.dp, top = 4.dp)
                         )
                     }
 
@@ -475,7 +494,11 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
                             value = pw,
                             onValueChange = { pw = it },
                             visualTransformation = if (isPwVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                            textStyle = TextStyle(color = Color.Black, fontSize = 14.sp, platformStyle = PlatformTextStyle(includeFontPadding = false)),
+                            textStyle = TextStyle(
+                                color = Color.Black,
+                                fontSize = 14.sp,
+                                platformStyle = PlatformTextStyle(includeFontPadding = false)
+                            ),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             modifier = Modifier
@@ -483,16 +506,27 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
                                 .height(40.dp) // 다른 칸들이랑 똑같이 40dp로 맞춤!
                                 .onFocusChanged { isPwFocused = it.isFocused }
                                 .border(
-                                    border = BorderStroke(1.dp, if (isPwFocused) Color.Black else Color.LightGray),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (isPwFocused) Color.Black else Color.LightGray
+                                    ),
                                     shape = RoundedCornerShape(5.dp)
                                 ),
                             decorationBox = { innerTextField ->
                                 Row(
-                                    modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) { innerTextField() }
-                                    IconButton(onClick = { isPwVisible = !isPwVisible }, modifier = Modifier.size(24.dp)) {
+                                    Box(
+                                        modifier = Modifier.weight(1f),
+                                        contentAlignment = Alignment.CenterStart
+                                    ) { innerTextField() }
+                                    IconButton(
+                                        onClick = { isPwVisible = !isPwVisible },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
                                         Icon(
                                             painter = painterResource(id = if (isPwVisible) R.drawable.eye else R.drawable.eyeinvisibleoutlined),
                                             contentDescription = "비밀번호 보이기",
@@ -521,7 +555,11 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
                             value = pwConfirm,
                             onValueChange = { pwConfirm = it },
                             visualTransformation = if (isPwConfirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                            textStyle = TextStyle(color = Color.Black, fontSize = 14.sp, platformStyle = PlatformTextStyle(includeFontPadding = false)),
+                            textStyle = TextStyle(
+                                color = Color.Black,
+                                fontSize = 14.sp,
+                                platformStyle = PlatformTextStyle(includeFontPadding = false)
+                            ),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             modifier = Modifier
@@ -529,16 +567,26 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
                                 .height(40.dp)
                                 .onFocusChanged { isPwConfirmFocused = it.isFocused }
                                 .border(
-                                    border = BorderStroke(1.dp, if (isPwConfirmFocused) Color.Black else Color.LightGray),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (isPwConfirmFocused) Color.Black else Color.LightGray
+                                    ),
                                     shape = RoundedCornerShape(5.dp)
                                 ),
                             decorationBox = { innerTextField ->
                                 Row(
-                                    modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) { innerTextField() }
-                                    IconButton(onClick = { isPwConfirmVisible = !isPwConfirmVisible }, modifier = Modifier.size(24.dp)) {
+                                    Box(
+                                        modifier = Modifier.weight(1f),
+                                        contentAlignment = Alignment.CenterStart
+                                    ) { innerTextField() }
+                                    IconButton(onClick = {
+                                        isPwConfirmVisible = !isPwConfirmVisible
+                                    }, modifier = Modifier.size(24.dp)) {
                                         Icon(
                                             painter = painterResource(id = if (isPwConfirmVisible) R.drawable.eye else R.drawable.eyeinvisibleoutlined),
                                             contentDescription = "비밀번호 보이기",
@@ -557,17 +605,26 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
                             text = if (pw == pwConfirm) "비밀번호가 일치합니다." else "비밀번호가 일치하지 않습니다.",
                             color = if (pw == pwConfirm) Color(0xFF4CAF50) else Color.Red,
                             fontSize = 12.sp,
-                            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 4.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 4.dp, top = 4.dp)
                         )
                     }
 
                     // 4. 이메일 (타이머 삭제! 중복확인 버튼으로 통일)
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         CloverTextField(
                             value = email,
-                            onValueChange = { email = it; isEmailChecked = false; isEmailAvailable = false },
+                            onValueChange = {
+                                email = it; isEmailChecked = false; isEmailAvailable = false
+                            },
                             label = "이메일",
-                            modifier = Modifier.weight(1f).height(40.dp)
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
                         )
                         Spacer(modifier = Modifier.width(7.dp))
 
@@ -582,16 +639,21 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
                                 onClick = {
                                     // TODO: 나중에 여기서 이메일 중복검사 API 호출!
                                     isEmailChecked = true
-                                    isEmailAvailable = email.isNotBlank() && email != "test@test.com"
+                                    isEmailAvailable =
+                                        email.isNotBlank() && email != "test@test.com"
                                 },
                                 enabled = email.isNotBlank(),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isEmailChecked && !isEmailAvailable) Color(0xFFFF6B6B)
+                                    containerColor = if (isEmailChecked && !isEmailAvailable) Color(
+                                        0xFFFF6B6B
+                                    )
                                     else if (email.isNotBlank()) CloverGreen else Color(0xFFC8E6C9)
                                 ),
                                 shape = RoundedCornerShape(5.dp),
                                 elevation = null,
-                                modifier = Modifier.width(60.dp).height(40.dp),
+                                modifier = Modifier
+                                    .width(60.dp)
+                                    .height(40.dp),
                                 contentPadding = PaddingValues(0.dp)
                             ) {
                                 Text(
@@ -610,19 +672,29 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
                             text = "이미 가입된 이메일입니다.",
                             color = Color.Red,
                             fontSize = 12.sp,
-                            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 4.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 4.dp, top = 4.dp)
                         )
                     }
 
                     Spacer(modifier = Modifier.height(15.dp))
 
                     // 5. 닉네임 (중복확인)
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         CloverTextField(
                             value = nickname,
-                            onValueChange = { nickname = it; isNicknameChecked = false; isNicknameAvailable = false },
+                            onValueChange = {
+                                nickname = it; isNicknameChecked = false; isNicknameAvailable =
+                                false
+                            },
                             label = "닉네임",
-                            modifier = Modifier.weight(1f).height(40.dp)
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
                         )
                         Spacer(modifier = Modifier.width(7.dp))
 
@@ -637,16 +709,23 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
                                 onClick = {
                                     // TODO: 나중에 여기서 닉네임 중복검사 API 호출!
                                     isNicknameChecked = true
-                                    isNicknameAvailable = nickname.isNotBlank() && nickname != "test"
+                                    isNicknameAvailable =
+                                        nickname.isNotBlank() && nickname != "test"
                                 },
                                 enabled = nickname.isNotBlank(),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isNicknameChecked && !isNicknameAvailable) Color(0xFFFF6B6B)
-                                    else if (nickname.isNotBlank()) CloverGreen else Color(0xFFC8E6C9)
+                                    containerColor = if (isNicknameChecked && !isNicknameAvailable) Color(
+                                        0xFFFF6B6B
+                                    )
+                                    else if (nickname.isNotBlank()) CloverGreen else Color(
+                                        0xFFC8E6C9
+                                    )
                                 ),
                                 shape = RoundedCornerShape(5.dp),
                                 elevation = null,
-                                modifier = Modifier.width(60.dp).height(40.dp),
+                                modifier = Modifier
+                                    .width(60.dp)
+                                    .height(40.dp),
                                 contentPadding = PaddingValues(0.dp)
                             ) {
                                 Text(
@@ -665,7 +744,9 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
                             text = "이미 사용 중인 닉네임입니다.",
                             color = Color.Red,
                             fontSize = 12.sp,
-                            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 4.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 4.dp, top = 4.dp)
                         )
                     }
 
@@ -675,7 +756,13 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
                         text = "이미 계정이 있으신가요?",
                         fontSize = 16.sp,
                         color = Color.Black,
-                        modifier = Modifier.clickable { navController.navigate("login") { popUpTo("login") { inclusive = true } } }
+                        modifier = Modifier.clickable {
+                            navController.navigate("login") {
+                                popUpTo("login") {
+                                    inclusive = true
+                                }
+                            }
+                        }
                     )
 
                     Spacer(modifier = Modifier.height(40.dp))
@@ -699,7 +786,12 @@ fun JoinDetail(navController: NavController, viewModel: AuthViewModel) {
                                 showEmailSentDialog = true
                             },
                             onError = {
-                                Toast.makeText(context, "회원가입 실패! Android Studio Logcat을 확인하세요.", Toast.LENGTH_SHORT).show()                            }
+                                Toast.makeText(
+                                    context,
+                                    "회원가입 실패! Android Studio Logcat을 확인하세요.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         )
                     }
                 },
@@ -801,11 +893,26 @@ fun JoinTerms(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(50.dp))
 
-                CustomCheckBoxRow("약관 전체 동의", isAllChecked, { val t = !isAllChecked; term1 = t; term2 = t; term3 = t })
-                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), thickness = 1.dp, color = Color.LightGray)
+                CustomCheckBoxRow(
+                    "약관 전체 동의",
+                    isAllChecked,
+                    { val t = !isAllChecked; term1 = t; term2 = t; term3 = t })
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    thickness = 1.dp,
+                    color = Color.LightGray
+                )
 
-                CustomCheckBoxRow("이용약관 동의(필수)", term1, { term1 = it }, { navController.navigate("term_detail_1") })
-                CustomCheckBoxRow("개인정보 수집 및 이용동의(필수)", term2, { term2 = it }, { navController.navigate("term_detail_2") })
+                CustomCheckBoxRow(
+                    "이용약관 동의(필수)",
+                    term1,
+                    { term1 = it },
+                    { navController.navigate("term_detail_1") })
+                CustomCheckBoxRow(
+                    "개인정보 수집 및 이용동의(필수)",
+                    term2,
+                    { term2 = it },
+                    { navController.navigate("term_detail_2") })
                 CustomCheckBoxRow("가입 시 알림 동의(선택)", term3, { term3 = it })
 
                 Spacer(modifier = Modifier.height(40.dp))
