@@ -40,7 +40,7 @@
         const token = document.getElementById('jwtToken').value;
         const productId = document.getElementById('productId').value;
 
-        fetch(`http://localhost:8080/api/chat/rooms?productId=${productId}`, {
+        fetch(`/api/chat/rooms?productId=${productId}`, {
             method: 'POST',
             headers: {
                 'Authorization': token
@@ -66,7 +66,7 @@
         const token = document.getElementById('jwtToken').value;
         const roomId = document.getElementById('roomId').value;
 
-        const socket = new SockJS('http://localhost:8080/ws-stomp');
+        const socket = new SockJS('/ws-stomp');
         stompClient = Stomp.over(socket);
 
         stompClient.connect({'Authorization': token}, function (frame) {
@@ -88,7 +88,7 @@
 
     // 💡 [추가된 함수] REST API 호출 및 화면 렌더링
     function fetchHistory(roomId, token) {
-        fetch(`http://localhost:8080/api/chat/rooms/${roomId}/messages`, {
+        fetch(`/api/chat/rooms/${roomId}/messages`, {
             method: 'GET',
             headers: {
                 'Authorization': token
