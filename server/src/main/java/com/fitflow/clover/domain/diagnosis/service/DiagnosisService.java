@@ -2,7 +2,9 @@ package com.fitflow.clover.domain.diagnosis.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fitflow.clover.domain.diagnosis.entity.BodyType;
 import com.fitflow.clover.domain.diagnosis.entity.Diagnosis;
+import com.fitflow.clover.domain.diagnosis.entity.PersonalColor;
 import com.fitflow.clover.domain.diagnosis.repository.DiagnosisRepository;
 import com.fitflow.clover.global.error.CustomException;
 import com.fitflow.clover.global.error.ErrorCode;
@@ -54,7 +56,9 @@ public class DiagnosisService {
             );
 
             JsonNode rootNode = objectMapper.readTree(response.getBody());
-            String obesityType = rootNode.get("body_type").asText();
+            String obesityTypeStr = rootNode.get("body_type").asText();
+
+            BodyType obesityType = BodyType.fromDescription(obesityTypeStr);
 
             Optional<Diagnosis> existingDiagnosis = diagnosisRepository.findByMemberId(memberId);
 
@@ -69,7 +73,7 @@ public class DiagnosisService {
                         weight,
                         obesityType,
                         "TBD",
-                        "TBD",
+                        null,
                         "체형 분석 완료",
                         "추후 상세 추천이 제공됩니다."
                 );
@@ -97,7 +101,8 @@ public class DiagnosisService {
             );
 
             JsonNode rootNode = objectMapper.readTree(response.getBody());
-            String personalColor = rootNode.get("personal_color").asText();
+            String colorStr = rootNode.get("personal_color").asText();
+            PersonalColor personalColor = PersonalColor.fromDescription(colorStr);
 
             Optional<Diagnosis> existingDiagnosis = diagnosisRepository.findByMemberId(memberId);
 
@@ -110,7 +115,7 @@ public class DiagnosisService {
                         memberId,
                         0,
                         0,
-                        "TBD",
+                        null,
                         "TBD",
                         personalColor,
                         "퍼스널 컬러 분석 완료",

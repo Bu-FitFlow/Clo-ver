@@ -22,14 +22,16 @@ public class Diagnosis extends BaseTimeEntity {
     @Column(nullable = false)
     private Integer weight;
 
-    @Column(name = "obesity_type", length = 50, nullable = false)
-    private String obesityType;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "obesity_type", length = 50)
+    private BodyType obesityType;
 
     @Column(name = "face_shape", length = 50, nullable = false)
     private String faceShape;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "personal_color", length = 50, nullable = false)
-    private String personalColor;
+    private PersonalColor personalColor;
 
     @Column(name = "result_title", nullable = false)
     private String resultTitle;
@@ -40,8 +42,8 @@ public class Diagnosis extends BaseTimeEntity {
     protected Diagnosis() {
     }
 
-    public Diagnosis(Long memberId, Integer height, Integer weight, String obesityType,
-                     String faceShape, String personalColor, String resultTitle, String resultRecommend) {
+    public Diagnosis(Long memberId, Integer height, Integer weight, BodyType obesityType,
+                     String faceShape, PersonalColor personalColor, String resultTitle, String resultRecommend) {
         this.memberId = memberId;
         this.height = height;
         this.weight = weight;
@@ -52,8 +54,8 @@ public class Diagnosis extends BaseTimeEntity {
         this.resultRecommend = resultRecommend;
     }
 
-    public void updateValues(Integer height, Integer weight, String obesityType,
-                             String faceShape, String personalColor, String resultTitle, String resultRecommend) {
+    public void updateValues(Integer height, Integer weight, BodyType obesityType,
+                             String faceShape, PersonalColor personalColor, String resultTitle, String resultRecommend) {
         this.height = height;
         this.weight = weight;
         this.obesityType = obesityType;
@@ -63,14 +65,14 @@ public class Diagnosis extends BaseTimeEntity {
         this.resultRecommend = resultRecommend;
     }
 
-    public void updateBodyType(Integer height, Integer weight, String obesityType) {
+    public void updateBodyType(Integer height, Integer weight, BodyType obesityType) {
         this.height = height;
         this.weight = weight;
         this.obesityType = obesityType;
         this.resultTitle = "체형 분석 완료";
     }
 
-    public void updatePersonalColor(String personalColor) {
+    public void updatePersonalColor(PersonalColor personalColor) {
         this.personalColor = personalColor;
         this.resultTitle = "퍼스널 컬러 분석 완료";
     }

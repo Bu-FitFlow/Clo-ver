@@ -1,5 +1,7 @@
 package com.fitflow.clover.domain.product.dto.response;
 
+import com.fitflow.clover.domain.diagnosis.entity.BodyType;
+import com.fitflow.clover.domain.diagnosis.entity.PersonalColor;
 import com.fitflow.clover.domain.product.entity.Product;
 import com.fitflow.clover.domain.product.entity.ProductGrade;
 import com.fitflow.clover.domain.product.entity.ProductSize;
@@ -19,8 +21,8 @@ public record ProductDetailResponse(
         ProductSize size,
         ProductGrade grade,
         String tradingArea,
-        String recommendedType,
-        String personalColor,
+        BodyType recommendedType,
+        PersonalColor personalColor,
         ProductStatus postStatus,
         Integer viewCount,
         Integer wishlistCount,

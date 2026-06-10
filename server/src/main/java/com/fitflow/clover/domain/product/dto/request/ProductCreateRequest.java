@@ -1,5 +1,7 @@
 package com.fitflow.clover.domain.product.dto.request;
 
+import com.fitflow.clover.domain.diagnosis.entity.BodyType;
+import com.fitflow.clover.domain.diagnosis.entity.PersonalColor;
 import com.fitflow.clover.domain.product.entity.ProductGrade;
 import com.fitflow.clover.domain.product.entity.ProductSize;
 import jakarta.validation.constraints.Min;
@@ -25,18 +27,18 @@ public record ProductCreateRequest(
         @NotBlank(message = "상품 설명을 입력해 주세요.")
         String content,
 
-        @NotBlank(message = "사이즈를 입력해 주세요.")
+        @NotNull(message = "사이즈를 입력해 주세요.")
         ProductSize size,
 
-        @NotBlank(message = "상품 상태(급)를 입력해 주세요.")
+        @NotNull(message = "상품 상태(급)를 입력해 주세요.")
         ProductGrade grade,
 
         @NotBlank(message = "거래 지역을 입력해 주세요.")
         String tradingArea,
 
-        String recommendedType,
+        BodyType recommendedType,
 
-        String personalColor,
+        PersonalColor personalColor,
 
         List<String> hashtags,
 

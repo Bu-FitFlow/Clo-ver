@@ -1,10 +1,9 @@
 package com.fitflow.clover.domain.product.repository;
 
+import com.fitflow.clover.domain.diagnosis.entity.BodyType;
+import com.fitflow.clover.domain.diagnosis.entity.PersonalColor;
 import com.fitflow.clover.domain.product.dto.request.ProductSearchCondition;
 import com.fitflow.clover.domain.product.entity.Product;
-
-import static com.fitflow.clover.domain.product.entity.QProduct.product;
-
 import com.fitflow.clover.domain.product.entity.ProductStatus;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -15,6 +14,8 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+
+import static com.fitflow.clover.domain.product.entity.QProduct.product;
 
 @RequiredArgsConstructor
 public class ProductRepositoryImpl implements ProductRepositoryCustom {
@@ -46,7 +47,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     }
 
     @Override
-    public Slice<Product> findRecommendedProducts(String recommendedType, String personalColor, ProductStatus status, Pageable pageable) {
+    public Slice<Product> findRecommendedProducts(BodyType recommendedType, PersonalColor personalColor, ProductStatus status, Pageable pageable) {
         List<Product> products = queryFactory
                 .selectFrom(product)
                 .where(
@@ -92,14 +93,14 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         return status != null ? product.postStatus.eq(status) : product.postStatus.eq(ProductStatus.ACTIVE);
     }
 
-    private BooleanExpression matchRecommendedTypeOrPersonalColor(String recommendedType, String personalColor) {
+    private BooleanExpression matchRecommendedTypeOrPersonalColor(BodyType recommendedType, PersonalColor personalColor) {
         BooleanExpression condition = null;
 
-        if (StringUtils.hasText(recommendedType) && !recommendedType.equals("TBD")) {
+        if (recommendedType != null) {
             condition = product.recommendedType.eq(recommendedType);
         }
 
-        if (StringUtils.hasText(personalColor) && !personalColor.equals("TBD")) {
+        if (personalColor != null) {
             BooleanExpression colorCondition = product.personalColor.eq(personalColor);
             condition = (condition != null) ? condition.or(colorCondition) : colorCondition;
         }

@@ -101,7 +101,17 @@ public class ProductController {
         return ResponseEntity.ok(resultMessage);
     }
 
-    @Operation(summary = "맞춤 체형 상품 추천", description = "로그인한 유저의 체형 진단 결과를 바탕으로 추천 상품을 제공합니다.")
+    @Operation(summary = "맞춤 체형 상품 추천", description = """
+            로그인한 유저의 체형 진단 결과를 바탕으로 추천 상품을 제공합니다.
+            
+            **[ 💡 추천에 사용되는 체형 타입(BodyType) 기준 ]**
+            * `LEAN_COLUMN` : 마른 기둥형 (The Lean Column)
+            * `APPLE` : 사과형 (The Apple)
+            * `INVERTED_TRIANGLE` : 역삼각형 (The Inverted Triangle)
+            * `PEAR` : 서양배형 (The Pear)
+            * `HOUR_GLASS` : 모래시계형 (The Hour Glass)
+            * `RECTANGLE` : 직사각형 (The Rectangle)
+            """)
     @GetMapping("/recommendations")
     public ResponseEntity<Slice<ProductListResponse>> getRecommendedProducts(
             @AuthenticationPrincipal UserDetails userDetails,

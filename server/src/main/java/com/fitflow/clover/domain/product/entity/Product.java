@@ -1,5 +1,7 @@
 package com.fitflow.clover.domain.product.entity;
 
+import com.fitflow.clover.domain.diagnosis.entity.BodyType;
+import com.fitflow.clover.domain.diagnosis.entity.PersonalColor;
 import com.fitflow.clover.domain.member.entity.Member;
 import com.fitflow.clover.domain.product.dto.request.ProductUpdateRequest;
 import com.fitflow.clover.global.common.BaseTimeEntity;
@@ -50,11 +52,13 @@ public class Product extends BaseTimeEntity {
     @Column(name = "trading_area", nullable = false, length = 100)
     private String tradingArea;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "recommended_type", length = 50)
-    private String recommendedType;
+    private BodyType recommendedType;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "personal_color", length = 50)
-    private String personalColor;
+    private PersonalColor personalColor;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)

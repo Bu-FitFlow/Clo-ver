@@ -1,14 +1,16 @@
 package com.fitflow.clover.domain.diagnosis.dto.response;
 
+import com.fitflow.clover.domain.diagnosis.entity.BodyType;
 import com.fitflow.clover.domain.diagnosis.entity.Diagnosis;
+import com.fitflow.clover.domain.diagnosis.entity.PersonalColor;
 import lombok.Getter;
 
 @Getter
 public class DiagnosisResponse {
     private final Long diagnosisId;
     private final Long memberId;
-    private final String obesityType;
-    private final String personalColor;
+    private final BodyType obesityType;
+    private final PersonalColor personalColor;
     private final String resultTitle;
 
     public DiagnosisResponse(Diagnosis diagnosis) {

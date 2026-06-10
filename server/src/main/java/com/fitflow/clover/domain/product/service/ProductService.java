@@ -1,6 +1,8 @@
 package com.fitflow.clover.domain.product.service;
 
+import com.fitflow.clover.domain.diagnosis.entity.BodyType;
 import com.fitflow.clover.domain.diagnosis.entity.Diagnosis;
+import com.fitflow.clover.domain.diagnosis.entity.PersonalColor;
 import com.fitflow.clover.domain.diagnosis.repository.DiagnosisRepository;
 import com.fitflow.clover.domain.member.entity.Member;
 import com.fitflow.clover.domain.member.repository.MemberRepository;
@@ -196,8 +198,8 @@ public class ProductService {
         Slice<Product> productSlice;
 
         if (diagnosisOpt.isPresent()) {
-            String userObesityType = diagnosisOpt.get().getObesityType();
-            String userPersonalColor = diagnosisOpt.get().getPersonalColor(); // 💡 퍼스널 컬러 추출 추가
+            BodyType userObesityType = diagnosisOpt.get().getObesityType();
+            PersonalColor userPersonalColor = diagnosisOpt.get().getPersonalColor();
 
             productSlice = productRepository.findRecommendedProducts(
                     userObesityType, userPersonalColor, ProductStatus.ACTIVE, pageable);
