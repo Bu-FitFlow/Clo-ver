@@ -1,5 +1,6 @@
 package com.fitflow.clover.presentation.diagnosis
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -12,7 +13,8 @@ import com.google.gson.JsonObject
 @Composable
 fun rememberDiagnosisViewModel(
     memberId: Long?,
-    displayName: String?
+    displayName: String?,
+    gender: String? = null
 ): DiagnosisViewModel {
     val context = LocalContext.current
 
@@ -24,64 +26,135 @@ fun rememberDiagnosisViewModel(
         DiagnosisViewModel(
             diagnosisRepository = DiagnosisRepositoryImpl(
                 diagnosisApi = networkModule.diagnosisApi
-            )
+            ),
+            memberProfileLoader = {
+                networkModule.userApi
+                    .getMyInfo()
+                    .toDiagnosisMemberProfile()
+            }
         )
     }
 
-    LaunchedEffect(memberId, displayName) {
+    LaunchedEffect(memberId, displayName, gender) {
         viewModel.setMemberProfile(
             memberId = memberId,
-            displayName = displayName
+            displayName = displayName,
+            gender = gender
         )
 
         if (memberId == null || memberId <= 0L) {
-            runCatching {
-                val payload = networkModule.userApi.getMyInfo().payloadObject()
-                val currentMemberId = payload.longOrNull("memberId", "member_id", "id")
-                val currentDisplayName = displayName
-                    ?: payload.stringOrNull("nickname")
-                    ?: payload.stringOrNull("name")
-                    ?: payload.stringOrNull("loginId", "login_id")
+            val loaded = viewModel.refreshMemberProfileFromServer()
 
-                viewModel.setMemberProfile(
-                    memberId = currentMemberId,
-                    displayName = currentDisplayName
-                )
-            }
+            Log.d(
+                TAG,
+                "초기 회원 정보 복구 결과: loaded=$loaded"
+            )
         }
     }
 
     return viewModel
 }
 
-private fun JsonObject.payloadObject(): JsonObject {
-    val data = get("data")
-    return if (data != null && !data.isJsonNull && data.isJsonObject) {
-        data.asJsonObject
-    } else {
-        this
-    }
+private fun JsonObject.toDiagnosisMemberProfile(): DiagnosisMemberProfile {
+    val currentMemberId = findLongRecursively(
+        "memberId",
+        "member_id",
+        "id",
+        "userId",
+        "user_id"
+    )
+
+    val currentDisplayName = findStringRecursively(
+        "nickname",
+        "name",
+        "loginId",
+        "login_id",
+        "username"
+    )
+
+    val currentGender = findStringRecursively(
+        "gender",
+        "sex"
+    )
+
+    Log.d(
+        TAG,
+        "회원 정보 응답 파싱 결과: memberId=$currentMemberId, displayName=$currentDisplayName, gender=$currentGender, raw=$this"
+    )
+
+    return DiagnosisMemberProfile(
+        memberId = currentMemberId,
+        displayName = currentDisplayName,
+        gender = currentGender
+    )
 }
 
-private fun JsonObject.stringOrNull(vararg keys: String): String? {
+private fun JsonObject.findLongRecursively(
+    vararg keys: String
+): Long? {
     for (key in keys) {
-        val value = get(key).asStringOrNull()
-        if (!value.isNullOrBlank()) return value
+        val parsed = get(key).asLongOrNull()
+        if (parsed != null) {
+            return parsed
+        }
     }
+
+    for ((_, value) in entrySet()) {
+        if (value != null && !value.isJsonNull && value.isJsonObject) {
+            val parsed = value.asJsonObject.findLongRecursively(*keys)
+            if (parsed != null) {
+                return parsed
+            }
+        }
+    }
+
     return null
 }
 
-private fun JsonObject.longOrNull(vararg keys: String): Long? {
+private fun JsonObject.findStringRecursively(
+    vararg keys: String
+): String? {
     for (key in keys) {
-        val value = get(key) ?: continue
-        if (value.isJsonNull) continue
-        runCatching { value.asLong }.getOrNull()?.let { return it }
-        value.asStringOrNull()?.toLongOrNull()?.let { return it }
+        val parsed = get(key).asStringOrNull()
+        if (!parsed.isNullOrBlank()) {
+            return parsed
+        }
     }
+
+    for ((_, value) in entrySet()) {
+        if (value != null && !value.isJsonNull && value.isJsonObject) {
+            val parsed = value.asJsonObject.findStringRecursively(*keys)
+            if (!parsed.isNullOrBlank()) {
+                return parsed
+            }
+        }
+    }
+
     return null
+}
+
+private fun JsonElement?.asLongOrNull(): Long? {
+    if (this == null || isJsonNull) {
+        return null
+    }
+
+    runCatching {
+        asLong
+    }.getOrNull()?.let {
+        return it
+    }
+
+    return asStringOrNull()?.toLongOrNull()
 }
 
 private fun JsonElement?.asStringOrNull(): String? {
-    if (this == null || isJsonNull) return null
-    return runCatching { asString }.getOrNull()
+    if (this == null || isJsonNull) {
+        return null
+    }
+
+    return runCatching {
+        asString
+    }.getOrNull()
 }
+
+private const val TAG = "DiagnosisProfile"

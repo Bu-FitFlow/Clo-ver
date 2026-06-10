@@ -11,25 +11,37 @@ data class DiagnosisApiResponse(
     @SerializedName("message")
     val message: String? = null,
 
-    @SerializedName("data")
+    @SerializedName(value = "data", alternate = ["payload", "result", "body"])
     val data: DiagnosisDataResponse? = null
 )
 
 data class DiagnosisDataResponse(
-    @SerializedName("diagnosisId")
+    @SerializedName(value = "diagnosisId", alternate = ["diagnosis_id"])
     val diagnosisId: Long? = null,
 
-    @SerializedName("memberId")
+    @SerializedName(value = "memberId", alternate = ["member_id", "userId", "user_id"])
     val memberId: Long? = null,
 
-    @SerializedName("obesityType")
+    @SerializedName(value = "obesityType", alternate = ["obesity_type", "bodyType", "body_type"])
     val obesityType: String? = null,
 
-    @SerializedName("personalColor")
+    @SerializedName(value = "personalColor", alternate = ["personal_color", "colorType", "color_type"])
     val personalColor: String? = null,
 
-    @SerializedName("resultTitle")
-    val resultTitle: String? = null
+    @SerializedName(value = "faceShape", alternate = ["face_shape"])
+    val faceShape: String? = null,
+
+    @SerializedName(value = "resultTitle", alternate = ["result_title", "title"])
+    val resultTitle: String? = null,
+
+    @SerializedName(value = "resultRecommend", alternate = ["result_recommend", "recommend", "recommendation"])
+    val resultRecommend: String? = null,
+
+    @SerializedName("height")
+    val height: Int? = null,
+
+    @SerializedName("weight")
+    val weight: Int? = null
 )
 
 fun DiagnosisApiResponse.toBodyUiModel(
@@ -46,12 +58,18 @@ fun DiagnosisApiResponse.toBodyUiModel(
 
     val normalizedBodyType = data.obesityType.normalizeBodyRecommendedType()
     val fallback = normalizedBodyType.toBodyResultPreset(userName)
+
     val apiTitle = data.resultTitle
         ?.trim()
         ?.takeIf { it.isNotBlank() && it != "string" }
 
+    val apiRecommend = data.resultRecommend
+        ?.trim()
+        ?.takeIf { it.isNotBlank() && it != "string" }
+
     return fallback.copy(
-        title = apiTitle ?: fallback.title
+        title = apiTitle ?: fallback.title,
+        recommendMessage = apiRecommend ?: fallback.recommendMessage
     )
 }
 
@@ -69,12 +87,18 @@ fun DiagnosisApiResponse.toPersonalColorUiModel(
 
     val normalizedPersonalColor = data.personalColor.normalizePersonalColor()
     val fallback = normalizedPersonalColor.toPersonalColorPreset(userName)
+
     val apiTitle = data.resultTitle
         ?.trim()
         ?.takeIf { it.isNotBlank() && it != "string" }
 
+    val apiRecommend = data.resultRecommend
+        ?.trim()
+        ?.takeIf { it.isNotBlank() && it != "string" }
+
     return fallback.copy(
-        resultTitle = apiTitle ?: fallback.resultTitle
+        resultTitle = apiTitle ?: fallback.resultTitle,
+        resultRecommend = apiRecommend ?: fallback.resultRecommend
     )
 }
 

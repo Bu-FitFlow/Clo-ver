@@ -36,6 +36,13 @@ class NetworkModule(
             .create()
     }
 
+    private val tokenAuthenticator: TokenAuthenticator by lazy {
+        TokenAuthenticator(
+            tokenDataStore = tokenDataStore,
+            authApiProvider = { authApi }
+        )
+    }
+
     private val authInterceptor: AuthInterceptor by lazy {
         AuthInterceptor(tokenDataStore)
     }
@@ -57,7 +64,10 @@ class NetworkModule(
             val elapsedMs = System.currentTimeMillis() - startedAt
 
             if (isDebuggable) {
-                Log.d(NETWORK_LOG_TAG, "<-- ${response.code} ${request.method} ${request.url} (${elapsedMs}ms)")
+                Log.d(
+                    NETWORK_LOG_TAG,
+                    "<-- ${response.code} ${request.method} ${request.url} (${elapsedMs}ms)"
+                )
             }
 
             response
@@ -70,6 +80,7 @@ class NetworkModule(
             .readTimeout(NetworkConstants.READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .writeTimeout(NetworkConstants.WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .addInterceptor(authInterceptor)
+            .authenticator(tokenAuthenticator)
             .addInterceptor(networkLogInterceptor)
             .build()
     }

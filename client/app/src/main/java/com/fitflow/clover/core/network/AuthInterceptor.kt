@@ -1,5 +1,6 @@
 package com.fitflow.clover.core.network
 
+import android.util.Log
 import com.fitflow.clover.data.local.TokenDataStore
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
@@ -14,10 +15,12 @@ class AuthInterceptor(
         val path = originalRequest.url.encodedPath
 
         if (shouldSkipAuth(path)) {
+            Log.d(TAG, "Authorization 생략: path=$path")
             return chain.proceed(originalRequest)
         }
 
         if (originalRequest.header(NetworkConstants.HEADER_AUTHORIZATION) != null) {
+            Log.d(TAG, "Authorization 이미 존재: path=$path")
             return chain.proceed(originalRequest)
         }
 
@@ -25,26 +28,43 @@ class AuthInterceptor(
             tokenDataStore.getAccessToken()
         }
 
-        val request = if (accessToken.isNullOrBlank()) {
-            originalRequest
-        } else {
-            originalRequest.newBuilder()
-                .addHeader(
-                    NetworkConstants.HEADER_AUTHORIZATION,
-                    "${NetworkConstants.BEARER_PREFIX} $accessToken"
-                )
-                .build()
+        if (accessToken.isNullOrBlank()) {
+            Log.e(TAG, "Authorization 추가 실패: accessToken 없음, path=$path")
+            return chain.proceed(originalRequest)
         }
+
+        val request = originalRequest.newBuilder()
+            .header(
+                NetworkConstants.HEADER_AUTHORIZATION,
+                accessToken.toBearerHeaderValue()
+            )
+            .build()
+
+        Log.d(TAG, "Authorization 추가 완료: path=$path")
 
         return chain.proceed(request)
     }
 
     private fun shouldSkipAuth(path: String): Boolean {
-        return path == "/api/health" ||
-                path.contains("/login") ||
-                path.contains("/signup") ||
-                path.contains("/sign-up") ||
-                path.contains("/refresh") ||
-                path.contains("/reissue")
+        return path.contains("/api/members/login") ||
+                path.contains("/api/members/signup") ||
+                path.contains("/api/members/refresh") ||
+                path.contains("/api/auth/login") ||
+                path.contains("/api/auth/signup") ||
+                path.contains("/api/auth/refresh")
+    }
+
+    private fun String.toBearerHeaderValue(): String {
+        val token = trim()
+
+        return if (token.startsWith("${NetworkConstants.BEARER_PREFIX} ", ignoreCase = true)) {
+            token
+        } else {
+            "${NetworkConstants.BEARER_PREFIX} $token"
+        }
+    }
+
+    companion object {
+        private const val TAG = "AuthInterceptor"
     }
 }

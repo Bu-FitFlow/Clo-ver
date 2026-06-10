@@ -105,11 +105,6 @@ fun DiagnosisSummaryScreen(
                 title = "기본 정보"
             ) {
                 SummaryRow(
-                    label = "성별",
-                    value = uiState.selectedGender?.label ?: "미선택"
-                )
-
-                SummaryRow(
                     label = "키",
                     value = uiState.selectedHeightCm?.let { height ->
                         "$height cm"

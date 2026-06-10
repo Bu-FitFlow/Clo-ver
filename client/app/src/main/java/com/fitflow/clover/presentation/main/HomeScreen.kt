@@ -88,11 +88,8 @@ fun HomeScreen(
     onClickCommunityMore: () -> Unit,
     onClickCommunityPost: (Long) -> Unit = {},
     onClickCarbonBanner: () -> Unit,
-    onClickSearch:() -> Unit
+    onClickSearch: () -> Unit
 ) {
-    MainSearchBar(
-        onClickSearch = onClickSearch // 전달받은 함수 연결
-    )
     val mainViewModel = remember {
         MainViewModel()
     }
@@ -149,9 +146,11 @@ fun HomeScreen(
                         mainUiState.isLoading -> {
                             "체형 추천 상품을 불러오는 중입니다."
                         }
+
                         !mainUiState.hasBodyDiagnosis -> {
                             "체형 진단을 완료하면\n내 체형에 맞는 추천 상품 9개를 확인할 수 있어요."
                         }
+
                         else -> {
                             "추천 상품이 없습니다."
                         }
@@ -208,6 +207,12 @@ fun HomeScreen(
 
         MainFabMenu(
             expanded = fabExpanded,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(
+                    end = 22.dp,
+                    bottom = 24.dp
+                ),
             onToggle = {
                 fabExpanded = !fabExpanded
             },
@@ -238,10 +243,7 @@ fun HomeScreen(
             onClickWrite = {
                 fabExpanded = false
                 onClickWrite()
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 10.dp, bottom = 10.dp)
+            }
         )
     }
 }
