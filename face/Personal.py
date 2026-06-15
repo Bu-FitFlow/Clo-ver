@@ -103,12 +103,22 @@ def draw_korean_text(img, text, position, font_size, text_color):
     # OpenCV의 멀티바이트 문자(한글) 렌더링 한계를 극복하기 위한 Pillow(PIL) 변환 헬퍼 함수
     img_pil = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     draw = ImageDraw.Draw(img_pil)
-    try:
-        # 시스템 기본 내장 폰트(Windows: 맑은 고딕) 로드 시도
-        font = ImageFont.truetype("malgun.ttf", font_size)
-    except:
-        # 폰트 부재 시 크로스플랫폼 호환성을 위한 기본 폰트 Fallback
-        font = ImageFont.load_default() 
+    font_candidates = [
+        "/System/Library/Fonts/AppleSDGothicNeo.ttc",          # macOS (Apple SD 고딕 Neo)
+        "/System/Library/Fonts/Supplemental/AppleGothic.ttf",  # macOS (Apple Gothic)
+        "/System/Library/Fonts/Supplemental/NotoSansGothic-Regular.ttf",  # macOS (Noto Sans Gothic)
+        "malgun.ttf",                                           # Windows (맑은 고딕)
+        "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",     # Linux (나눔고딕)
+    ]
+    font = None
+    for path in font_candidates:
+        try:
+            font = ImageFont.truetype(path, font_size)
+            break
+        except (IOError, OSError):
+            continue
+    if font is None:
+        font = ImageFont.load_default()
     draw.text(position, text, font=font, fill=text_color)
     return cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
 
