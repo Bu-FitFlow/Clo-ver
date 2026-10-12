@@ -48,6 +48,7 @@ public enum ErrorCode {
     DEAL_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 거래입니다."),
     UNAUTHORIZED_DEAL_ACCESS(HttpStatus.FORBIDDEN, "해당 거래 내역에 대한 권한이 없습니다."),
     COMPLETED_DEAL_CANNOT_DELETE(HttpStatus.BAD_REQUEST, "이미 완료된 거래는 삭제할 수 없습니다."),
+    DEAL_ALREADY_CLOSED(HttpStatus.BAD_REQUEST, "이미 종료된 거래는 상태를 변경할 수 없습니다."),
 
     DEAL_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "거래가 완료(COMPLETED)된 상태에서만 후기를 작성할 수 있습니다."),
     ALREADY_REVIEWED(HttpStatus.CONFLICT, "해당 거래에 이미 작성된 후기가 존재합니다."),

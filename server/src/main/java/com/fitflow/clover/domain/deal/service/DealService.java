@@ -18,6 +18,8 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -30,18 +32,24 @@ public class DealService {
     public Long createDeal(Long buyerId, Long sellerId, Long productId) {
         Member buyer = memberRepository.findById(buyerId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        Member seller = memberRepository.findById(sellerId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        Product product = productRepository.findById(productId)
+        // 상품 행을 잠가 상태 확인과 예약 처리 사이에 다른 거래 생성 요청이 끼어들지 못하게 한다.
+        Product product = productRepository.findByIdForUpdate(productId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+        Member seller = product.getSeller();
+
+        if (!seller.getMemberId().equals(sellerId)) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
 
         if (buyer.getMemberId().equals(seller.getMemberId())) {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        if (product.getPostStatus() == ProductStatus.SOLD_OUT || product.getPostStatus() == ProductStatus.RESERVED) {
+        if (product.getPostStatus() != ProductStatus.ACTIVE) {
             throw new CustomException(ErrorCode.PRODUCT_NOT_AVAILABLE);
         }
+
+        product.changeStatus(ProductStatus.RESERVED);
 
         Deal deal = Deal.builder()
                 .buyer(buyer)
@@ -56,13 +64,19 @@ public class DealService {
 
     @Transactional
     public void updateDealStatus(Long dealId, DealStatus newStatus) {
-        Deal deal = dealRepository.findById(dealId)
+        Deal deal = dealRepository.findByIdForUpdate(dealId)
                 .orElseThrow(() -> new CustomException(ErrorCode.DEAL_NOT_FOUND));
+
+        if (deal.getDealStatus() != DealStatus.IN_PROGRESS) {
+            throw new CustomException(ErrorCode.DEAL_ALREADY_CLOSED);
+        }
 
         deal.updateStatus(newStatus);
 
         if (newStatus == DealStatus.COMPLETED) {
-            deal.getProduct().changeStatus(ProductStatus.SOLD_OUT);
+            lockProduct(deal).ifPresent(product -> product.changeStatus(ProductStatus.SOLD_OUT));
+        } else if (newStatus == DealStatus.CANCELED || newStatus == DealStatus.ABORTED) {
+            releaseReservation(deal);
         }
     }
 
@@ -73,7 +87,7 @@ public class DealService {
 
     @Transactional
     public void deleteDeal(Long memberId, Long dealId) {
-        Deal deal = dealRepository.findById(dealId)
+        Deal deal = dealRepository.findByIdForUpdate(dealId)
                 .orElseThrow(() -> new CustomException(ErrorCode.DEAL_NOT_FOUND));
 
         boolean isParticipant = deal.getBuyer().getMemberId().equals(memberId)
@@ -86,7 +100,22 @@ public class DealService {
             throw new CustomException(ErrorCode.COMPLETED_DEAL_CANNOT_DELETE);
         }
 
+        if (deal.getDealStatus() == DealStatus.IN_PROGRESS) {
+            releaseReservation(deal);
+        }
+
         dealRepository.delete(deal);
+    }
+
+    private Optional<Product> lockProduct(Deal deal) {
+        // 삭제(DELETED)된 상품은 @SQLRestriction 때문에 조회되지 않으므로 상태를 건드리지 않는다.
+        return productRepository.findByIdForUpdate(deal.getProduct().getProductId());
+    }
+
+    private void releaseReservation(Deal deal) {
+        lockProduct(deal)
+                .filter(product -> product.getPostStatus() == ProductStatus.RESERVED)
+                .ifPresent(product -> product.changeStatus(ProductStatus.ACTIVE));
     }
 }
 
